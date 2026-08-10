@@ -1,3 +1,9 @@
 # Anabuki Event Frontend
 
-Frontend application for the Anabuki Event project.
+Anabuki Event のフロントエンドアプリケーションです。
+
+## 技術スタック
+
+- [Nuxt](https://nuxt.com/)
+- [Vue.js](https://vuejs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
