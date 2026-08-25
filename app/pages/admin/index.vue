@@ -1,22 +1,35 @@
 <script setup lang="ts">
-import type { AdminEmailEntry, AdminSession } from '~/features/admin-auth/types/admin'
-import { request } from '~/lib/api/client'
+import type { AccessRequest, AdminEmailEntry, AdminSession } from '~/features/admin-auth/types/admin'
+import { createAccessRequest, deactivateAdmin, decideAccessRequest, exchangeApplicantSession, getAdminSession, getOwnAccessRequest, listAccessRequests, listAdmins, logoutAdmin } from '~/features/admin-auth/api/admin'
 import { ApiError } from '~/lib/api/error'
 
 const session = ref<AdminSession | null>(null)
-const entries = ref<AdminEmailEntry[]>([])
-const email = ref('')
+const ownRequest = ref<AccessRequest | null>(null)
+const pendingRequests = ref<AccessRequest[]>([])
+const admins = ref<AdminEmailEntry[]>([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+let pollingTimer: number | undefined
+
+const isApplicant = computed(() => session.value?.role === 'APPLICANT')
+const isAdmin = computed(() => session.value?.role === 'DB_ADMIN' || session.value?.role === 'ENV_ADMIN')
+const isEnvironmentAdmin = computed(() => session.value?.role === 'ENV_ADMIN')
 
 async function loadAdminPage() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    session.value = await request<AdminSession>('/admin/auth/session')
-    entries.value = await request<AdminEmailEntry[]>('/admin/allowed-emails')
+    session.value = await getAdminSession()
+    if (isApplicant.value) {
+      ownRequest.value = await getOwnAccessRequest()
+      startPolling()
+    }
+    else if (isAdmin.value) {
+      pendingRequests.value = await listAccessRequests()
+      admins.value = await listAdmins()
+    }
   }
   catch (error) {
     if (error instanceof ApiError && error.statusCode === 401) {
@@ -30,36 +43,76 @@ async function loadAdminPage() {
   }
 }
 
-async function addEmail() {
-  if (!email.value.trim()) return
+async function requestAccess() {
+  if (!window.confirm('管理者アクセスを申請します。申請内容を確認して送信しますか？')) return
   isSaving.value = true
   errorMessage.value = ''
-  successMessage.value = ''
   try {
-    const created = await request<AdminEmailEntry>('/admin/allowed-emails', {
-      method: 'POST',
-      body: { email: email.value },
-    })
-    entries.value = [...entries.value.filter(entry => entry.id !== created.id), created].sort((a, b) => a.email.localeCompare(b.email))
-    email.value = ''
-    successMessage.value = '許可メールを追加しました。'
+    ownRequest.value = await createAccessRequest()
+    successMessage.value = '申請を受け付けました。承認されるまでこの画面でお待ちください。'
+    startPolling()
   }
   catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '許可メールを追加できませんでした。'
+    errorMessage.value = error instanceof ApiError ? error.message : '申請を作成できませんでした。'
   }
   finally {
     isSaving.value = false
   }
 }
 
-async function deactivate(entry: AdminEmailEntry) {
-  if (entry.id === null || !window.confirm(`${entry.email} を無効化しますか？`)) return
+function startPolling() {
+  if (pollingTimer !== undefined) return
+  pollingTimer = window.setInterval(checkOwnRequest, 3000)
+}
+
+async function checkOwnRequest() {
+  if (!isApplicant.value) return
+  try {
+    ownRequest.value = await getOwnAccessRequest()
+    if (ownRequest.value?.status === 'APPROVED') {
+      await exchangeApplicantSession()
+      stopPolling()
+      await navigateTo('/admin', { replace: true })
+    }
+    else if (ownRequest.value?.status === 'REJECTED') {
+      stopPolling()
+    }
+  }
+  catch {
+    // 一時的な通信失敗では申請状態を消さず、次のポーリングで再試行する。
+  }
+}
+
+function stopPolling() {
+  if (pollingTimer !== undefined) {
+    window.clearInterval(pollingTimer)
+    pollingTimer = undefined
+  }
+}
+
+async function decide(request: AccessRequest, decision: 'approve' | 'reject') {
+  const label = decision === 'approve' ? '承認' : '却下'
+  if (!window.confirm(`${request.email} の申請を${label}しますか？`)) return
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    await request(`/admin/allowed-emails/${entry.id}`, { method: 'DELETE' })
+    await decideAccessRequest(request.id, decision)
+    pendingRequests.value = pendingRequests.value.filter(item => item.id !== request.id)
+    successMessage.value = `申請を${label}しました。`
+  }
+  catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : `申請を${label}できませんでした。`
+  }
+}
+
+async function deactivate(entry: AdminEmailEntry) {
+  if (entry.id === null || !window.confirm(`${entry.email} を無効化しますか？対象セッションも即時失効します。`)) return
+  errorMessage.value = ''
+  successMessage.value = ''
+  try {
+    await deactivateAdmin(entry.id)
     entry.active = false
-    successMessage.value = '管理者を無効化しました。対象セッションも失効しています。'
+    successMessage.value = 'DB管理者を無効化しました。対象セッションも失効しています。'
   }
   catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '管理者を無効化できませんでした。'
@@ -67,11 +120,12 @@ async function deactivate(entry: AdminEmailEntry) {
 }
 
 async function logout() {
-  await request('/admin/auth/logout', { method: 'POST' })
+  await logoutAdmin()
   await navigateTo('/admin/login')
 }
 
 onMounted(loadAdminPage)
+onUnmounted(stopPolling)
 </script>
 
 <template>
@@ -79,45 +133,57 @@ onMounted(loadAdminPage)
     <header class="admin-page__header">
       <div>
         <p class="eyebrow">Administrator console</p>
-        <h1>管理者設定</h1>
-        <p v-if="session" class="muted-copy">{{ session.email }} でログイン中</p>
+        <h1>{{ isApplicant ? '管理者アクセス申請' : '管理者設定' }}</h1>
+        <p v-if="session" class="muted-copy">{{ session.email }} · {{ session.role === 'ENV_ADMIN' ? '環境管理者' : session.role === 'DB_ADMIN' ? 'DB管理者' : '申請者' }}</p>
       </div>
       <button class="secondary-button" type="button" @click="logout">ログアウト</button>
     </header>
 
     <p v-if="errorMessage" class="status-message error" role="alert">{{ errorMessage }}</p>
     <p v-if="successMessage" class="status-message success" role="status">{{ successMessage }}</p>
+    <p v-if="isLoading" class="muted-copy">読み込み中です…</p>
 
-    <section class="admin-panel" aria-labelledby="allowlist-title">
-      <div class="admin-panel__heading">
-        <div>
-          <p class="eyebrow">Access control</p>
-          <h2 id="allowlist-title">許可メールアドレス</h2>
+    <template v-else-if="isApplicant">
+      <section class="admin-panel applicant-panel" aria-labelledby="applicant-title">
+        <p class="eyebrow">Applicant access</p>
+        <h2 id="applicant-title">管理者アクセスを申請</h2>
+        <p class="muted-copy">Google本人確認済みです。管理者の承認後、管理画面へ自動的に切り替わります。</p>
+        <button v-if="!ownRequest" class="primary-link" type="button" :disabled="isSaving" @click="requestAccess">管理者アクセスを申請</button>
+        <div v-else class="request-status" :class="`request-status--${ownRequest.status.toLowerCase()}`" role="status">
+          <strong v-if="ownRequest.status === 'PENDING'">承認待ちです</strong>
+          <strong v-else-if="ownRequest.status === 'APPROVED'">承認されました。管理画面へ移動しています…</strong>
+          <strong v-else>申請は却下されました</strong>
+          <span v-if="ownRequest.status === 'PENDING'">数秒ごとに承認状況を確認しています。</span>
         </div>
-        <span class="admin-panel__hint">環境変数とDB登録の和集合</span>
-      </div>
+      </section>
+    </template>
 
-      <form class="admin-add-form" @submit.prevent="addEmail">
-        <label for="admin-email">個別メールを追加</label>
-        <div class="admin-add-form__row">
-          <input id="admin-email" v-model="email" type="email" autocomplete="off" placeholder="admin@example.com" :disabled="isSaving">
-          <button class="primary-link admin-add-form__button" type="submit" :disabled="isSaving || !email.trim()">追加</button>
+    <template v-else-if="isAdmin">
+      <section class="admin-panel" aria-labelledby="requests-title">
+        <div class="admin-panel__heading">
+          <div><p class="eyebrow">Approval queue</p><h2 id="requests-title">承認待ち申請</h2></div>
+          <span class="admin-panel__hint">B/Cのどちらか一人が承認または却下</span>
         </div>
-        <small>Google Workspaceドメイン全体ではなく、個別メールアドレスだけを登録できます。</small>
-      </form>
+        <ul class="admin-email-list">
+          <li v-for="item in pendingRequests" :key="item.id" class="admin-email-list__item">
+            <div><strong>{{ item.email }}</strong><small>申請日時: {{ new Date(item.createdAt).toLocaleString('ja-JP') }}</small></div>
+            <div class="admin-action-group"><button class="primary-link" type="button" @click="decide(item, 'approve')">承認</button><button class="danger-button" type="button" @click="decide(item, 'reject')">却下</button></div>
+          </li>
+          <li v-if="pendingRequests.length === 0" class="muted-copy">承認待ちの申請はありません。</li>
+        </ul>
+      </section>
 
-      <p v-if="isLoading" class="muted-copy">読み込み中です…</p>
-      <ul v-else class="admin-email-list">
-        <li v-for="entry in entries" :key="`${entry.source}-${entry.id ?? entry.email}`" class="admin-email-list__item" :class="{ 'is-inactive': !entry.active }">
-          <div>
-            <strong>{{ entry.email }}</strong>
-            <small>{{ entry.source === 'ENVIRONMENT' ? '環境変数' : '管理者UI / DB' }} · {{ entry.active ? '有効' : '無効' }}</small>
-          </div>
-          <button v-if="entry.source === 'DATABASE' && entry.active" class="danger-button" type="button" @click="deactivate(entry)">無効化</button>
-          <span v-else-if="entry.source === 'ENVIRONMENT'" class="admin-email-list__protected">環境変数で管理</span>
-        </li>
-        <li v-if="entries.length === 0" class="muted-copy">許可メールはまだ登録されていません。</li>
-      </ul>
-    </section>
+      <section class="admin-panel" aria-labelledby="allowlist-title">
+        <div class="admin-panel__heading"><div><p class="eyebrow">Access control</p><h2 id="allowlist-title">管理者一覧</h2></div><span class="admin-panel__hint">環境管理者は削除できません</span></div>
+        <ul class="admin-email-list">
+          <li v-for="entry in admins" :key="`${entry.source}-${entry.id ?? entry.email}`" class="admin-email-list__item" :class="{ 'is-inactive': !entry.active }">
+            <div><strong>{{ entry.email }}</strong><small>{{ entry.source === 'ENVIRONMENT' ? '環境管理者' : 'DB管理者' }} · {{ entry.active ? '有効' : '無効' }}</small></div>
+            <button v-if="isEnvironmentAdmin && entry.source === 'DATABASE' && entry.active" class="danger-button" type="button" @click="deactivate(entry)">無効化</button>
+            <span v-else-if="entry.source === 'ENVIRONMENT'" class="admin-email-list__protected">環境変数で管理</span>
+          </li>
+          <li v-if="admins.length === 0" class="muted-copy">管理者はまだ登録されていません。</li>
+        </ul>
+      </section>
+    </template>
   </main>
 </template>

@@ -642,3 +642,43 @@ h1 {
     flex-direction: column;
   }
 }
+
+.applicant-panel {
+  max-width: 720px;
+}
+
+.request-status {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 14px;
+  line-height: 1.6;
+}
+
+.request-status--pending {
+  color: #725014;
+  background: #fff9eb;
+}
+
+.request-status--approved {
+  color: #14643b;
+  background: #effaf3;
+}
+
+.request-status--rejected {
+  color: #912018;
+  background: #ffefed;
+}
+
+.admin-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-action-group .primary-link {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
