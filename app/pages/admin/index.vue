@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import type { AccessRequest, AdminEmailEntry, AdminSession } from '~/features/admin-auth/types/admin'
+import type { AccessRequest, AdminSession, ManagementAccessEntry } from '~/features/admin-auth/types/admin'
 import { createAccessRequest, deactivateAdmin, decideAccessRequest, exchangeApplicantSession, getAdminSession, getOwnAccessRequest, listAccessRequests, listAdmins, logoutAdmin } from '~/features/admin-auth/api/admin'
 import { ApiError } from '~/lib/api/error'
 
 const session = ref<AdminSession | null>(null)
 const ownRequest = ref<AccessRequest | null>(null)
 const pendingRequests = ref<AccessRequest[]>([])
-const admins = ref<AdminEmailEntry[]>([])
+const admins = ref<ManagementAccessEntry[]>([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 let pollingTimer: number | undefined
 
-const isApplicant = computed(() => session.value?.role === 'APPLICANT')
-const isAdmin = computed(() => session.value?.role === 'DB_ADMIN' || session.value?.role === 'ENV_ADMIN')
-const isEnvironmentAdmin = computed(() => session.value?.role === 'ENV_ADMIN')
+const isApplicant = computed(() => session.value?.accessSource === 'APPLICANT')
+const isAdmin = computed(() => session.value?.permissions.includes('MANAGEMENT_PAGE_VIEW') === true)
+const canRevokeManagementAccess = computed(() => session.value?.permissions.includes('MANAGEMENT_ACCESS_REVOKE') === true)
 
 async function loadAdminPage() {
   isLoading.value = true
@@ -44,7 +44,7 @@ async function loadAdminPage() {
 }
 
 async function requestAccess() {
-  if (!window.confirm('管理者アクセスを申請します。申請内容を確認して送信しますか？')) return
+  if (!window.confirm('管理ページ利用を申請します。申請内容を確認して送信しますか？')) return
   isSaving.value = true
   errorMessage.value = ''
   try {
@@ -105,14 +105,14 @@ async function decide(request: AccessRequest, decision: 'approve' | 'reject') {
   }
 }
 
-async function deactivate(entry: AdminEmailEntry) {
+async function deactivate(entry: ManagementAccessEntry) {
   if (entry.id === null || !window.confirm(`${entry.email} を無効化しますか？対象セッションも即時失効します。`)) return
   errorMessage.value = ''
   successMessage.value = ''
   try {
     await deactivateAdmin(entry.id)
     entry.active = false
-    successMessage.value = 'DB管理者を無効化しました。対象セッションも失効しています。'
+    successMessage.value = '管理ページ利用を解除しました。対象セッションも失効しています。'
   }
   catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : '管理者を無効化できませんでした。'
@@ -133,8 +133,8 @@ onUnmounted(stopPolling)
     <header class="admin-page__header">
       <div>
         <p class="eyebrow">Administrator console</p>
-        <h1>{{ isApplicant ? '管理者アクセス申請' : '管理者設定' }}</h1>
-        <p v-if="session" class="muted-copy">{{ session.email }} · {{ session.role === 'ENV_ADMIN' ? '環境管理者' : session.role === 'DB_ADMIN' ? 'DB管理者' : '申請者' }}</p>
+        <h1>{{ isApplicant ? '管理ページ利用申請' : '管理ページ設定' }}</h1>
+        <p v-if="session" class="muted-copy">{{ session.email }} · {{ session.accessSource === 'ENVIRONMENT_ACCESS' ? '環境設定者' : session.accessSource === 'MANAGEMENT_ACCESS' ? '管理ページ利用者' : '申請者' }}</p>
       </div>
       <button class="secondary-button" type="button" @click="logout">ログアウト</button>
     </header>
@@ -146,9 +146,9 @@ onUnmounted(stopPolling)
     <template v-else-if="isApplicant">
       <section class="admin-panel applicant-panel" aria-labelledby="applicant-title">
         <p class="eyebrow">Applicant access</p>
-        <h2 id="applicant-title">管理者アクセスを申請</h2>
-        <p class="muted-copy">Google本人確認済みです。管理者の承認後、管理画面へ自動的に切り替わります。</p>
-        <button v-if="!ownRequest" class="primary-link" type="button" :disabled="isSaving" @click="requestAccess">管理者アクセスを申請</button>
+        <h2 id="applicant-title">管理ページ利用を申請</h2>
+        <p class="muted-copy">Google本人確認済みです。管理ページ利用の承認後、管理画面へ自動的に切り替わります。</p>
+        <button v-if="!ownRequest" class="primary-link" type="button" :disabled="isSaving" @click="requestAccess">管理ページ利用を申請</button>
         <div v-else class="request-status" :class="`request-status--${ownRequest.status.toLowerCase()}`" role="status">
           <strong v-if="ownRequest.status === 'PENDING'">承認待ちです</strong>
           <strong v-else-if="ownRequest.status === 'APPROVED'">承認されました。管理画面へ移動しています…</strong>
@@ -174,14 +174,14 @@ onUnmounted(stopPolling)
       </section>
 
       <section class="admin-panel" aria-labelledby="allowlist-title">
-        <div class="admin-panel__heading"><div><p class="eyebrow">Access control</p><h2 id="allowlist-title">管理者一覧</h2></div><span class="admin-panel__hint">環境管理者は削除できません</span></div>
+        <div class="admin-panel__heading"><div><p class="eyebrow">Access control</p><h2 id="allowlist-title">管理ページ利用者一覧</h2></div><span class="admin-panel__hint">環境設定者の利用許可は変更できません</span></div>
         <ul class="admin-email-list">
           <li v-for="entry in admins" :key="`${entry.source}-${entry.id ?? entry.email}`" class="admin-email-list__item" :class="{ 'is-inactive': !entry.active }">
-            <div><strong>{{ entry.email }}</strong><small>{{ entry.source === 'ENVIRONMENT' ? '環境管理者' : 'DB管理者' }} · {{ entry.active ? '有効' : '無効' }}</small></div>
-            <button v-if="isEnvironmentAdmin && entry.source === 'DATABASE' && entry.active" class="danger-button" type="button" @click="deactivate(entry)">無効化</button>
-            <span v-else-if="entry.source === 'ENVIRONMENT'" class="admin-email-list__protected">環境変数で管理</span>
+            <div><strong>{{ entry.email }}</strong><small>{{ entry.source === 'ENVIRONMENT_ACCESS' ? '環境設定者' : '管理ページ利用者' }} · {{ entry.active ? '有効' : '無効' }}</small></div>
+            <button v-if="canRevokeManagementAccess && entry.source === 'MANAGEMENT_ACCESS' && entry.active" class="danger-button" type="button" @click="deactivate(entry)">無効化</button>
+            <span v-else-if="entry.source === 'ENVIRONMENT_ACCESS'" class="admin-email-list__protected">環境変数で管理</span>
           </li>
-          <li v-if="admins.length === 0" class="muted-copy">管理者はまだ登録されていません。</li>
+          <li v-if="admins.length === 0" class="muted-copy">管理ページ利用者はまだ登録されていません。</li>
         </ul>
       </section>
     </template>

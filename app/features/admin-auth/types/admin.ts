@@ -1,17 +1,19 @@
-export type AdminRole = 'APPLICANT' | 'DB_ADMIN' | 'ENV_ADMIN'
+export type AccessSource = 'APPLICANT' | 'MANAGEMENT_ACCESS' | 'ENVIRONMENT_ACCESS'
+export type Permission = 'MANAGEMENT_PAGE_VIEW' | 'ACCESS_REQUEST_APPROVE' | 'MANAGEMENT_ACCESS_REVOKE'
 export type AccessRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
-export type AdminEmailEntry = {
+export type ManagementAccessEntry = {
   id: number | null
   email: string
-  source: 'ENVIRONMENT' | 'DATABASE'
+  source: Extract<AccessSource, 'MANAGEMENT_ACCESS' | 'ENVIRONMENT_ACCESS'>
   active: boolean
 }
 
 export type AdminSession = {
   email: string
   googleSub: string
-  role: AdminRole
+  accessSource: AccessSource
+  permissions: Permission[]
   expiresAt: string
 }
 

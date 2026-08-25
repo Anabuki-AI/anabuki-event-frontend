@@ -1,4 +1,4 @@
-import type { AccessRequest, AdminEmailEntry, AdminSession } from '../types/admin'
+import type { AccessRequest, ManagementAccessEntry, AdminSession } from '../types/admin'
 import { request } from '~/lib/api/client'
 
 export function getAdminSession() {
@@ -22,7 +22,7 @@ export function decideAccessRequest(id: number, decision: 'approve' | 'reject') 
 }
 
 export function listAdmins() {
-  return request<AdminEmailEntry[]>('/admin/allowed-emails')
+  return request<ManagementAccessEntry[]>('/admin/allowed-emails')
 }
 
 export function deactivateAdmin(id: number) {

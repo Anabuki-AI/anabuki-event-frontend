@@ -20,14 +20,14 @@ useSeoMeta({
           <p class="admin-login-intro__eyebrow">For event administrators</p>
           <h1 id="admin-login-intro-title">イベント運営を、<br>安全に始める。</h1>
           <p>
-            管理者専用の入口です。Google OAuth接続後、環境管理者・DB管理者・申請者の権限をサーバーで判定します。
+            管理者専用の入口です。Google OAuth接続後、環境設定者・管理ページ利用者・申請者の権限をサーバーで判定します。
           </p>
         </div>
 
         <ul class="admin-login-points">
           <li>
             <span class="admin-login-points__icon" aria-hidden="true">✓</span>
-            <span>Google本人確認後、管理者または申請者として安全に開始できます</span>
+            <span>Google本人確認後、管理ページ利用者または申請者として安全に開始できます</span>
           </li>
           <li>
             <span class="admin-login-points__icon" aria-hidden="true">✓</span>
