@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 import { createUser } from '../api/create-user'
 import type { UserResponse } from '../types'
 import { toApiError } from '~/lib/api/error'
+import { setMyUserId } from '~/features/rankings/storage'
 
 const form = reactive({
   userName: '',
@@ -21,6 +22,7 @@ async function handleSubmit() {
 
   try {
     createdUser.value = await createUser({ ...form })
+    setMyUserId(createdUser.value.id)
     form.password = ''
   }
   catch (error) {

@@ -28,6 +28,10 @@ pnpm dev
 
 開発サーバーは通常 `http://localhost:3000` で起動します。Javalin backendはデフォルトで `http://localhost:8080` を参照し、Nuxtの開発proxyが `/api` へのリクエストを転送します。
 
+## 利用するbackend API
+
+- ランキング画面: `GET /api/rankings`（上位10件）と `GET /api/rankings/users/{userId}`（自分の順位。参加登録時にlocalStorageへ保存したuserIdを利用）
+
 ## コマンド
 
 ```bash
