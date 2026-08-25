@@ -1,5 +1,28 @@
 <script setup lang="ts">
-const isOAuthConnected = false
+import { request } from '~/lib/api/client'
+
+const isOAuthConfigured = ref(false)
+const isLoading = ref(true)
+const statusError = ref('')
+
+onMounted(async () => {
+  try {
+    const status = await request<{ configured: boolean }>('/auth/google/status')
+    isOAuthConfigured.value = status.configured
+  }
+  catch {
+    statusError.value = '認証サービスの状態を確認できません。バックエンドの設定を確認してください。'
+  }
+  finally {
+    isLoading.value = false
+  }
+})
+
+function startGoogleLogin() {
+  if (!isOAuthConfigured.value) return
+  const config = useRuntimeConfig()
+  window.location.assign(`${config.public.apiBase}/auth/google/start`)
+}
 </script>
 
 <template>
@@ -23,25 +46,29 @@ const isOAuthConnected = false
       イベントの作成や運営に使用する管理者専用画面です。許可されたGoogleアカウントでログインしてください。
     </p>
 
-    <div class="oauth-status" :class="{ 'oauth-status--ready': isOAuthConnected }" role="status">
+    <div class="oauth-status" :class="{ 'oauth-status--ready': isOAuthConfigured }" role="status">
       <span class="oauth-status__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" role="presentation">
           <path d="M12 3 4.5 6v5.25c0 4.64 3.2 8.97 7.5 9.75 4.3-.78 7.5-5.11 7.5-9.75V6L12 3Zm0 4.2 4.5 1.8v2.25c0 3.28-2.11 6.56-4.5 7.45-2.39-.89-4.5-4.17-4.5-7.45V9L12 7.2Z" />
         </svg>
       </span>
       <span>
-        <strong>{{ isOAuthConnected ? 'Google OAuth接続済み' : 'Google OAuth接続前です' }}</strong>
-        <small v-if="!isOAuthConnected">接続が完了するまでログインは開始されません。</small>
+        <strong v-if="isLoading">Google OAuthの設定を確認中です</strong>
+        <strong v-else-if="isOAuthConfigured">Google OAuthを利用できます</strong>
+        <strong v-else>Google OAuthは利用できません</strong>
+        <small v-if="statusError">{{ statusError }}</small>
+        <small v-else-if="!isLoading && !isOAuthConfigured">必要な環境変数がバックエンドに設定されるまでログインは開始されません。</small>
+        <small v-else-if="!isLoading">設定済みのGoogle OAuthへ安全に移動します。</small>
       </span>
     </div>
 
-    <button class="google-login-button" type="button" :disabled="!isOAuthConnected" title="Google OAuth接続後に利用できます">
+    <button class="google-login-button" type="button" :disabled="isLoading || !isOAuthConfigured" @click="startGoogleLogin">
       <span class="google-login-button__logo" aria-hidden="true">G</span>
       <span>Googleでログイン</span>
     </button>
 
     <p class="admin-login-card__notice">
-      現在はOAuth接続を行っていないため、このボタンを押しても認証やログイン状態は発生しません。
+      クライアントシークレットやトークンはブラウザへ渡しません。ログイン後はサーバーサイドセッションを使用します。
     </p>
   </section>
 </template>
