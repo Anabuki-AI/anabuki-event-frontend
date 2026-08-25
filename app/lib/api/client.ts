@@ -1,7 +1,7 @@
-import type { FetchOptions } from 'ofetch'
+import type { NitroFetchOptions, NitroFetchRequest } from 'nitropack/types'
 import { toApiError } from './error'
 
-export async function request<T>(path: string, options: FetchOptions = {}): Promise<T> {
+export async function request<T>(path: NitroFetchRequest, options: NitroFetchOptions<NitroFetchRequest> = {}): Promise<T> {
   const config = useRuntimeConfig()
 
   try {
