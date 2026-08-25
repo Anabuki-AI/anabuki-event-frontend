@@ -3,7 +3,7 @@ export type Permission = 'MANAGEMENT_PAGE_VIEW' | 'ACCESS_REQUEST_APPROVE' | 'MA
 export type AccessRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export type ManagementAccessEntry = {
-  id: number | null
+  id: string | null
   email: string
   source: Extract<AccessSource, 'MANAGEMENT_ACCESS' | 'ENVIRONMENT_ACCESS'>
   active: boolean

@@ -115,7 +115,7 @@ async function deactivate(entry: ManagementAccessEntry) {
     successMessage.value = '管理ページ利用を解除しました。対象セッションも失効しています。'
   }
   catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '管理者を無効化できませんでした。'
+    errorMessage.value = error instanceof ApiError ? error.message : '管理ページ利用を解除できませんでした。'
   }
 }
 

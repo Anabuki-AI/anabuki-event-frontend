@@ -25,7 +25,7 @@ export function listAdmins() {
   return request<ManagementAccessEntry[]>('/admin/allowed-emails')
 }
 
-export function deactivateAdmin(id: number) {
+export function deactivateAdmin(id: string) {
   return request(`/admin/allowed-emails/${id}`, { method: 'DELETE' })
 }
 
