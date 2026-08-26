@@ -74,7 +74,7 @@ async function checkOwnRequest() {
       stopPolling()
       await navigateTo('/admin', { replace: true })
     }
-    else if (ownRequest.value?.status === 'REJECTED') {
+    else if (ownRequest.value?.status === 'REJECTED' || ownRequest.value?.status === 'CANCELLED') {
       stopPolling()
     }
   }
@@ -101,7 +101,13 @@ async function decide(request: AccessRequest, decision: 'approve' | 'reject') {
     successMessage.value = `申請を${label}しました。`
   }
   catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : `申請を${label}できませんでした。`
+    if (error instanceof ApiError && error.statusCode === 409) {
+      pendingRequests.value = pendingRequests.value.filter(item => item.id !== request.id)
+      errorMessage.value = '申請の有効期限が切れたか、取り消されています。一覧から除外しました。'
+    }
+    else {
+      errorMessage.value = error instanceof ApiError ? error.message : `申請を${label}できませんでした。`
+    }
   }
 }
 
@@ -152,8 +158,10 @@ onUnmounted(stopPolling)
         <div v-else class="request-status" :class="`request-status--${ownRequest.status.toLowerCase()}`" role="status">
           <strong v-if="ownRequest.status === 'PENDING'">承認待ちです</strong>
           <strong v-else-if="ownRequest.status === 'APPROVED'">承認されました。管理画面へ移動しています…</strong>
-          <strong v-else>申請は却下されました</strong>
+          <strong v-else-if="ownRequest.status === 'REJECTED'">申請は却下されました</strong>
+          <strong v-else>申請は取り消されました</strong>
           <span v-if="ownRequest.status === 'PENDING'">数秒ごとに承認状況を確認しています。</span>
+          <span v-else-if="ownRequest.status === 'CANCELLED'">一時セッションの期限切れまたはログアウトにより申請を取り消しました。再ログインして新しく申請してください。</span>
         </div>
       </section>
     </template>

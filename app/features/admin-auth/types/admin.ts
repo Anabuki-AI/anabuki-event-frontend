@@ -1,6 +1,6 @@
 export type AccessSource = 'APPLICANT' | 'MANAGEMENT_ACCESS' | 'ENVIRONMENT_ACCESS'
 export type Permission = 'MANAGEMENT_PAGE_VIEW' | 'ACCESS_REQUEST_APPROVE' | 'MANAGEMENT_ACCESS_REVOKE'
-export type AccessRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+export type AccessRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 export type ManagementAccessEntry = {
   id: string | null
@@ -22,5 +22,8 @@ export type AccessRequest = {
   email: string
   status: AccessRequestStatus
   createdAt: string
+  expiresAt: string
+  cancelledAt: string | null
+  cancellationReason: string | null
   decidedAt: string | null
 }

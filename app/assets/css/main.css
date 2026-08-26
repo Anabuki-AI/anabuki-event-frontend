@@ -670,6 +670,11 @@ h1 {
   background: #ffefed;
 }
 
+.request-status--cancelled {
+  color: #5c6370;
+  background: #f0f2f5;
+}
+
 .admin-action-group {
   display: flex;
   flex-wrap: wrap;
