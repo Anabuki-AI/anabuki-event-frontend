@@ -111,9 +111,9 @@ useSeoMeta({
 .help-card {
   width: min(100%, 480px);
   margin: 0 auto;
-  padding: 24px 18px 32px;
+  padding: 0 18px 32px;
   border-radius: 20px;
-  background: var(--help-surface);
+  background: var(--help-background);
 }
 
 .help-back-link {
@@ -143,13 +143,17 @@ useSeoMeta({
   margin: 0;
   font-size: 32px;
   line-height: 1.3;
+  background: var(--help-surface);
+  border-radius: 14px 14px 0 0;
 }
 
 .help-description {
-  margin: 12px 0 0;
+  margin: 0 0 0;
   color: var(--help-muted-text);
+  background: var(--help-surface);
   font-size: 16px;
   line-height: 1.7;
+  border-radius: 0 0 14px 14px;
 }
 
 .help-section + .help-section {
