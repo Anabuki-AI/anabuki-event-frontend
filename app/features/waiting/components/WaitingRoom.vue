@@ -14,11 +14,16 @@ const emit = defineEmits<{
   react: [emoji: string]
 }>()
 
+// 絵文字のみ表示。labelはスクリーンリーダー用のaria-labelに使う
 const reactionOptions: ReactionOption[] = [
   { emoji: '👏', label: '拍手' },
   { emoji: '🎉', label: 'わーい' },
   { emoji: '🙌', label: 'いつでも' },
   { emoji: '😂', label: '笑' },
+  { emoji: '😢', label: 'かなしい' },
+  { emoji: '😲', label: 'おどろき' },
+  { emoji: '👍', label: 'いいね' },
+  { emoji: '❤️', label: 'ありがとう' },
 ]
 
 // 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
@@ -71,9 +76,18 @@ function closeHelp() {
         <p class="eyebrow">
           Waiting room
         </p>
-        <p class="waiting-user-name">
-          {{ userName }} さん
-        </p>
+        <div class="waiting-user-row">
+          <p class="waiting-user-name">
+            {{ userName }} さん
+          </p>
+          <NuxtLink
+            class="name-edit-button"
+            :to="{ path: '/users/name/edit', query: { userName } }"
+            aria-label="ニックネームを編集する"
+          >
+            <span aria-hidden="true">✏️</span>
+          </NuxtLink>
+        </div>
       </div>
       <button
         type="button"
@@ -81,7 +95,7 @@ function closeHelp() {
         aria-haspopup="dialog"
         @click="openHelp"
       >
-        ?
+        ヘルプ
       </button>
     </div>
 
@@ -96,7 +110,8 @@ function closeHelp() {
     </div>
 
     <p class="waiting-note">
-      この画面を閉じずにお待ちください。クイズが開始されると、画面が自動的に切り替わります。
+      <span class="waiting-note-line">この画面を閉じずにお待ちください。</span>
+      <span class="waiting-note-line waiting-note-emphasis">クイズが開始されると画面が自動的に切り替わります。</span>
     </p>
 
     <div class="reaction-section">
@@ -126,12 +141,6 @@ function closeHelp() {
           <span aria-hidden="true">{{ emoji }}</span> × {{ count }}
         </span>
       </div>
-    </div>
-
-    <div class="waiting-footer">
-      <NuxtLink class="back-button" to="/users/new">
-        ユーザー登録に戻る
-      </NuxtLink>
     </div>
 
     <HelpDialog v-if="isHelpOpen" @close="closeHelp" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useRoute } from '#imports'
+import { ref, useRoute } from '#imports'
 import WaitingRoom from '~/features/waiting/components/WaitingRoom.vue'
 
 useSeoMeta({
@@ -10,10 +10,10 @@ useSeoMeta({
 const route = useRoute()
 
 // ユーザー登録画面からクエリで受け取る(状態管理は後の工程で整理)
-const userName = computed(() => {
+const userName = ref((() => {
   const name = route.query.userName
   return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
-})
+})())
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)

@@ -43,6 +43,7 @@ function handleKeydown(event: KeyboardEvent) {
         <li>参加人数は自動で更新されます。</li>
         <li>リアクションボタンで気持ちを伝えられます。</li>
         <li>クイズが開始されると、画面は自動的に切り替わります。</li>
+        <li>ニックネームを変更したいときは、名前の横の✏️ボタンを押してください。</li>
       </ul>
       <button
         type="button"
