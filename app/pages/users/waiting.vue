@@ -25,7 +25,7 @@ function handleReact(emoji: string) {
 </script>
 
 <template>
-  <main class="page-shell">
+  <main class="page-shell waiting-shell">
     <WaitingRoom
       :user-name="userName"
       :participant-count="participantCount"
