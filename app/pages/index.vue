@@ -16,7 +16,7 @@ useSeoMeta({
         Nuxt 4を土台に、機能単位で無理なく育てられるフロントエンド構成です。
       </p>
       <NuxtLink class="primary-link" to="/users/new">
-        ユーザー登録を試す
+        ユーザー登録を試す。
       </NuxtLink>
     </section>
   </main>
