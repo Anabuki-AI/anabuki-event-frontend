@@ -1,69 +1,8 @@
 <script setup lang="ts">
-const helpSections = [
-  {
-    title: 'クイズ大会について',
-    content:
-      'スマートフォンからクイズに参加し、回答結果に応じて順位を競うクイズ大会です。',
-  },
-  {
-    title: '必要なもの',
-    content:
-      '参加にはスマートフォンが必要です。スマートフォンのみ対応しています。',
-  },
-  {
-    title: '注意事項',
-    content:
-      '内容は現在調整中です。',
-  },
-  {
-    title: '参加方法',
-    content:
-      '会場に掲示されているQRコード、または案内されたURLから参加できます。',
-  },
-  {
-    title: '使い方',
-    content:
-      'クイズ画面から問題に回答できます。現在の順位はランキング画面から確認できます。',
-  },
-]
-
-const faqItems = [
-  {
-    question: '回答を間違えて送信した場合、変更できますか？',
-    answer:
-      '制限時間内であれば変更できます。',
-  },
-  {
-    question: 'スマートフォン以外でも参加できますか？',
-    answer:
-      '参加できません。スマートフォンのみ対応しています。',
-  },
-  {
-    question: '通信が切れた場合はどうなりますか？',
-    answer:
-      '再接続できます。',
-  },
-  {
-    question: '同点の場合はどうなりますか？',
-    answer:
-      '景品対象者が同点の場合は、じゃんけんで順位を決定します。',
-  },
-  {
-    question: '景品は出ますか？',
-    answer:
-      '豪華景品を用意する予定です。景品対象となる順位は現在調整中です。',
-  },
-  {
-    question: '途中参加はできますか？',
-    answer:
-      '途中参加できます。ただし、最初から参加している場合と比べて不利になる可能性があります。',
-  },
-  {
-    question: 'Wi-Fiはありますか？',
-    answer:
-      '穴吹アリーナのWi-Fiを利用できます。ただし、利用者数によって回線が混雑する場合があります。',
-  },
-]
+import {
+  faqItems,
+  helpSections,
+} from '~/features/help/data/help-content'
 
 useSeoMeta({
   title: 'ヘルプ',
@@ -72,29 +11,37 @@ useSeoMeta({
 </script>
 
 <template>
-  <main class="page-shell">
-    <section class="form-card">
+  <main class="help-page">
+    <article class="help-card">
       <NuxtLink
-        class="back-link"
+        class="help-back-link"
         to="/"
       >
         ← ホームへ戻る
       </NuxtLink>
 
-      <header>
-        <p class="eyebrow">
+      <header class="help-header">
+        <p class="help-eyebrow">
           Help
         </p>
 
-        <h1>ヘルプ</h1>
+        <h1 class="help-title">
+          ヘルプ
+        </h1>
 
-        <p class="muted-copy">
+        <p class="help-description">
           クイズ大会への参加方法や注意事項を確認できます。
         </p>
       </header>
 
-      <section aria-labelledby="help-guide-heading">
-        <h2 id="help-guide-heading">
+      <section
+        class="help-section"
+        aria-labelledby="guide-heading"
+      >
+        <h2
+          id="guide-heading"
+          class="help-section-title"
+        >
           ご利用案内
         </h2>
 
@@ -102,20 +49,27 @@ useSeoMeta({
           <details
             v-for="section in helpSections"
             :key="section.title"
+            class="help-item"
           >
-            <summary>
+            <summary class="help-item-summary">
               {{ section.title }}
             </summary>
 
-            <p>
+            <p class="help-item-content">
               {{ section.content }}
             </p>
           </details>
         </div>
       </section>
 
-      <section aria-labelledby="faq-heading">
-        <h2 id="faq-heading">
+      <section
+        class="help-section"
+        aria-labelledby="faq-heading"
+      >
+        <h2
+          id="faq-heading"
+          class="help-section-title"
+        >
           よくある質問
         </h2>
 
@@ -123,24 +77,147 @@ useSeoMeta({
           <details
             v-for="item in faqItems"
             :key="item.question"
+            class="help-item"
           >
-            <summary>
+            <summary class="help-item-summary">
               {{ item.question }}
             </summary>
 
-            <p>
+            <p class="help-item-content">
               {{ item.answer }}
             </p>
           </details>
         </div>
       </section>
-
-      <button
-        type="button"
-        disabled
-      >
-        アンケート回答はこちら
-      </button>
-    </section>
+    </article>
   </main>
 </template>
+
+<style scoped>
+.help-page {
+  --help-primary: #1769c2;
+  --help-background: #edeffa;
+  --help-surface: #ffffff;
+  --help-text: #132238;
+  --help-muted-text: #516176;
+  --help-border: rgb(19 34 56 / 12%);
+
+  min-height: 100vh;
+  padding: 24px 16px 40px;
+  color: var(--help-text);
+  background: var(--help-background);
+}
+
+.help-card {
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: 24px 18px 32px;
+  border-radius: 20px;
+  background: var(--help-surface);
+}
+
+.help-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 16px;
+  color: var(--help-muted-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.help-header {
+  margin-bottom: 32px;
+}
+
+.help-eyebrow {
+  margin: 0 0 8px;
+  color: var(--help-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.help-title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.3;
+}
+
+.help-description {
+  margin: 12px 0 0;
+  color: var(--help-muted-text);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.help-section + .help-section {
+  margin-top: 32px;
+}
+
+.help-section-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.help-list {
+  display: grid;
+  gap: 12px;
+}
+
+.help-item {
+  overflow: hidden;
+  border: 1px solid var(--help-border);
+  border-radius: 14px;
+  background: var(--help-surface);
+}
+
+.help-item-summary {
+  position: relative;
+  padding: 16px 48px 16px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+.help-item-summary::-webkit-details-marker {
+  display: none;
+}
+
+.help-item-summary::after {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  content: '+';
+  color: var(--help-primary);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.help-item[open] .help-item-summary::after {
+  content: '−';
+}
+
+.help-item-content {
+  margin: 0 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--help-border);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.help-item[open] .help-item-summary {
+  color: var(--help-primary);
+}
+
+.help-item-summary:active {
+  background: var(--help-background);
+}
+
+</style>
