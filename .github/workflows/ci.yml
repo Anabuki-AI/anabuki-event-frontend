@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Only the newest main commit should be eligible to update the parent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, type-check, test, and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  notify-parent:
+    name: Update the parent submodule reference
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dispatch the successful main commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PARENT_REPOSITORY_TOKEN: ${{ secrets.PARENT_REPOSITORY_TOKEN }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          latest_main_sha=$(curl --fail-with-body --silent --show-error \
+            --url "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/heads/main" \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" | jq --raw-output '.object.sha')
+          if [ "$SHA" != "$latest_main_sha" ]; then
+            echo "${SHA} is no longer the tip of main; skipping parent update."
+            exit 0
+          fi
+
+          if [ -z "$PARENT_REPOSITORY_TOKEN" ]; then
+            echo "::warning::PARENT_REPOSITORY_TOKEN is not configured; skipping the parent submodule update."
+            echo "Add a fine-grained token or GitHub App token with Contents: write access to Anabuki-AI/anabuki-event as this repository's Actions secret."
+            exit 0
+          fi
+
+          curl --fail-with-body --request POST \
+            --url "https://api.github.com/repos/Anabuki-AI/anabuki-event/dispatches" \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${PARENT_REPOSITORY_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --data "{\"event_type\":\"submodule-main-succeeded\",\"client_payload\":{\"repository\":\"${GITHUB_REPOSITORY}\",\"sha\":\"${SHA}\"}}"
