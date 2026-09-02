@@ -174,69 +174,13 @@ h1 {
 
 /* --- 待機画面 --- */
 
-/* 対応端末はスマホのみのため、PC幅で見てもスマホ実機の縦長画面と同じ見た目になるよう
-   幅をスマホサイズに固定し、背景色もカードと同色にして画面いっぱいに広げる */
-.page-shell.waiting-shell {
-  padding: 0;
-  align-items: stretch;
-  background: #edeffa;
-}
-
-.page-shell.waiting-shell .waiting-card {
-  width: 100%;
-  max-width: 480px;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding-top: calc(clamp(28px, 6vw, 56px) + env(safe-area-inset-top));
-  padding-bottom: calc(clamp(28px, 6vw, 56px) + env(safe-area-inset-bottom));
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  background: #edeffa;
-}
-
-/* iPhone (375–430px幅) を主対象にした密度調整 */
-@media (width <= 480px) {
-  .page-shell {
-    padding: 16px 12px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  }
-
-  .form-card,
-  .hero-card {
-    width: 100%;
-    padding: 20px 16px;
-    border-radius: 22px;
-  }
-
-  .waiting-card {
-    gap: 14px;
-  }
-
-  .participant-panel {
-    padding: 12px 16px;
-  }
-
-  .waiting-note {
-    padding: 10px 12px;
-  }
-
-  .help-dialog {
-    padding: 16px;
-  }
-
-  .help-dialog-panel {
-    padding: 20px;
-  }
-}
-
 .waiting-card {
   display: grid;
   gap: 26px;
 }
 
 .waiting-header {
+  margin: 0; /* h2やpのデフォルトmarginが高さを押し広げるのを防ぐ */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -325,6 +269,7 @@ h1 {
 }
 
 .participant-label {
+  margin: 0; /* pデフォルトの上下marginがパネルを大きくするためリセット */
   color: #3c3c43;
   font-size: clamp(1rem, 3.5vw, 1.2rem);
   font-weight: 700;
@@ -332,6 +277,7 @@ h1 {
 }
 
 .participant-count {
+  margin: 0; /* pデフォルトの上下marginがパネルを大きくするためリセット */
   color: #3c3c43;
   font-size: clamp(2.75rem, 11vw, 4rem);
   font-weight: 800;
@@ -376,10 +322,12 @@ h1 {
   font-weight: 700;
 }
 
-/* 改行位置はHTMLで制御し、途中で単語内折返ししない(「..さい。」が次行に崩れない) */
+/* 改行位置はHTMLで制御する。
+   注意: nowrapは使わない。25文字の文はiPhone幅(351px)より横に長く、
+   nowrapだと親カード全体が押し広げられて横はみ出し・見切れの原因になる */
 .waiting-note-line {
   display: block;      /* <br>に依存せず行として積む → 行間をline-heightで直接制御できる */
-  white-space: nowrap;
+  overflow-wrap: anywhere; /* どうしても入らない場合は文字間で折り返す */
   line-height: 1.5;    /* AとBの間の距離。1.4〜1.6が日本語の読みやすい標準範囲 */
 }
 
@@ -400,13 +348,6 @@ h1 {
   display: grid;
   grid-template-columns: repeat(8, 1fr); /* 絵文字8個を1行に横並べ */
   gap: 10px;
-}
-
-@media (width <= 480px) {
-  .reaction-bar {
-    grid-template-columns: repeat(4, 1fr); /* iPhoneでは4列×2行に折返す */
-    gap: 8px;
-  }
 }
 
 .reaction-button {
@@ -437,12 +378,6 @@ h1 {
 .reaction-emoji {
   font-size: 1.5rem;
   line-height: 1;
-}
-
-@media (width <= 480px) {
-  .reaction-emoji {
-    font-size: 1.35rem; /* 4列に並べた際にボタンからはみ出さない大きさに */
-  }
 }
 
 /* リアクションが押されたときのアニメーション */
@@ -484,8 +419,8 @@ h1 {
 .reaction-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 4px;
+  padding: 4px 9px;
   border: 1px solid rgb(23 105 194 / 22%);
   border-radius: 9999px;
   color: #3c3c43;
@@ -493,6 +428,19 @@ h1 {
   font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
   animation: chip-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* iPhone幅ではチップを小型化し1行4個に収める */
+@media (width <= 480px) {
+  .reaction-chip {
+    gap: 3px;
+    padding: 3px 7px;
+    font-size: 0.78rem;
+  }
+
+  .reaction-feed {
+    gap: 6px;
+  }
 }
 
 .reaction-feed {
@@ -508,7 +456,7 @@ h1 {
   inset: 0;
   z-index: 50;
   display: grid;
-  place-items: center;
+  place-items: start center;;
   padding: 20px;
   background: rgb(19 34 56 / 45%);
 }
@@ -558,6 +506,102 @@ h1 {
   background: #0f57a4;
 }
 
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid #c7d3e0;
+  border-radius: 14px;
+  color: #253750;
+  background: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.back-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+  transform: translateY(-1px);
+}
+
+/* iPhone (375–430px幅) を主対象にした密度調整。
+   ベースルールより後に置かないと同詳細度の上書きに負けるため、必ず末尾に置く */
 @media (width <= 480px) {
-  
+  .page-shell {
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    /* カードのmax-height計算と揃える: 上下中央寄せは行わず上から積む */
+    place-items: start center;
+  }
+
+  .form-card,
+  .hero-card {
+    width: 100%;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  /* カードの高さを「中身の実寸」で確定させる。
+     max-height + overflow: hidden は溢れた分をサイレントに切り捨てる(見切れの温存になる)ため使わない */
+  .waiting-card {
+    gap: 10px;
+    align-content: start;
+  }
+
+  .waiting-user-name {
+    font-size: 1.15rem;
+  }
+
+  .help-button {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .participant-panel {
+    padding: 8px 16px;
+    gap: 0;
+  }
+
+  .participant-label {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .participant-count {
+    font-size: 2.25rem;
+    line-height: 1.05;
+  }
+
+  .waiting-note {
+    padding: 8px 12px;
+  }
+
+  .waiting-note-line {
+    line-height: 1.45;
+  }
+
+  .reaction-section {
+    gap: 8px;
+  }
+
+  .reaction-bar {
+    grid-template-columns: repeat(4, 1fr); /* iPhoneでは4列×2行に折返す */
+    gap: 6px;
+  }
+
+  .reaction-button {
+    min-height: 44px; /* タッチターゲット下限。これ以上下げない */
+    padding: 4px;
+  }
+
+  .reaction-emoji {
+    font-size: 1.35rem; /* 4列に並べた際にボタンからはみ出さない大きさに */
+  }
+
+  .reaction-feed {
+    min-height: 30px; /* 未押下時も行のスペースを確保。上限は設けず、押した分だけ折り返して全チップを表示する */
+  }
 }
