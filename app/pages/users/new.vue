@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import UserCreateForm from '~/features/users/components/UserCreateForm.vue'
+import RegistrationForm from '~/features/registration/components/RegistrationForm.vue'
 
 useSeoMeta({
   title: 'ユーザー登録',
@@ -19,10 +19,10 @@ useSeoMeta({
         </p>
         <h1>ユーザー登録</h1>
         <p class="muted-copy">
-          Javalinのユーザー登録APIへ接続する最初の縦切り機能です。
+          ニックネームとアンケートの入力だけで参加登録できます。
         </p>
       </div>
-      <UserCreateForm />
+      <RegistrationForm />
     </section>
   </main>
 </template>

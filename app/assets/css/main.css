@@ -168,3 +168,181 @@ h1 {
   color: #14643b;
   background: #e9f8ef;
 }
+
+/* --- ユーザー登録画面 --- */
+
+.registration-form {
+  gap: 22px;
+}
+
+.required-badge {
+  margin-left: 4px;
+  color: #912018;
+  font-weight: 700;
+}
+
+.field-note {
+  margin: 0;
+  color: #516176;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.field-note.is-error {
+  color: #912018;
+}
+
+.field-note.is-success {
+  color: #14643b;
+}
+
+/* ユーザーネームの状態表示(登録可=緑 / 不可=赤) */
+.user-form input.is-available {
+  border-color: #1b8a5a;
+  box-shadow: 0 0 0 4px rgb(27 138 90 / 12%);
+}
+
+.user-form input.is-invalid {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 4px rgb(179 38 30 / 10%);
+}
+
+/* fieldset/legendのリセット */
+.terms-field,
+.survey-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.terms-field legend,
+.survey-field legend {
+  padding: 0;
+  color: #253750;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* 利用規約の折りたたみ+スクロール領域 */
+.terms-details {
+  display: grid;
+  gap: 10px;
+}
+
+.terms-summary {
+  width: fit-content;
+  color: #1769c2;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.terms-scroll {
+  max-height: 40vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.terms-text {
+  margin: 0;
+  color: #253750;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  white-space: pre-line; /* 規約原文の改行・空行をそのまま再現 */
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #253750;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.check-row input,
+.radio-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #1769c2;
+}
+
+.survey-label {
+  color: #253750;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.radio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.radio-list {
+  display: grid;
+  gap: 6px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px; /* タッチターゲット確保 */
+  color: #253750;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* プルダウン(inputと同じ見た目に統一)。font:inheritはiOSのfocus時ズーム防止に必須 */
+.select-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #132238;
+  background: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.select-input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px rgb(23 105 194 / 12%);
+}
+
+/* 登録ボタン(必須入力が揃うまでグレー) */
+.submit-button {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: #1769c2;
+  font-weight: 750;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #0f57a4;
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  background: #b8c2d1;
+  opacity: 1; /* グローバルの button:disabled を上書きし、グレーを見える形で保つ */
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-button.is-submitting:disabled {
+  cursor: wait;
+}
