@@ -185,17 +185,28 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: #ffffff;
+  background: #edeffa; /* カード(form-card)と同じ背景色に統一 */
+  border-bottom: 3px solid #1769c2; /* メインカラーのボーダーでヘッダーとの境目を明示 */
+  padding-bottom: 12px;
 }
 
 .waiting-user {
   min-width: 0;
 }
 
+.eyebrow-main {
+  margin: 0 0 6px;
+  color: #1769c2; /* メインカラー */
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .waiting-user-name {
   margin: 6px 0 0;
   overflow: hidden;
-  color: #3c3c43;
+  color: #132238;
   font-size: clamp(1.15rem, 4vw, 1.75rem);
   font-weight: 750;
   letter-spacing: -0.02em;
@@ -339,9 +350,9 @@ h1 {
 
 .reaction-title {
   margin: 0;
-  color: #3c3c43;
-  font-size: 0.9rem;
-  font-weight: 700;
+  color: #132238;
+  font-size: 1.05rem;
+  font-weight: 750;
 }
 
 .reaction-bar {
@@ -351,13 +362,13 @@ h1 {
 }
 
 .reaction-button {
-  min-height: 56px;
+  min-height: 64px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 8px 4px;
+  padding: 10px 4px;
   border: 1px solid #c7d3e0;
   border-radius: 18px;
   color: #3c3c43;
@@ -376,7 +387,7 @@ h1 {
 }
 
 .reaction-emoji {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   line-height: 1;
 }
 
@@ -403,60 +414,12 @@ h1 {
   animation: reaction-bounce 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* リアクション集計チップの出現アニメーション */
-@keyframes chip-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.85);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.reaction-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 9px;
-  border: 1px solid rgb(23 105 194 / 22%);
-  border-radius: 9999px;
-  color: #3c3c43;
-  background: rgb(23 105 194 / 7%);
-  font-size: 0.88rem;
-  font-variant-numeric: tabular-nums;
-  animation: chip-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* iPhone幅ではチップを小型化し1行4個に収める */
-@media (width <= 480px) {
-  .reaction-chip {
-    gap: 3px;
-    padding: 3px 7px;
-    font-size: 0.78rem;
-  }
-
-  .reaction-feed {
-    gap: 6px;
-  }
-}
-
-.reaction-feed {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  min-height: 34px;
-}
-
 .help-dialog {
   position: fixed;
   inset: 0;
   z-index: 50;
   display: grid;
-  place-items: start center;;
+  place-items: start center; /* 狭い画面でパネル下端が見切れないよう上寄せ */
   padding: 20px;
   background: rgb(19 34 56 / 45%);
 }
@@ -544,11 +507,16 @@ h1 {
     border-radius: 22px;
   }
 
-  /* カードの高さを「中身の実寸」で確定させる。
-     max-height + overflow: hidden は溢れた分をサイレントに切り捨てる(見切れの温存になる)ため使わない */
+  /* カードの高さを550pxに固定。余った高さは参加人数パネル(2行目)が吸収して伸びる */
   .waiting-card {
+    height: 550px;
     gap: 10px;
-    align-content: start;
+    grid-template-rows: auto 1fr auto auto;
+    align-content: stretch;
+  }
+
+  .participant-panel {
+    min-height: 0;
   }
 
   .waiting-user-name {
@@ -561,8 +529,11 @@ h1 {
   }
 
   .participant-panel {
-    padding: 8px 16px;
-    gap: 0;
+    padding: 20px 16px;
+    gap: 4px;
+    /* 1fr行に置かれ、カード550pxの余り高さを吸収して縦に伸びる */
+    align-self: stretch;
+    align-content: center; /* パネル内のラベル+数字を伸びた領域の中央に配置 */
   }
 
   .participant-label {
@@ -571,8 +542,8 @@ h1 {
   }
 
   .participant-count {
-    font-size: 2.25rem;
-    line-height: 1.05;
+    font-size: 2.5rem;
+    line-height: 1.1;
   }
 
   .waiting-note {
@@ -584,24 +555,20 @@ h1 {
   }
 
   .reaction-section {
-    gap: 8px;
+    gap: 10px;
   }
 
   .reaction-bar {
     grid-template-columns: repeat(4, 1fr); /* iPhoneでは4列×2行に折返す */
-    gap: 6px;
+    gap: 8px;
   }
 
   .reaction-button {
-    min-height: 44px; /* タッチターゲット下限。これ以上下げない */
-    padding: 4px;
+    min-height: 56px; /* 拡大版。タッチターゲット下限44pxを十分に満たす */
+    padding: 8px 4px;
   }
 
   .reaction-emoji {
-    font-size: 1.35rem; /* 4列に並べた際にボタンからはみ出さない大きさに */
-  }
-
-  .reaction-feed {
-    min-height: 30px; /* 未押下時も行のスペースを確保。上限は設けず、押した分だけ折り返して全チップを表示する */
+    font-size: 1.6rem; /* 4列に並べた際の拡大サイズ */
   }
 }

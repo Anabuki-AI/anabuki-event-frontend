@@ -1,38 +1,31 @@
 <script setup lang="ts">
-import { ref, useRoute } from '#imports'
-import { setupHelpDialog } from '~/features/waiting/components/HelpDialog'
+import { ref, useSeoMeta } from '#imports'
 import { reactionOptions } from '~/features/waiting/components/ReactionButton'
-import { setupWaitingRoom } from '~/features/waiting/components/WaitingRoom'
+import {
+  setupUserName,
+  setupWaitingRoom,
+} from '~/features/waiting/components/WaitingRoom'
+import { setupHelpDialog } from '~/features/waiting/components/HelpDialog'
 
 useSeoMeta({
   title: '待機画面',
   description: 'Anabuki Eventのイベント待機画面です。',
 })
 
-const route = useRoute()
-
-// ユーザー登録画面からクエリで受け取る(状態管理は後の工程で整理)
-const userName = ref((() => {
-  const name = route.query.userName
-  return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
-})())
+const userName = setupUserName()
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)
-const reactions = ref<Record<string, number>>({})
-
-function handleReact(emoji: string) {
-  reactions.value = { ...reactions.value, [emoji]: (reactions.value[emoji] ?? 0) + 1 }
-}
 
 // 各TSモジュールのロジックを接続(旧3コンポーネントのscript)
 const {
   isCountUpdated,
   lastReactedEmoji,
+  handleReact,
   isHelpOpen,
   openHelp,
   closeHelp,
-} = setupWaitingRoom(participantCount, handleReact)
+} = setupWaitingRoom(participantCount)
 
 const { panelRef, titleId } = setupHelpDialog(closeHelp)
 </script>
@@ -42,7 +35,7 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
     <section class="form-card waiting-card">
       <div class="waiting-header">
         <div class="waiting-user">
-          <p class="eyebrow">
+          <p class="eyebrow-main">
             Waiting room
           </p>
           <div class="waiting-user-row">
@@ -99,19 +92,6 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
           >
             <span class="reaction-emoji" aria-hidden="true">{{ option.emoji }}</span>
           </button>
-        </div>
-        <div
-          v-if="Object.keys(reactions).length > 0"
-          class="reaction-feed"
-          aria-live="polite"
-        >
-          <span
-            v-for="(count, emoji) in reactions"
-            :key="emoji"
-            class="reaction-chip"
-          >
-            <span aria-hidden="true">{{ emoji }}</span> × {{ count }}
-          </span>
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import { useRoute } from '#imports'
 import type { Ref } from 'vue'
 import { ref, watch } from 'vue'
 
@@ -5,7 +6,7 @@ import { ref, watch } from 'vue'
  * 待機画面全体の状態とイベント(旧WaitingRoom.vueのscript)。
  * テンプレートはpages/users/waiting.vueに統合済み。
  */
-export function setupWaitingRoom(participantCount: Ref<number>, onReact: (emoji: string) => void) {
+export function setupWaitingRoom(participantCount: Ref<number>) {
   // 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
   const isCountUpdated = ref(false)
   let countTimer: ReturnType<typeof setTimeout> | undefined
@@ -31,7 +32,6 @@ export function setupWaitingRoom(participantCount: Ref<number>, onReact: (emoji:
 
   function handleReact(emoji: string) {
     lastReactedEmoji.value = emoji
-    onReact(emoji)
     clearTimeout(reactionTimer)
     reactionTimer = setTimeout(() => {
       lastReactedEmoji.value = ''
@@ -56,4 +56,16 @@ export function setupWaitingRoom(participantCount: Ref<number>, onReact: (emoji:
     openHelp,
     closeHelp,
   }
+}
+
+/**
+ * ユーザー登録画面からクエリで受け取ったニックネームを解決する。
+ * (旧waiting.vueのscript内ユーティリティ)
+ */
+export function setupUserName(): Ref<string> {
+  const route = useRoute()
+  return ref((() => {
+    const name = route.query.userName
+    return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
+  })())
 }
