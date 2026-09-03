@@ -188,6 +188,12 @@ h1 {
   background: #edeffa; /* カード(form-card)と同じ背景色に統一 */
   border-bottom: 3px solid #1769c2; /* メインカラーのボーダーでヘッダーとの境目を明示 */
   padding-bottom: 12px;
+  /* カードのpaddingを打ち消してボーダーを画面(card外枠)いっぱいまで伸ばす */
+  margin-top: calc(-1 * clamp(28px, 6vw, 56px));
+  margin-left: calc(-1 * clamp(28px, 6vw, 56px));
+  margin-right: calc(-1 * clamp(28px, 6vw, 56px));
+  padding: clamp(28px, 6vw, 56px) clamp(28px, 6vw, 56px) 12px;
+  border-radius: 28px 28px 0 0; /* カード上辺の角丸に合わせる */
 }
 
 .waiting-user {
@@ -505,6 +511,13 @@ h1 {
     width: 100%;
     padding: 16px;
     border-radius: 22px;
+  }
+
+  .waiting-header {
+    /* iPhone幅のカードpadding(16px)に合わせて打ち消し値を調整 */
+    margin: -16px -16px 0;
+    padding: 16px 16px 12px;
+    border-radius: 22px 22px 0 0;
   }
 
   /* カードの高さを550pxに固定。余った高さは参加人数パネル(2行目)が吸収して伸びる */
