@@ -2,7 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-08-10',
   devtools: { enabled: true },
   modules: ['@nuxt/eslint'],
-  css: ['~/assets/registration.css'],
+  css: ['~/assets/css/registration.css'],
   runtimeConfig: {
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
