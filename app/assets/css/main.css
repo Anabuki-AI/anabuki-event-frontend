@@ -56,6 +56,7 @@ button:disabled {
 .form-card {
   display: grid;
   gap: 28px;
+  background: #edeffa;
 }
 
 .eyebrow {
@@ -218,19 +219,76 @@ h1 {
 
 .question-edit-form legend {
   padding: 0;
-  color: #253750;
-  font-size: 0.9rem;
-  font-weight: 700;
 }
 
+/* 「問題文」「選択肢」「正解」の見出し */
+.edit-heading {
+  margin: 0;
+  color: #132238;
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* eyebrow+タイトルのヘッダー区間。白背景枠+メインカラーの下線ボーダーで区切る。
+   ネガティブマージンでカードpaddingを打ち消し、下線がカード外枠いっぱいに伸びる */
+.question-header {
+  margin: 0 calc(-1 * clamp(28px, 6vw, 56px));
+  padding: 20px clamp(28px, 6vw, 56px);
+  background: #ffffff;
+  border: 1px solid #c7d3e0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
+  border-radius: 0; /* 角丸の枠ではなく、カードの横幅を満たす帯にする */
+}
+
+.question-header h1 {
+  margin: 0;
+  color: #132238;
+  font-size: clamp(1.75rem, 3vw, 2.5rem); /* PC基準: 3vwはPCでは増えすぎないよう上限で打ち止め */
+}
+
+.question-header .muted-copy {
+  margin: 10px 0 0;
+  font-size: 0.95rem;
+}
+
+.edit-section {
+  display: grid;
+  gap: 8px;
+}
+
+/* スクリーンリーダー専用(見当たらないが読み上げ対象)テキスト */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* 正解ラジオ群。グリッドはradio-option(ラジオ+spanの横並び)を2列に並べるだけ。
+   ※.user-form直下でないradio-grid内のlabelには.user-form labelのgrid指定が
+   継承されないため、横並びはradio-option側のflexで実現している */
 .radio-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px 12px;
 }
 
+/* radio-grid内のlabelは.user-form labelのgrid縦積み(grid gap 8px)を継承するため、
+   ラジオとspanが縦に落ちる。flex横並びで上書きする */
+.radio-grid .radio-option {
+  display: flex;
+  flex-direction: row;
+  grid-auto-flow: column;
+}
+
 .radio-option {
   display: flex;
+  flex-direction: row; /* 「東京 ●」の順に横並び(同じ行=平行) */
   align-items: center;
   gap: 8px;
   min-height: 44px; /* タッチターゲット確保 */
@@ -293,4 +351,55 @@ h1 {
 .button-cancel:hover:not(:disabled) {
   background: #f0f3f8;
   transform: translateY(-1px);
+}
+
+/* PC・iPad Air(820×1180)基準の調整。
+   カードは「読みやすいぎりぎり」の1120pxまで拡大。
+   1120pxは本文16px換算で1行約66文字=フォームUIの実用上限の目安。
+   幅は画面から48px(左右24px)引いた値とし、広いPC画面でも左右に余白を残す */
+@media (width >= 768px) {
+  .form-card:has(.question-edit-form),
+  .hero-card:has(.question-edit-form) {
+    width: min(100% - 48px, 1120px);
+  }
+
+  .question-edit-form {
+    gap: 24px;
+  }
+
+  /* 選択肢A〜Dを2×2に */
+  .question-edit-form .choices-field {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+  }
+
+  .question-edit-form .choices-field legend {
+    grid-column: 1 / -1; /* 見出しは全幅(左端) */
+  }
+
+  .question-edit-form .choices-field label {
+    min-width: 0;
+  }
+
+  /* 正解ラジオは1行に4つ並べる */
+  .radio-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .radio-option {
+    font-size: 1.05rem;
+  }
+
+  /* ボタンは右寄せの横並び(PC操作を想定)。幅は内容に合わせる */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .submit-button,
+  .button-cancel {
+    min-width: 160px;
+    min-height: 52px;
+  }
 }

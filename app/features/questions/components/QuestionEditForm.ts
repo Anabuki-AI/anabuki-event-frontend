@@ -2,7 +2,7 @@ import type { QuestionFieldErrors, QuestionFormState } from '../types'
 import { computed, reactive, ref } from 'vue'
 import { navigateTo, useRouter } from '#imports'
 import {
-  CANCEL_ROUTE,
+  CANEL_FALLBACK_ROUTE,
   MOCK_QUESTION,
   SAVE_DELAY_MS,
 } from '../definitions'
@@ -87,20 +87,14 @@ export function setupQuestionEdit() {
     }
   }
 
-  const router = useRouter()
-
-  function handleCancel() {
-    if (isDirty.value && !window.confirm('編集内容を破棄して戻りますか?')) {
-      return
+  // キャンセル=「編集を破棄して一つ前の画面へ戻る」。戻るリンクと同じsetupQuestionBackを使う
+  const { handleBack } = setupQuestionBack(() => {
+    if (!isDirty.value) {
+      return true
     }
-    // 履歴があれば前画面へ、なければ定義済みルートへ(直接URLアクセス対策)
-    if (window.history.state?.back) {
-      router.back()
-    }
-    else {
-      navigateTo(CANCEL_ROUTE)
-    }
-  }
+    return window.confirm('編集内容を破棄して戻りますか?')
+  })
+  const handleCancel = handleBack
 
   return {
     form,
@@ -112,5 +106,29 @@ export function setupQuestionEdit() {
     savedMessage,
     handleSubmit,
     handleCancel,
+  }
+}
+/**
+ * 「一つ前の画面へ戻る」共通挙動。
+ * 戻るリンク・キャンセルボタンの双方から呼ばれる。
+ * onNoHistory: 履歴がない場合に実行するガード。falseを返すと遷移しない
+ */
+export function setupQuestionBack(onNoHistory?: () => boolean) {
+  const router = useRouter()
+
+  function handleBack() {
+    if (window.history.state?.back) {
+      router.back()
+      return
+    }
+    // 履歴がない場合: 追加処理(ガード)がfalseを返したら遷移しない
+    if (onNoHistory && onNoHistory() === false) {
+      return
+    }
+    navigateTo(CANEL_FALLBACK_ROUTE)
+  }
+
+  return {
+    handleBack,
   }
 }

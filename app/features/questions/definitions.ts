@@ -10,6 +10,9 @@ export const SAVE_DELAY_MS = 400
 // キャンセル時の戻り先。問題管理画面(未作成)追加後に '/questions' へ差し替える
 export const CANCEL_ROUTE = '/'
 
+// 履歴がない場合の「戻る」フォールバック先(CANCEL_ROUTEと同じ意図)
+export const CANEL_FALLBACK_ROUTE = '/'
+
 // 画面構成イメージ用のモックデータ。バックエンドの問題API未実装のため直接埋め込む
 export const MOCK_QUESTION: Question = {
   id: 1,

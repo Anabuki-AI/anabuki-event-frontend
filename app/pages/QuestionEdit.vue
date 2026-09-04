@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useSeoMeta } from '#imports'
-import { CHOICE_KEYS, QUESTION_TEXT_MAX } from '~/features/questions/definitions'
-import { setupQuestionEdit } from '~/features/questions/components/QuestionEditForm'
+import { CANEL_FALLBACK_ROUTE, CHOICE_KEYS, QUESTION_TEXT_MAX } from '~/features/questions/definitions'
+import {
+  setupQuestionEdit,
+  setupQuestionBack,
+} from '~/features/questions/components/QuestionEditForm'
 
 useSeoMeta({
   title: '問題編集',
@@ -19,6 +22,12 @@ const {
   handleSubmit,
   handleCancel,
 } = setupQuestionEdit()
+
+// 「戻る」リンクとキャンセルで同じ「一つ前の画面へ戻る」挙動を使う
+const { handleBack } = setupQuestionBack(() => {
+  handleCancel()
+  return true
+})
 </script>
 
 <template>
@@ -26,19 +35,20 @@ const {
     <section class="form-card">
       <NuxtLink
         class="back-link"
-        to="/"
+        :to="CANEL_FALLBACK_ROUTE"
+        @click.prevent="handleBack"
       >
-        ← ホームへ戻る
+        ← 例）問題一覧へ戻る
       </NuxtLink>
-      <div>
+      <header class="question-header">
         <p class="eyebrow">
           Edit question
         </p>
-        <h1>問題編集画面</h1>
+        <h1>問題編集</h1>
         <p class="muted-copy">
           問題の内容を修正して保存してください。バックエンド未実装のため、内容は保存されません。
         </p>
-      </div>
+      </header>
 
       <form
         class="user-form question-edit-form"
@@ -46,33 +56,36 @@ const {
         @submit.prevent="handleSubmit"
       >
         <!-- 問題文 -->
-        <label>
-          <span>問題文<span class="required-badge">*</span></span>
-          <textarea
-            v-model.trim="form.questionText"
-            :maxlength="QUESTION_TEXT_MAX"
-            rows="3"
-            :aria-invalid="showFieldErrors && fieldErrors.questionText !== ''"
-            aria-describedby="question-text-note"
-          />
-          <p
-            v-if="showFieldErrors && fieldErrors.questionText"
-            id="question-text-note"
-            class="field-note is-error"
-            role="alert"
-          >
-            {{ fieldErrors.questionText }}
-          </p>
-        </label>
+        <div class="edit-section">
+          <h2 class="edit-heading">問題文<span class="required-badge">*</span></h2>
+          <label>
+            <span class="visually-hidden">問題文</span>
+            <textarea
+              v-model.trim="form.questionText"
+              :maxlength="QUESTION_TEXT_MAX"
+              rows="3"
+              :aria-invalid="showFieldErrors && fieldErrors.questionText !== ''"
+              aria-describedby="question-text-note"
+            />
+            <p
+              v-if="showFieldErrors && fieldErrors.questionText"
+              id="question-text-note"
+              class="field-note is-error"
+              role="alert"
+            >
+              {{ fieldErrors.questionText }}
+            </p>
+          </label>
+        </div>
 
         <!-- 選択肢 -->
         <fieldset class="choices-field">
-          <legend>選択肢<span class="required-badge">*</span></legend>
+          <legend class="edit-heading">選択肢<span class="required-badge">*</span></legend>
           <label
             v-for="key in CHOICE_KEYS"
             :key="key"
           >
-            <span>選択肢{{ key }}<span class="required-badge">*</span></span>
+            <span>{{ key }}<span class="required-badge">*</span></span>
             <input
               v-model.trim="form.choices[key]"
               type="text"
@@ -91,7 +104,7 @@ const {
 
         <!-- 正解 -->
         <fieldset class="correct-answer-field">
-          <legend>正解<span class="required-badge">*</span></legend>
+          <legend class="edit-heading">正解<span class="required-badge">*</span></legend>
           <div
             class="radio-grid"
             role="radiogroup"
@@ -108,7 +121,7 @@ const {
                 name="correctAnswer"
                 :value="key"
               >
-              <span>{{ key }}. {{ form.choices[key] || `（選択肢${key}）` }}</span>
+              <span>{{ form.choices[key] || `（選択肢${key}）` }}</span>
             </label>
           </div>
           <p
