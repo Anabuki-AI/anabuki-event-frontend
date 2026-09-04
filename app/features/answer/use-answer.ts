@@ -38,6 +38,9 @@ const CONFIDENCE_POINTS: Record<Confidence, number> = {
  * API通信は行わず、フロントエンドの状態のみを扱う。
  */
 export function useAnswer() {
+  // TODO: API接続後に実データへ置き換え
+  const userName = ref('UserName')
+
   const selectedChoice = ref<number | null>(null)
   const confidence = ref<Confidence>('普通')
   const submitted = ref(false)
@@ -70,6 +73,7 @@ export function useAnswer() {
   }
 
   return {
+    userName,
     question,
     choices,
     confidenceOptions,

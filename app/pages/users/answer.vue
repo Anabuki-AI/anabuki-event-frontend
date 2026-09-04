@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useAnswer } from '~/features/answer/use-answer'
 
+// 解答画面専用CSS（main.cssから分離、ページ単位で読み込み）
+import '~/assets/css/answer.css'
+
 useSeoMeta({
   title: '解答画面',
   description: 'クイズの解答を選択して送信する、一般ユーザー向けページです。',
@@ -8,6 +11,7 @@ useSeoMeta({
 
 // 状態・ロジックは features/answer/use-answer.ts に集約
 const {
+  userName,
   question,
   choices,
   confidenceOptions,
@@ -25,10 +29,15 @@ const {
 <template>
   <div class="page-shell answer-shell">
     <header class="answer-header">
-      <p class="eyebrow">
-        Quiz
+      <div class="answer-heading">
+        <p class="eyebrow">
+          Quiz
+        </p>
+        <h1>解答画面</h1>
+      </div>
+      <p class="answer-user">
+        {{ userName }}
       </p>
-      <h1>解答画面</h1>
     </header>
 
     <main class="answer-main">
@@ -131,11 +140,6 @@ const {
             解説の公開を待っています…
           </p>
         </div>
-
-        <!-- 解説ページが未作成のため、見た目のみのボタン -->
-        <button type="button" class="wait-next">
-          解説画面へ進む
-        </button>
 
         <p class="answer-note">
           ※ この画面はダミーデータによる見た目確認用です（API未接続）。
