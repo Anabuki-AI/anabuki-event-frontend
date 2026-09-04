@@ -41,7 +41,7 @@ const adminMenu: AdminMenuItem[] = [
         </p>
         <h1>運営者メイン画面</h1>
         <p class="muted-copy">
-          各管理機能へ移動して、クイズイベントの運営を行えます。
+          各管理機能へ移動して、クイズイベントの運営を行えます。。
         </p>
       </div>
 
