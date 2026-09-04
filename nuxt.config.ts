@@ -3,6 +3,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/eslint'],
   css: ['~/assets/css/main.css'],
+  app: {
+    head: {
+      viewport: 'width=device-width, initial-scale=1',
+    },
+  },
   runtimeConfig: {
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
