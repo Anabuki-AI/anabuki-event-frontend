@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RegistrationForm from '~/features/registration/components/RegistrationForm.vue'
+import RegistrationForm from '~/pages/RegistrationForm.vue'
 
 useSeoMeta({
   title: 'ユーザー登録',

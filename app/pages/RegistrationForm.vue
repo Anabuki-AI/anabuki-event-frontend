@@ -7,8 +7,8 @@ import {
   STUDENT_TYPE_OPTIONS,
   TERMS_TEXT,
   USERNAME_MAX,
-} from '../definitions'
-import { setupRegistrationForm } from './RegistrationForm'
+} from '~/features/registration/definitions'
+import { setupRegistrationForm } from '~/features/registration/components/RegistrationForm'
 
 const {
   form,
