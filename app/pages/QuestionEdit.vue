@@ -31,8 +31,8 @@ const { handleBack } = setupQuestionBack(() => {
 </script>
 
 <template>
-  <main class="page-shell">
-    <section class="form-card">
+  <section class="form-card quiz-page">
+    <header class="question-header">
       <NuxtLink
         class="back-link"
         :to="CANEL_FALLBACK_ROUTE"
@@ -40,16 +40,16 @@ const { handleBack } = setupQuestionBack(() => {
       >
         ← 例）問題一覧へ戻る
       </NuxtLink>
-      <header class="question-header">
-        <p class="eyebrow">
-          Edit question
-        </p>
-        <h1>問題編集</h1>
-        <p class="muted-copy">
-          問題の内容を修正して保存してください。バックエンド未実装のため、内容は保存されません。
-        </p>
-      </header>
+      <p class="eyebrow">
+        Edit question
+      </p>
+      <h1>問題編集</h1>
+      <p class="muted-copy">
+        問題の内容を修正して保存してください。バックエンド未実装のため、内容は保存されません。
+      </p>
+    </header>
 
+    <main class="page-shell">
       <form
         class="user-form question-edit-form"
         novalidate
@@ -85,7 +85,7 @@ const { handleBack } = setupQuestionBack(() => {
             v-for="key in CHOICE_KEYS"
             :key="key"
           >
-            <span>{{ key }}<span class="required-badge">*</span></span>
+            <span>{{ key }}</span>
             <input
               v-model.trim="form.choices[key]"
               type="text"
@@ -168,6 +168,6 @@ const { handleBack } = setupQuestionBack(() => {
           {{ submitErrorMessage }}
         </p>
       </form>
-    </section>
-  </main>
+    </main>
+  </section>
 </template>

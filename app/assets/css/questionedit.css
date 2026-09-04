@@ -133,7 +133,6 @@ h1 {
   display: grid;
   gap: 8px;
   color: #253750;
-  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -230,23 +229,44 @@ h1 {
   letter-spacing: -0.01em;
 }
 
-/* eyebrow+タイトルのヘッダー区間。白背景枠+メインカラーの下線ボーダーで区切る。
-   ネガティブマージンでカードpaddingを打ち消し、下線がカード外枠いっぱいに伸びる */
+/* 画面全体: カードを最外側とし、ヘッダー+フォームを縦に積む(user-registrationのquiz-pageと同じ方式)。
+   iPad Air(820×1180)を基準に、幅は画面から左右の余白を引いた値、高さは画面いっぱい */
+.quiz-page {
+  width: 100%; /* 画面全体に表示(隙間なし) */
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px clamp(16px, 5vw, 48px) 48px;
+  background: #edeffa; /* プロジェクト規定の背景色 */
+}
+
+/* eyebrow+タイトルのヘッダー区間。メインカラーの下線でヘッダー区間を明示。
+   ネガティブマージンで親(.quiz-page)の左右paddingを打ち消し、下線を画面の端から端まで引く */
 .question-header {
-  margin: 0 calc(-1 * clamp(28px, 6vw, 56px));
-  padding: 20px clamp(28px, 6vw, 56px);
-  background: #ffffff;
-  border: 1px solid #c7d3e0;
-  border-left: 0;
-  border-right: 0;
-  border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
-  border-radius: 0; /* 角丸の枠ではなく、カードの横幅を満たす帯にする */
+  margin: 0 calc(-1 * clamp(16px, 5vw, 48px)) 24px; /* 親padding(左右)分を外に広げる */
+  padding: 14px clamp(16px, 5vw, 48px) 20px; /* 中身(テキスト)の位置はpaddingで確保 */
+  background: #edeffa; /* プロジェクト規定の背景色 */
+  border-bottom: 3px solid #1769c2; /* メインカラーの下線(ヘッダー=画面全幅) */
 }
 
 .question-header h1 {
   margin: 0;
   color: #132238;
   font-size: clamp(1.75rem, 3vw, 2.5rem); /* PC基準: 3vwはPCでは増えすぎないよう上限で打ち止め */
+}
+
+/* ヘッダー下のコンテンツ(フォーム) */
+.quiz-page .page-shell {
+  flex: 1;
+  padding: 0;
+  background: none;
+  place-items: start center;
+}
+
+.question-header .back-link {
+  margin-bottom: 12px;
 }
 
 .question-header .muted-copy {
@@ -353,18 +373,13 @@ h1 {
   transform: translateY(-1px);
 }
 
-/* PC・iPad Air(820×1180)基準の調整。
-   カードは「読みやすいぎりぎり」の1120pxまで拡大。
-   1120pxは本文16px換算で1行約66文字=フォームUIの実用上限の目安。
-   幅は画面から48px(左右24px)引いた値とし、広いPC画面でも左右に余白を残す */
+/* PC・iPad Air(820×1180)基準の調整。カード自体がページの土台(.quiz-page)のため
+   追加の幅指定は不要。フォーム間隔と2カラム化のみ行う */
 @media (width >= 768px) {
-  .form-card:has(.question-edit-form),
-  .hero-card:has(.question-edit-form) {
-    width: min(100% - 48px, 1120px);
-  }
-
   .question-edit-form {
     gap: 24px;
+    max-width: 100%; /* カード(quiz-page)の幅いっぱいまで広げる */
+    padding: 0 clamp(8px, 4vw, 48px);
   }
 
   /* 選択肢A〜Dを2×2に */
