@@ -13,6 +13,7 @@
 body {
   min-width: 320px;
   margin: 0;
+  -webkit-text-size-adjust: 100%; /* iOS Safariで横画面時に自動拡大されないようにする */
 }
 
 a {
@@ -25,7 +26,7 @@ input {
 }
 
 button {
-  cursor: pointer;
+  cursor: pointer;  
 }
 
 button:disabled {
@@ -35,12 +36,14 @@ button:disabled {
 
 .page-shell {
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safariのツールバー出入れで高さが変わるのに追従 */
   display: grid;
   place-items: center;
   padding: 32px 20px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom)); /* ホームインジケータ領域を避ける */
   background:
     radial-gradient(circle at top left, rgb(80 155 255 / 18%), transparent 34%),
-    linear-gradient(145deg, #f7fbff 0%, #edf4fb 100%);
+    linear-gradient(145deg, #f7fbff 0%, #ffffff 100%);
 }
 
 .hero-card,
@@ -49,7 +52,7 @@ button:disabled {
   padding: clamp(28px, 6vw, 56px);
   border: 1px solid rgb(19 34 56 / 8%);
   border-radius: 28px;
-  background: rgb(255 255 255 / 92%);
+  background: #edeffa;
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
 
@@ -60,7 +63,7 @@ button:disabled {
 
 .eyebrow {
   margin: 0 0 10px;
-  color: #1769c2;
+  color: #3c3c43;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -167,6 +170,420 @@ h1 {
 .status-message.success {
   color: #14643b;
   background: #e9f8ef;
+}
+
+/* --- 待機画面 --- */
+
+.waiting-card {
+  display: grid;
+  gap: 26px;
+}
+
+.waiting-header {
+  margin: 0; /* h2やpのデフォルトmarginが高さを押し広げるのを防ぐ */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #edeffa; /* カード(form-card)と同じ背景色に統一 */
+  border-bottom: 3px solid #1769c2; /* メインカラーのボーダーでヘッダーとの境目を明示 */
+  padding-bottom: 12px;
+  /* カードのpaddingを打ち消してボーダーを画面(card外枠)いっぱいまで伸ばす */
+  margin-top: calc(-1 * clamp(28px, 6vw, 56px));
+  margin-left: calc(-1 * clamp(28px, 6vw, 56px));
+  margin-right: calc(-1 * clamp(28px, 6vw, 56px));
+  padding: clamp(28px, 6vw, 56px) clamp(28px, 6vw, 56px) 12px;
+  border-radius: 28px 28px 0 0; /* カード上辺の角丸に合わせる */
+}
+
+.waiting-user {
+  min-width: 0;
+}
+
+.eyebrow-main {
+  margin: 0 0 6px;
+  color: #1769c2; /* メインカラー */
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.waiting-user-name {
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: #132238;
+  font-size: clamp(1.15rem, 4vw, 1.75rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waiting-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waiting-user-row .waiting-user-name {
+  margin: 6px 0 0;
+}
+
+.name-edit-button {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #c7d3e0;
+  border-radius: 9999px;
+  background: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.name-edit-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+  transform: translateY(-1px);
+}
+
+
+.help-button {
+  flex-shrink: 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid #3c3c43;
+  border-radius: 9999px;
+  color: #3c3c43;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.help-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+.participant-panel {
+  display: grid;
+  gap: 2px;
+  padding: clamp(16px, 5vw, 22px) clamp(20px, 6vw, 24px);
+  border: 1px solid rgb(19 34 56 / 8%);
+  border-radius: 18px;
+  background:#ffffff;
+  text-align: center;
+}
+
+.participant-label {
+  margin: 0; /* pデフォルトの上下marginがパネルを大きくするためリセット */
+  color: #3c3c43;
+  font-size: clamp(1rem, 3.5vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.participant-count {
+  margin: 0; /* pデフォルトの上下marginがパネルを大きくするためリセット */
+  color: #3c3c43;
+  font-size: clamp(2.75rem, 11vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 参加人数が増えたときのアニメーション */
+@keyframes participant-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.18);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.participant-count.is-updated {
+  animation: participant-pop 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.participant-unit {
+  color: #516176;
+  font-size: 0.9rem;
+}
+
+.waiting-note {
+  margin: 0;
+  padding: 13px 15px;
+  border-radius: 12px;
+  color: #3c3c43;
+  background: #ffffff;
+  line-height: 1.7;
+}
+
+.waiting-note-emphasis {
+  font-weight: 700;
+}
+
+/* 改行位置はHTMLで制御する。
+   注意: nowrapは使わない。25文字の文はiPhone幅(351px)より横に長く、
+   nowrapだと親カード全体が押し広げられて横はみ出し・見切れの原因になる */
+.waiting-note-line {
+  display: block;      /* <br>に依存せず行として積む → 行間をline-heightで直接制御できる */
+  overflow-wrap: anywhere; /* どうしても入らない場合は文字間で折り返す */
+  line-height: 1.5;    /* AとBの間の距離。1.4〜1.6が日本語の読みやすい標準範囲 */
+}
+
+.waiting-note,
+.reaction-section {
+  display: grid;
+  gap: 14px;
+}
+
+.reaction-title {
+  margin: 0;
+  color: #132238;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.reaction-bar {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr); /* 絵文字8個を1行に横並べ */
+  gap: 10px;
+}
+
+.reaction-button {
+  min-height: 64px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border: 1px solid #c7d3e0;
+  border-radius: 18px;
+  color: #3c3c43;
+  background: #ffffff;
+  font-weight: 700;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.reaction-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+.reaction-button:active {
+  transform: scale(0.94);
+}
+
+.reaction-emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+/* リアクションが押されたときのアニメーション */
+@keyframes reaction-bounce {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+
+  35% {
+    transform: scale(1.35) translateY(-6px);
+  }
+
+  65% {
+    transform: scale(0.9) translateY(0);
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.reaction-button.is-reacted .reaction-emoji {
+  animation: reaction-bounce 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.help-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: start center; /* 狭い画面でパネル下端が見切れないよう上寄せ */
+  padding: 20px;
+  background: rgb(19 34 56 / 45%);
+}
+
+.help-dialog-panel {
+  width: min(100%, 460px);
+  max-height: 80dvh; /* iOS Safariの実効高に合わせる(vh未対応用に下へフォールバック) */
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 26px;
+  border: none;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgb(34 75 120 / 30%);
+}
+
+.help-dialog-panel:focus-visible {
+  outline: 3px solid #1769c2;
+  outline-offset: 2px;
+}
+
+.help-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.help-dialog ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #3c3c43;
+  line-height: 1.9;
+}
+
+.help-dialog-close {
+  margin-top: 20px;
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  color: #ffffff;
+  background: #3c3c43;
+  font-weight: 750;
+}
+
+.help-dialog-close:hover {
+  background: #0f57a4;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid #c7d3e0;
+  border-radius: 14px;
+  color: #253750;
+  background: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.back-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+  transform: translateY(-1px);
+}
+
+/* iPhone (375–430px幅) を主対象にした密度調整。
+   ベースルールより後に置かないと同詳細度の上書きに負けるため、必ず末尾に置く */
+@media (width <= 480px) {
+  .page-shell {
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    /* カードのmax-height計算と揃える: 上下中央寄せは行わず上から積む */
+    place-items: start center;
+  }
+
+  .form-card,
+  .hero-card {
+    width: 100%;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .waiting-header {
+    /* iPhone幅のカードpadding(16px)に合わせて打ち消し値を調整 */
+    margin: -16px -16px 0;
+    padding: 16px 16px 12px;
+    border-radius: 22px 22px 0 0;
+  }
+
+  /* カードの高さを550pxに固定。余った高さは参加人数パネル(2行目)が吸収して伸びる */
+  .waiting-card {
+    height: 550px;
+    gap: 10px;
+    grid-template-rows: auto 1fr auto auto;
+    align-content: stretch;
+  }
+
+  .participant-panel {
+    min-height: 0;
+  }
+
+  .waiting-user-name {
+    font-size: 1.15rem;
+  }
+
+  .help-button {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .participant-panel {
+    padding: 20px 16px;
+    gap: 4px;
+    /* 1fr行に置かれ、カード550pxの余り高さを吸収して縦に伸びる */
+    align-self: stretch;
+    align-content: center; /* パネル内のラベル+数字を伸びた領域の中央に配置 */
+  }
+
+  .participant-label {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .participant-count {
+    font-size: 2.5rem;
+    line-height: 1.1;
+  }
+
+  .waiting-note {
+    padding: 8px 12px;
+  }
+
+  .waiting-note-line {
+    line-height: 1.45;
+  }
+
+  .reaction-section {
+    gap: 10px;
+  }
+
+  .reaction-bar {
+    grid-template-columns: repeat(4, 1fr); /* iPhoneでは4列×2行に折返す */
+    gap: 8px;
+  }
+
+  .reaction-button {
+    min-height: 56px; /* 拡大版。タッチターゲット下限44pxを十分に満たす */
+    padding: 8px 4px;
+  }
+
+  .reaction-emoji {
+    font-size: 1.6rem; /* 4列に並べた際の拡大サイズ */
+  }
 }
 
 /* ===== ホーム画面のアクション ===== */
