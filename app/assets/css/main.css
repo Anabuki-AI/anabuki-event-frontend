@@ -432,8 +432,8 @@ h1 {
 
 .help-dialog-panel {
   width: min(100%, 460px);
-  max-height: 80dvh; /* iOS Safariの実効高に合わせる(vh未対応用に下へフォールバック) */
   max-height: 80vh;
+  max-height: 80dvh; /* iOS Safariの実効高に合わせる(vh未対応用に下へフォールバック) */
   overflow-y: auto;
   padding: 26px;
   border: none;
