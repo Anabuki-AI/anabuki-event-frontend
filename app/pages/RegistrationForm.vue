@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import {
   AGE_GROUP_OPTIONS,
   DEPARTMENT_OPTIONS,
@@ -28,6 +29,18 @@ const userNameInputClass = () => ({
   'is-available': userNameStatus.value === 'available',
   'is-invalid': userNameStatus.value === 'invalid' || userNameStatus.value === 'unavailable',
 })
+
+// 利用規約ダイアログの開閉
+const isTermsDialogOpen = ref(false)
+
+function openTermsDialog() {
+  isTermsDialogOpen.value = true
+}
+
+// ダイアログ内の「戻る」: 同意状態はそのままに登録画面へ戻る
+function closeTermsDialog() {
+  isTermsDialogOpen.value = false
+}
 </script>
 
 <template>
@@ -229,25 +242,14 @@ const userNameInputClass = () => ({
     <!-- 利用規約(アンケートの後に配置。入力→アンケート→同意→登録の流れ) -->
     <fieldset class="terms-field">
       <legend>利用規約<span class="required-badge">*</span></legend>
-      <details class="terms-details">
-        <summary class="terms-summary">規約全文を確認する</summary>
-        <div
-          class="terms-scroll"
-          role="region"
-          aria-label="利用規約 本文"
-          tabindex="0"
-        >
-          <p class="terms-text">{{ TERMS_TEXT }}</p>
-        </div>
-      </details>
-      <label class="check-row">
-        <input
-          v-model="form.agreedTerms"
-          type="checkbox"
-          name="agreedTerms"
-        >
-        <span>利用規約に同意します</span>
-      </label>
+      <button
+        type="button"
+        class="terms-open-button"
+        aria-haspopup="dialog"
+        @click="openTermsDialog"
+      >
+        利用規約を確認する
+      </button>
       <p
         v-if="showFieldErrors && fieldErrors.terms"
         class="field-note is-error"
@@ -256,6 +258,42 @@ const userNameInputClass = () => ({
         {{ fieldErrors.terms }}
       </p>
     </fieldset>
+
+    <!-- 利用規約ダイアログ(規約を読みながらその場で同意をチェックできる。「戻る」で同意状態のまま登録画面へ) -->
+    <div
+      v-if="isTermsDialogOpen"
+      class="terms-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="利用規約"
+    >
+      <div class="terms-dialog-panel">
+        <h2 class="terms-dialog-title">利用規約</h2>
+        <div
+          class="terms-scroll"
+          role="region"
+          aria-label="利用規約 本文"
+          tabindex="0"
+        >
+          <p class="terms-text">{{ TERMS_TEXT }}</p>
+        </div>
+        <label class="check-row">
+          <input
+            v-model="form.agreedTerms"
+            type="checkbox"
+            name="agreedTerms"
+          >
+          <span>利用規約に同意します</span>
+        </label>
+        <button
+          type="button"
+          class="terms-dialog-back"
+          @click="closeTermsDialog"
+        >
+          戻る
+        </button>
+      </div>
+    </div>
 
     <button
       type="submit"

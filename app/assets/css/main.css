@@ -49,7 +49,7 @@ button:disabled {
   padding: clamp(28px, 6vw, 56px);
   border: 1px solid rgb(19 34 56 / 8%);
   border-radius: 28px;
-  background: rgb(255 255 255 / 92%);
+  background: #edeffa; /* プロジェクト規定の背景色 */
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
 
@@ -171,6 +171,62 @@ h1 {
 
 /* --- ユーザー登録画面 --- */
 
+/* 画面全体: カードを最外側とし、ヘッダー+コンテンツを縦に積む。
+   上下左右に余白を確保し、画面いっぱいに張らない */
+.quiz-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px clamp(16px, 5vw, 48px) 48px;
+  background: #edeffa; /* プロジェクト規定の背景色 */
+}
+
+/* クイズ大会ヘッダー(eyebrow+タイトルを統合した区間)。
+   メインカラーの下線でヘッダー区間を明示し、「クイズ大会」はeyebrowと同色 */
+.quiz-header {
+  margin: 0 0 6px;
+  padding: 14px 20px 16px;
+  background: #edeffa; /* プロジェクト規定の背景色 */
+  border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
+}
+
+.quiz-header-title {
+  margin: 0 0 10px;
+  color: #1769c2; /* eyebrow(Create account)と統一 */
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.quiz-header .eyebrow {
+  margin: 0 0 10px;
+}
+
+.quiz-header h1 {
+  margin: 0;
+  color: #132238;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+}
+
+.quiz-header .muted-copy {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+}
+
+/* ヘッダー下のコンテンツ(フォーム)。ヘッダーとの距離を詰めるため上部を0に */
+.quiz-page .page-shell {
+  flex: 1;
+  padding: 0;
+  background: none;
+  place-items: start center;
+}
+
+.quiz-page .page-shell .registration-form {
+  margin-top: 0;
+  gap: 22px;
+}
+
 .registration-form {
   gap: 22px;
 }
@@ -221,9 +277,82 @@ h1 {
 .terms-field legend,
 .survey-field legend {
   padding: 0;
-  color: #253750;
-  font-size: 0.9rem;
+  color: #132238;
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* ユーザーネームの見出しも同サイズに */
+.registration-form > label > span {
+  font-size: 1.15rem;
+  color: #132238;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* 利用規約を開くボタン(details summary の代替) */
+.terms-open-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #1769c2;
+  background: #fff;
   font-weight: 700;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.terms-open-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+/* 利用規約ダイアログ */
+.terms-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(19 34 56 / 45%);
+}
+
+.terms-dialog-panel {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 560px);
+  max-height: 85dvh;
+  padding: 20px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgb(34 75 120 / 30%);
+}
+
+.terms-dialog-title {
+  margin: 0;
+  color: #132238;
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.terms-dialog-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.terms-dialog-agree {
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: #1769c2;
+  font-weight: 750;
+}
+
+.terms-dialog-agree:hover {
+  background: #0f57a4;
 }
 
 /* 利用規約の折りたたみ+スクロール領域 */
@@ -258,13 +387,30 @@ h1 {
   white-space: pre-line; /* 規約原文の改行・空行をそのまま再現 */
 }
 
-.check-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* ダイアログ内の同意チェック行(規約を読みながらその場で同意できる) */
+.terms-dialog .check-row {
+  font-size: 0.95rem;
+}
+
+.terms-dialog .check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #1769c2;
+}
+
+/* ダイアログ内の「戻る」(同意状態を変えずに閉じる) */
+.terms-dialog-back {
+  min-height: 48px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
   color: #253750;
-  font-size: 1rem;
-  font-weight: 500;
+  background: #fff;
+  font-weight: 700;
+  transition: background 150ms ease;
+}
+
+.terms-dialog-back:hover {
+  background: #f0f3f8;
 }
 
 .check-row input,

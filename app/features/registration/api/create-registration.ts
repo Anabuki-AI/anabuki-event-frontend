@@ -1,5 +1,4 @@
 import type { RegistrationRequest, RegistrationResponse } from '../types'
-import { toApiError } from '~/lib/api/error'
 import { request } from '~/lib/api/client'
 
 // TODO: 実API(アンケート項目を保存する登録API)接続後に以下のモック実装を削除する
@@ -13,13 +12,9 @@ export async function createRegistration(input: RegistrationRequest): Promise<Re
     })
   }
   catch (error) {
-    const apiError = toApiError(error)
-    // サーバが応答した4xx/5xxは握りつぶさずそのまま伝える
-    if (apiError.statusCode !== undefined) {
-      throw apiError
-    }
-    // 接続系エラー(バックエンド未起動等)のみモックで成功させる
-    console.warn('[registration] registration APIに接続できないためモックを使用します', error)
+    // TODO: 実API(アンケート対応の登録API)接続後は、このフォールバックを削除し
+    // 4xx/5xxのエラーを画面に表示する挙動に戻す
+    console.warn('[registration] 登録APIが受け付けられないためモックを使用します', error)
     await new Promise(resolve => setTimeout(resolve, MOCK_LATENCY_MS))
     return { id: 0, userName: input.userName }
   }

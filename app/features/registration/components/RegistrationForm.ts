@@ -146,8 +146,9 @@ export function setupRegistrationForm() {
 
     try {
       const created = await createRegistration({ ...form })
+      // TODO: 本番実装では待機画面(/users/waiting)へ遷移する。現在は暫定の完了画面
       await navigateTo({
-        path: '/users/waiting',
+        path: '/users/complete',
         query: { userName: created.userName || form.userName },
       })
     }

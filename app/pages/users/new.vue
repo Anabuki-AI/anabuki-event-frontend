@@ -8,21 +8,19 @@ useSeoMeta({
 </script>
 
 <template>
-  <main class="page-shell">
-    <section class="form-card">
-      <NuxtLink class="back-link" to="/">
-        ← ホームへ戻る
-      </NuxtLink>
-      <div>
-        <p class="eyebrow">
-          Create account
-        </p>
-        <h1>ユーザー登録</h1>
-        <p class="muted-copy">
-          ニックネームとアンケートの入力だけで参加登録できます。
-        </p>
-      </div>
+  <section class="form-card quiz-page">
+    <header class="quiz-header">
+      <p class="quiz-header-title">クイズ大会</p>
+      <p class="eyebrow">
+        Create account
+      </p>
+      <h1>ユーザー登録</h1>
+      <p class="muted-copy">
+        ニックネームとアンケートの入力だけで参加登録できます。
+      </p>
+    </header>
+    <main class="page-shell">
       <RegistrationForm />
-    </section>
-  </main>
+    </main>
+  </section>
 </template>
