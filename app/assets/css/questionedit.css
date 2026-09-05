@@ -60,7 +60,7 @@ button:disabled {
 }
 
 .eyebrow {
-  margin: 0 0 10px;
+  margin: 10px 0 10px;
   color: #1769c2;
   font-size: 0.78rem;
   font-weight: 800;
@@ -262,7 +262,8 @@ h1 {
   flex: 1;
   padding: 0;
   background: none;
-  place-items: start center;
+  align-items: start;
+  justify-items: stretch;
 }
 
 .question-header .back-link {
