@@ -1,0 +1,207 @@
+/**
+ * 投票率画面（/event_operator/voting-rate）専用。
+ * ページ単位で voting-rate.vue から読み込む。
+ * 他ページへの漏洩を防ぐため、すべてテンプレートルート（.voting-rate-shell）配下でネームスペースする。
+ * 使用色は #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb の5色のみ。
+ */
+
+.voting-rate-shell {
+  min-height: 100vh;
+  background: #edeffa;
+}
+
+.voting-rate-shell .voting-card {
+  width: min(100%, 860px);
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid #cdcfdb;
+  border-radius: 28px;
+  background: #ffffff;
+  display: grid;
+  gap: 28px;
+}
+
+.voting-rate-shell .voting-card h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.voting-rate-shell .voting-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.voting-rate-shell .voting-refresh {
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  color: #ffffff;
+  background: #1769c2;
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.voting-rate-shell .voting-refresh:hover {
+  transform: translateY(-1px);
+}
+
+.voting-rate-shell .voting-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.voting-rate-shell .summary-item {
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid #cdcfdb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.voting-rate-shell .summary-label {
+  color: #132238;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.voting-rate-shell .summary-value {
+  color: #132238;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.voting-rate-shell .summary-unit {
+  margin-left: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.voting-rate-shell .question-panel {
+  display: grid;
+  gap: 14px;
+  padding: 22px 24px;
+  border: 1px solid #cdcfdb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.voting-rate-shell .question-select-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.voting-rate-shell .question-select {
+  display: grid;
+  gap: 8px;
+  width: fit-content;
+  color: #132238;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.voting-rate-shell .question-select select {
+  min-width: 200px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  color: #132238;
+  background: #ffffff;
+  font: inherit;
+  font-weight: 400;
+  outline: none;
+}
+
+.voting-rate-shell .question-select select:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.voting-rate-shell .question-number {
+  margin: 0;
+  color: #1769c2;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.voting-rate-shell .question-text {
+  margin: 0;
+  color: #132238;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.voting-rate-shell .option-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.voting-rate-shell .option-item {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid #cdcfdb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.voting-rate-shell .option-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.voting-rate-shell .option-label {
+  margin: 0;
+  color: #1769c2;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.voting-rate-shell .option-text {
+  margin: 0;
+  color: #132238;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.voting-rate-shell .option-stats {
+  margin: 0 0 0 auto;
+  color: #132238;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.voting-rate-shell .option-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #cdcfdb;
+  overflow: hidden;
+}
+
+.voting-rate-shell .option-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #1769c2;
+}
+
+.voting-rate-shell .voting-note {
+  margin: 0;
+  color: #132238;
+  font-size: 0.8125rem;
+}
