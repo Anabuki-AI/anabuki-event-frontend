@@ -16,8 +16,10 @@ export default defineNuxtConfig({
   },
   nitro: {
     devProxy: {
+      // h3がマウント済みプレフィックス(/api)をreq.urlから取り除いてから
+      // プロキシへ渡すため、転送先に /api パスを含めて復元する
       '/api': {
-        target: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
+        target: `${process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080'}/api`,
         changeOrigin: true,
       },
     },
