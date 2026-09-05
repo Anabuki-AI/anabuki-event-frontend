@@ -1,6 +1,6 @@
 :root {
   color: #132238;
-  background: #f3f7fb;
+  background: #edeffa;
   font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -45,10 +45,6 @@ button:disabled {
 
 .hero-card,
 .form-card {
-  width: min(100%, 680px);
-  padding: clamp(28px, 6vw, 56px);
-  border: 1px solid rgb(19 34 56 / 8%);
-  border-radius: 28px;
   background: #edeffa; /* プロジェクト規定の背景色 */
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
@@ -178,7 +174,7 @@ h1 {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 24px clamp(16px, 5vw, 48px) 48px;
+  padding: 0 clamp(16px, 5vw, 48px) 16px; /* 上paddingを0にし、ヘッダーをカード最上部に張り付かせる */
   background: #edeffa; /* プロジェクト規定の背景色 */
 }
 
@@ -187,7 +183,7 @@ h1 {
    ネガティブマージンで親(.quiz-page)の左右paddingを打ち消し、下線を画面の端から端まで引く */
 .quiz-header {
   margin: 0 calc(-1 * clamp(16px, 5vw, 48px)) 6px;
-  padding: 14px clamp(16px, 5vw, 48px) 16px;
+  padding: 0 clamp(16px, 5vw, 48px) 16px; /* 上paddingを0にし、「クイズ大会」をカード最上部に張り付かせる */
   background: #edeffa; /* プロジェクト規定の背景色 */
   border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
 }
@@ -217,10 +213,9 @@ h1 {
 
 /* ヘッダー下のコンテンツ(フォーム)。ヘッダーとの距離を詰めるため上部を0に */
 .quiz-page .page-shell {
-  flex: 1;
-  padding: 0;
+  padding: 0; min-height: 0;
   background: none;
-  place-items: start center;
+  place-items: start stretch;
 }
 
 .quiz-page .page-shell .registration-form {
