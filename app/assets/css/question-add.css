@@ -1,0 +1,179 @@
+/**
+ * 問題追加画面（/event_operator/question-add）専用。
+ * ページ単位で question-add.vue から読み込む。
+ * 他ページへの漏洩を防ぐため、すべてテンプレートルート（.question-add-shell）配下でネームスペースする。
+ * 使用色は #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb の5色のみ。
+ */
+
+.question-add-shell {
+  min-height: 100vh;
+  background: #edeffa;
+}
+
+.question-add-shell .question-add-card {
+  width: min(100%, 860px);
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid #cdcfdb;
+  border-radius: 28px;
+  background: #ffffff;
+  display: grid;
+  gap: 28px;
+}
+
+.question-add-shell .question-add-card h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.question-add-shell .question-add-header {
+  display: grid;
+  gap: 8px;
+}
+
+.question-add-shell .question-add-form {
+  display: grid;
+  gap: 24px;
+}
+
+.question-add-shell .question-add-field {
+  display: grid;
+  gap: 8px;
+}
+
+.question-add-shell .question-add-label {
+  color: #132238;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.question-add-shell .question-add-textarea {
+  min-height: 120px;
+  padding: 12px 16px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #132238;
+  font: inherit;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+}
+
+.question-add-shell .question-add-textarea::placeholder {
+  color: #cdcfdb;
+}
+
+.question-add-shell .question-add-textarea:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.question-add-shell .question-add-textarea:disabled {
+  opacity: 0.65;
+}
+
+.question-add-shell .question-add-file-input {
+  padding: 10px 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #132238;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.question-add-shell .question-add-file-input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.question-add-shell .question-add-hint {
+  margin: 0;
+  color: #132238;
+  font-size: 0.75rem;
+}
+
+.question-add-shell .question-add-preview {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #cdcfdb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.question-add-shell .question-add-preview-image {
+  max-width: 100%;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.question-add-shell .question-add-file-name {
+  margin: 0;
+  color: #132238;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.question-add-shell .question-add-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.question-add-shell .question-add-save {
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  color: #ffffff;
+  background: #1769c2;
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.question-add-shell .question-add-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.question-add-shell .question-add-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.question-add-shell .question-add-cancel {
+  min-height: 44px;
+  padding: 0 24px;
+  border: 1px solid #cdcfdb;
+  border-radius: 14px;
+  color: #132238;
+  background: #ffffff;
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.question-add-shell .question-add-cancel:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.question-add-shell .question-add-clear {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: #ffffff;
+  color: #1769c2;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: underline;
+  transition: transform 150ms ease;
+}
+
+.question-add-shell .question-add-status {
+  margin: 0;
+  color: #1769c2;
+  font-size: 1rem;
+  font-weight: 700;
+}
