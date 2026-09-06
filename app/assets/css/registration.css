@@ -383,8 +383,13 @@ h1 {
   white-space: pre-line; /* 規約原文の改行・空行をそのまま再現 */
 }
 
-/* ダイアログ内の同意チェック行(規約を読みながらその場で同意できる) */
+/* ダイアログ内の同意チェック行(規約を読みながらその場で同意できる)。
+   labelは.user-form labelのgrid指定を継承して縦積みになるためflex横並びで上書き */
 .terms-dialog .check-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   font-size: 0.95rem;
 }
 

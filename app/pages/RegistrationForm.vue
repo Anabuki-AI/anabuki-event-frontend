@@ -49,6 +49,9 @@ function closeTermsDialog() {
     novalidate
     @submit.prevent="handleSubmit"
   >
+    <!-- ページタイトル(new.vueのヘッダーから移動) -->
+    <h1>ユーザー登録</h1>
+
     <!-- ユーザーネーム -->
     <label>
       <span>ユーザーネーム<span class="required-badge">*</span></span>
@@ -278,11 +281,7 @@ function closeTermsDialog() {
           <p class="terms-text">{{ TERMS_TEXT }}</p>
         </div>
         <label class="check-row">
-          <input
-            v-model="form.agreedTerms"
-            type="checkbox"
-            name="agreedTerms"
-          >
+          <input v-model="form.agreedTerms" type="checkbox" name="agreedTerms">
           <span>利用規約に同意します</span>
         </label>
         <button
@@ -290,7 +289,7 @@ function closeTermsDialog() {
           class="terms-dialog-back"
           @click="closeTermsDialog"
         >
-          戻る
+          閉じる
         </button>
       </div>
     </div>
