@@ -45,10 +45,6 @@ button:disabled {
 
 .hero-card,
 .form-card {
-  width: min(100%, 680px);
-  padding: clamp(28px, 6vw, 56px);
-  border: 1px solid rgb(19 34 56 / 8%);
-  border-radius: 28px;
   background: rgb(255 255 255 / 92%);
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
@@ -68,27 +64,28 @@ button:disabled {
   text-transform: uppercase;
 }
 
-h1 {
-  margin: 0;
-  font-size: clamp(2rem, 7vw, 4rem);
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-}
-
-.form-card h1 {
-  font-size: clamp(2rem, 6vw, 3.25rem);
-}
+/* h1のフォントは下の .form-card.quiz-page h1 で定義(28px固定) */
 
 .hero-copy,
 .muted-copy {
   max-width: 52ch;
-  margin: 20px 0 30px;
+  margin: 0; /* 余白は.quiz-pageのgapで一括管理するためリセット */
   color: #516176;
   line-height: 1.8;
 }
 
+/* ヘッダー直下に置くタイトル・説明文 */
 .muted-copy {
-  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+/* PC帯域: フォームの左右paddingに合わせて説明文も内側に揃え、横のずれによる
+   「余白が大きく見える」感覚を解消。縦マージンは維持 */
+@media (width >= 768px) {
+  .quiz-page h1,
+  .quiz-page .muted-copy {
+    padding: 0 clamp(8px, 2vw, 24px);
+  }
 }
 
 .primary-link,
@@ -238,32 +235,49 @@ h1 {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  gap: 8px; /* ヘッダー/タイトル/説明文/フォームの間隔はここで一括管理 */
   padding: 24px clamp(16px, 5vw, 48px) 48px;
   background: #edeffa; /* プロジェクト規定の背景色 */
 }
 
 /* eyebrow+タイトルのヘッダー区間。メインカラーの下線でヘッダー区間を明示。
-   ネガティブマージンで親(.quiz-page)の左右paddingを打ち消し、下線を画面の端から端まで引く */
+   余白は.quiz-pageのgapで管理するためマージンはリセット */
 .question-header {
-  margin: 0 calc(-1 * clamp(16px, 5vw, 48px)) 24px; /* 親padding(左右)分を外に広げる */
-  padding: 14px clamp(16px, 5vw, 48px) 20px; /* 中身(テキスト)の位置はpaddingで確保 */
+  /* ネガティブマージンで親(.quiz-page)の左右paddingを打ち消し、下線を画面の左右端まで伸ばす */
+  margin: 0 calc(-1 * clamp(16px, 5vw, 48px));
+  padding: 14px clamp(16px, 5vw, 48px) 16px;
   background: #edeffa; /* プロジェクト規定の背景色 */
   border-bottom: 3px solid #1769c2; /* メインカラーの下線(ヘッダー=画面全幅) */
 }
 
-.question-header h1 {
-  margin: 0;
-  color: #132238;
-  font-size: clamp(1.75rem, 3vw, 2.5rem); /* PC基準: 3vwはPCでは増えすぎないよう上限で打ち止め */
+/* 「クイズ大会」タイトル(user-registrationと同様、メインカラー表記) */
+.question-header .quiz-header-title {
+  margin: 0 0 10px;
+  color: #1769c2; /* eyebrow(Edit question)と統一 */
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
 }
 
-/* ヘッダー下のコンテンツ(フォーム) */
+/* ヘッダー下線の下に置くページタイトル。
+   .form-card h1(同詳細度・競合)に確実に勝たせるため quiz-page も併記 */
+.form-card.quiz-page h1 {
+  margin: 0;
+  line-height: 1.1; /* フォントの内蔵余白を縮め、下線との距離を近づける */
+  color: #132238;
+  font-size: 1.75rem; /* 28px固定。PCでも伸びないため余白が画面間で揃う */
+}
+
+/* ヘッダー下のコンテンツ(フォーム)。
+   画面全体の文字サイズを拡大(20px基準) */
 .quiz-page .page-shell {
   flex: 1;
+  min-height: 0;
   padding: 0;
   background: none;
   align-items: start;
   justify-items: stretch;
+  font-size: 1.25rem; /* 20px */
 }
 
 .question-header .back-link {
@@ -314,7 +328,7 @@ h1 {
   gap: 8px;
   min-height: 44px; /* タッチターゲット確保 */
   color: #253750;
-  font-size: 1rem;
+  font-size: 1.25rem; /* page-shell(20px)基準に揃える */
   font-weight: 500;
 }
 
@@ -380,7 +394,7 @@ h1 {
   .question-edit-form {
     gap: 24px;
     max-width: 100%; /* カード(quiz-page)の幅いっぱいまで広げる */
-    padding: 0 clamp(8px, 4vw, 48px);
+    padding: 0 clamp(8px, 2vw, 24px);
   }
 
   /* 選択肢A〜Dを2×2に */

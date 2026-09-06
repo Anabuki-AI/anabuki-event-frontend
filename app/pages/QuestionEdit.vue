@@ -33,6 +33,7 @@ const { handleBack } = setupQuestionBack(() => {
 <template>
   <section class="form-card quiz-page">
     <header class="question-header">
+      <p class="quiz-header-title">クイズ大会</p>
       <NuxtLink
         class="back-link"
         :to="CANEL_FALLBACK_ROUTE"
@@ -43,13 +44,13 @@ const { handleBack } = setupQuestionBack(() => {
       <p class="eyebrow">
         Edit question
       </p>
+    </header>
+
+    <main class="page-shell">
       <h1>問題編集</h1>
       <p class="muted-copy">
         問題の内容を修正して保存してください。バックエンド未実装のため、内容は保存されません。
       </p>
-    </header>
-
-    <main class="page-shell">
       <form
         class="user-form question-edit-form"
         novalidate
