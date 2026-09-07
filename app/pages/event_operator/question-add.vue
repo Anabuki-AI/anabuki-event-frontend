@@ -12,11 +12,18 @@ const {
   questionText,
   previewUrl,
   fileName,
+  choiceA,
+  choiceB,
+  choiceC,
+  choiceD,
+  correctChoice,
   isSaving,
   savedMessage,
   canSave,
   hasImage,
   handleQuestionInput,
+  handleChoiceInput,
+  handleCorrectChoiceSelect,
   handleImageSelect,
   clearImage,
   save,
@@ -44,7 +51,7 @@ function handleCancel() {
         </p>
         <h1>問題追加画面</h1>
         <p class="muted-copy">
-          クイズ大会で出題する問題文と添付画像を入力して登録します。
+          クイズ大会で出題する問題文・添付画像・4つの選択肢と正解を入力して登録します。
         </p>
       </header>
 
@@ -97,6 +104,52 @@ function handleCancel() {
             </button>
           </div>
         </div>
+
+        <fieldset class="question-add-field question-add-choices">
+          <legend class="question-add-label">選択肢（正解にチェックを付けてください）</legend>
+
+          <div
+            v-for="choice in [
+              { label: 'A', text: choiceA },
+              { label: 'B', text: choiceB },
+              { label: 'C', text: choiceC },
+              { label: 'D', text: choiceD },
+            ] as const"
+            :key="choice.label"
+            class="question-add-choice-row"
+          >
+            <span class="question-add-choice-mark" aria-hidden="true">{{ choice.label }}</span>
+            <input
+              class="question-add-choice-input"
+              type="text"
+              maxlength="100"
+              :placeholder="`選択肢${choice.label}を入力`"
+              :value="choice.text"
+              :disabled="isSaving"
+              :aria-label="`選択肢${choice.label}`"
+              @input="handleChoiceInput(choice.label, ($event.target as HTMLInputElement).value)"
+            >
+            <label class="question-add-correct">
+              <input
+                class="question-add-correct-radio"
+                type="radio"
+                name="question-add-correct"
+                :value="choice.label"
+                :checked="correctChoice === choice.label"
+                :disabled="isSaving"
+                :aria-label="`選択肢${choice.label}を正解にする`"
+                @change="handleCorrectChoiceSelect(choice.label)"
+              >
+              <span
+                class="question-add-correct-text"
+                :class="{ 'is-selected': correctChoice === choice.label }"
+              >正解</span>
+            </label>
+          </div>
+          <p class="question-add-hint">
+            正解はA〜Dのいずれか1つを選択してください。
+          </p>
+        </fieldset>
 
         <div class="question-add-actions">
           <button

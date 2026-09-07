@@ -3,10 +3,18 @@ import { computed, onUnmounted, ref } from 'vue'
 // 保存完了メッセージ表示までの擬似処理待ち時間（API未接続のためのダミー遅延）
 const SAVE_DELAY_MS = 600
 
+/** 正解選択の候補（選択肢ラベル）。1問4択で固定。 */
+export type CorrectChoice = 'A' | 'B' | 'C' | 'D'
+
 export function useQuestionAdd() {
   const questionText = ref('')
   const selectedFile = ref<File | null>(null)
   const previewUrl = ref<string | null>(null)
+  const choiceA = ref('')
+  const choiceB = ref('')
+  const choiceC = ref('')
+  const choiceD = ref('')
+  const correctChoice = ref<CorrectChoice | null>(null)
   const isSaving = ref(false)
   const savedMessage = ref<string | null>(null)
 
@@ -14,7 +22,16 @@ export function useQuestionAdd() {
 
   const fileName = computed<string | null>(() => selectedFile.value?.name ?? null)
   const hasImage = computed<boolean>(() => selectedFile.value !== null)
-  const canSave = computed<boolean>(() => !isSaving.value && questionText.value.trim().length > 0)
+  const canSave = computed<boolean>(
+    () =>
+      !isSaving.value
+      && questionText.value.trim().length > 0
+      && choiceA.value.trim().length > 0
+      && choiceB.value.trim().length > 0
+      && choiceC.value.trim().length > 0
+      && choiceD.value.trim().length > 0
+      && correctChoice.value !== null,
+  )
 
   function revokePreview() {
     if (previewUrl.value !== null) {
@@ -32,6 +49,17 @@ export function useQuestionAdd() {
 
   function handleQuestionInput(value: string) {
     questionText.value = value
+  }
+
+  function handleChoiceInput(choice: 'A' | 'B' | 'C' | 'D', value: string) {
+    if (choice === 'A') choiceA.value = value
+    else if (choice === 'B') choiceB.value = value
+    else if (choice === 'C') choiceC.value = value
+    else choiceD.value = value
+  }
+
+  function handleCorrectChoiceSelect(choice: CorrectChoice) {
+    correctChoice.value = choice
   }
 
   function handleImageSelect(file: File | null) {
@@ -66,6 +94,11 @@ export function useQuestionAdd() {
     clearSaveTimer()
     questionText.value = ''
     clearImage()
+    choiceA.value = ''
+    choiceB.value = ''
+    choiceC.value = ''
+    choiceD.value = ''
+    correctChoice.value = null
     savedMessage.value = null
     isSaving.value = false
   }
@@ -79,11 +112,18 @@ export function useQuestionAdd() {
     questionText,
     previewUrl,
     fileName,
+    choiceA,
+    choiceB,
+    choiceC,
+    choiceD,
+    correctChoice,
     isSaving,
     savedMessage,
     canSave,
     hasImage,
     handleQuestionInput,
+    handleChoiceInput,
+    handleCorrectChoiceSelect,
     handleImageSelect,
     clearImage,
     save,

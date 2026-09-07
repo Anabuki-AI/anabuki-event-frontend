@@ -116,6 +116,100 @@
   overflow-wrap: anywhere;
 }
 
+/* --- 選択肢（4択固定）と正解選択 --- */
+
+.question-add-shell .question-add-choices {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+
+/* fieldsetのlegendはグリッドアイテムになれないため、親をgridにして位置を揃える */
+.question-add-shell .question-add-choices legend {
+  display: block;
+  padding: 0;
+}
+
+.question-add-shell .question-add-choice-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.question-add-shell .question-add-choice-mark {
+  color: #132238;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.question-add-shell .question-add-choice-input {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #132238;
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.question-add-shell .question-add-choice-input::placeholder {
+  color: #cdcfdb;
+}
+
+.question-add-shell .question-add-choice-input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.question-add-shell .question-add-choice-input:disabled {
+  opacity: 0.65;
+}
+
+.question-add-shell .question-add-correct {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.question-add-shell .question-add-correct-radio {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #1769c2;
+  cursor: pointer;
+}
+
+.question-add-shell .question-add-correct-radio:disabled {
+  cursor: not-allowed;
+}
+
+.question-add-shell .question-add-correct-text {
+  color: #132238;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* 正解として選択中の行はチェック項目を目立たせる（文字色とボーダーのみ・控えめな強調） */
+.question-add-shell .question-add-correct-text.is-selected {
+  color: #1769c2;
+  font-weight: 700;
+}
+
+.question-add-shell .question-add-choice-row:has(.question-add-correct-radio:checked) {
+  border-color: #1769c2;
+}
+
 .question-add-shell .question-add-actions {
   display: flex;
   align-items: center;
