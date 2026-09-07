@@ -585,3 +585,366 @@ h1 {
     font-size: 1.6rem; /* 4列に並べた際の拡大サイズ */
   }
 }
+/* ===== クイズ出題管理画面（Admin・PC向け） ===== */
+
+/* main.css共通のカードは .form-card/.hero-card のみのため、Adminカード基をここで定義 */
+.admin-card {
+  width: min(100%, 680px);
+  padding: clamp(28px, 6vw, 56px);
+  border: 1px solid rgb(19 34 56 / 8%);
+  border-radius: 28px;
+  background: #edeffa;
+  box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
+}
+
+.admin-card h1 {
+  font-size: 2rem; /* AdminはPC前提。ユーザー向けページほど大きくしない */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.quiz-control-card {
+  width: min(100%, 980px);
+}
+
+.quiz-control-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* 仮画面である旨の注記（注記は12-14px規定） */
+.quiz-control-card .mock-notice {
+  margin: 14px 0 0;
+  color: #516176;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.quiz-phase-badge {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1px solid rgb(23 105 194 / 32%);
+  border-radius: 999px;
+  color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+  font-size: 13px; /* 補足は12-14px規定 */
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.quiz-phase-badge[data-phase='PUBLISHING'] {
+  color: #14643b;
+  border-color: rgb(20 100 59 / 32%);
+  background: #e9f8ef;
+}
+
+.quiz-phase-badge[data-phase='ENDED'] {
+  color: #516176;
+  border-color: #c7d3e0;
+  background: #eef2f8;
+}
+
+.quiz-control-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* 左側: 時間表示パネル */
+.quiz-clock-panel {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #ffffff; /* 問題背景は指定色 */
+}
+
+.quiz-clock-label {
+  margin: 0;
+  color: #516176;
+  font-size: 13px; /* 補足は12-14px規定 */
+  font-weight: 700;
+}
+
+.quiz-clock-time {
+  margin: 0;
+  color: #132238;
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.quiz-clock-divider {
+  height: 1px;
+  margin: 10px 0;
+  background: rgb(19 34 56 / 10%);
+}
+
+.quiz-clock-elapsed {
+  margin: 0;
+  color: #1769c2;
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.quiz-clock-log {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed rgb(19 34 56 / 14%);
+}
+
+.quiz-clock-log-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quiz-clock-log-row dt {
+  color: #516176;
+  font-size: 12px; /* 補足は12-14px規定 */
+}
+
+.quiz-clock-log-row dd {
+  margin: 0;
+  color: #132238;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 右側: 進行管理 */
+.quiz-control-main {
+  display: grid;
+  gap: 16px;
+}
+
+.quiz-phase-panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.quiz-phase-steps {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-phase-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-phase-step:not(:last-child)::after {
+  margin-right: 8px;
+  padding-right: 8px;
+  color: #516176;
+  content: '→';
+  font-size: 13px;
+}
+
+.quiz-phase-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #c7d3e0;
+  border-radius: 999px;
+  color: #516176;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.quiz-phase-step.is-current .quiz-phase-marker {
+  border-color: #1769c2;
+  color: #fff;
+  background: #1769c2; /* メインカラー */
+}
+
+.quiz-phase-step.is-done .quiz-phase-marker {
+  border-color: #14643b;
+  color: #fff;
+  background: #14643b;
+}
+
+.quiz-phase-label {
+  color: #516176;
+  font-size: 13px; /* 補足は12-14px規定 */
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quiz-phase-step.is-current .quiz-phase-label {
+  color: #132238;
+}
+
+.quiz-phase-step.is-done .quiz-phase-label {
+  color: #14643b;
+}
+
+.quiz-phase-action {
+  display: grid;
+  gap: 10px;
+}
+
+.quiz-phase-hint {
+  margin: 0;
+  color: #516176;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.quiz-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: #1769c2;
+  font-size: 16px; /* 本文は16px規定 */
+  font-weight: 750;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.quiz-action-button:hover:not(:disabled) {
+  background: #0f57a4;
+  transform: translateY(-1px);
+}
+
+.quiz-phase-done {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #14643b;
+  background: #e9f8ef;
+  font-size: 14px;
+}
+
+/* 公開中の問題カード */
+.quiz-question-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.quiz-question-card.is-empty {
+  color: #516176;
+  background: #eef2f8;
+}
+
+.quiz-question-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.quiz-question-id {
+  color: #1769c2;
+  font-weight: 800;
+}
+
+.quiz-question-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+  font-size: 12px; /* 補足は12-14px規定 */
+  font-weight: 750;
+}
+
+.quiz-question-text {
+  margin: 0;
+  color: #132238;
+  font-size: 16px; /* 本文は16px規定 */
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.quiz-question-choices {
+  display: grid;
+  grid-template-columns: 1fr; /* PC画面では1列で読みやすく */
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #253750;
+  font-size: 14px;
+}
+
+.quiz-question-choices li {
+  display: flex;
+  gap: 8px;
+  line-height: 1.6;
+}
+
+.quiz-question-choices li.is-correct {
+  color: #14643b;
+  font-weight: 750;
+}
+
+.quiz-choice-key {
+  color: #516176;
+  font-weight: 750;
+}
+
+.quiz-answer-banner {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #14643b;
+  background: #e9f8ef;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.quiz-answer-banner strong {
+  font-size: 1.1em;
+}
+
+.quiz-answer-masked {
+  margin: 0;
+  color: #516176;
+  font-size: 13px;
+}
+
+.quiz-control-note {
+  margin: 0;
+  color: #516176;
+  font-size: 13px; /* 補足は12-14px規定 */
+}
+
+.quiz-refresh-button {
+  padding: 3px 10px;
+  border: 1px solid #c7d3e0;
+  border-radius: 8px;
+  color: #1769c2;
+  background: #fff;
+  font-size: 13px;
+}
+
+.quiz-refresh-button:hover:not(:disabled) {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
