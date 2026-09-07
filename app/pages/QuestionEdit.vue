@@ -34,16 +34,16 @@ const { handleBack } = setupQuestionBack(() => {
   <section class="form-card quiz-page">
     <header class="question-header">
       <p class="quiz-header-title">クイズ大会</p>
-      <NuxtLink
-        class="back-link"
-        :to="CANEL_FALLBACK_ROUTE"
-        @click.prevent="handleBack"
-      >
-        ← 例）問題一覧へ戻る
-      </NuxtLink>
       <p class="eyebrow">
         Edit question
       </p>
+       <NuxtLink
+            class="back-link"
+            :to="CANEL_FALLBACK_ROUTE"
+            @click.prevent="handleBack"
+          >
+            ← 例）問題一覧へ戻る
+        </NuxtLink>
     </header>
 
     <main class="page-shell">
