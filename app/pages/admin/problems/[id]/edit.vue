@@ -33,21 +33,23 @@ onMounted(async () => {
 
 <template>
   <main class="page-shell">
-    <section class="admin-card form-card quiz-page">
+    <section class="admin-card form-card">
       <NuxtLink
         class="back-link"
         to="/admin/problems"
       >
         ← 問題一覧へ戻る
       </NuxtLink>
-      <header class="question-header">
-        <p class="eyebrow">
-          Edit question
-        </p>
-        <h1>問題編集</h1>
-        <p class="muted-copy">
-          問題の内容を修正して保存してください。
-        </p>
+      <header class="problems-header">
+        <div>
+          <p class="eyebrow">
+            Edit question
+          </p>
+          <h1>問題編集</h1>
+          <p class="muted-copy">
+            問題の内容を修正して保存してください。
+          </p>
+        </div>
       </header>
 
       <p

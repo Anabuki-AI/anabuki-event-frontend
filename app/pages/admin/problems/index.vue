@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { fetchQuestions } from '~/features/problems/api/client'
 import type { Question } from '~/features/problems/types'
+import { MOCK_QUESTIONS } from '~/features/problems/mock'
 import QuestionRow from '~/features/problems/components/QuestionRow.vue'
 import { toApiError } from '~/lib/api/error'
 
@@ -9,6 +10,8 @@ useSeoMeta({
   title: '問題管理画面',
   description: '登録されている問題の一覧を確認し、編集・追加・自信度倍率変更へ移動できます。',
 })
+
+const USE_MOCK = true
 
 const questions = ref<Question[]>([])
 const isLoading = ref(true)
@@ -18,7 +21,7 @@ async function loadQuestions() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    questions.value = await fetchQuestions()
+    questions.value = USE_MOCK ? MOCK_QUESTIONS : await fetchQuestions()
   }
   catch (error) {
     errorMessage.value = toApiError(error).message
@@ -34,13 +37,6 @@ onMounted(loadQuestions)
 <template>
   <main class="page-shell">
     <section class="admin-card problems-card">
-      <NuxtLink
-        class="back-link"
-        to="/admin"
-      >
-        ← 運営者メニューへ戻る
-      </NuxtLink>
-
       <header class="problems-header">
         <div>
           <p class="eyebrow">
@@ -58,6 +54,10 @@ onMounted(loadQuestions)
           ＋ 問題を追加
         </NuxtLink>
       </header>
+
+      <p class="mock-notice">
+        現在は仮のデータを表示しています。実API連携は後ほど有効になります。
+      </p>
 
       <p
         v-if="isLoading"

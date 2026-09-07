@@ -33,21 +33,23 @@ onMounted(async () => {
 
 <template>
   <main class="page-shell">
-    <section class="admin-card form-card quiz-page">
+    <section class="admin-card form-card">
       <NuxtLink
         class="back-link"
         to="/admin/problems"
       >
         ← 問題一覧へ戻る
       </NuxtLink>
-      <header class="question-header">
-        <p class="eyebrow">
-          Confidence multiplier
-        </p>
-        <h1>自信度倍率変更</h1>
-        <p class="muted-copy">
-          問題ごとの自信度倍率を変更します。倍率は正解時の配点に反映されます。
-        </p>
+      <header class="problems-header">
+        <div>
+          <p class="eyebrow">
+            Confidence multiplier
+          </p>
+          <h1>自信度倍率変更</h1>
+          <p class="muted-copy">
+            問題ごとの自信度倍率を変更します。倍率は正解時の配点に反映されます。
+          </p>
+        </div>
       </header>
 
       <p
