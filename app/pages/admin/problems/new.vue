@@ -27,7 +27,7 @@ useSeoMeta({
           </p>
         </div>
       </header>
-      <QuestionForm @saved="() => {}" />
+      <QuestionForm />
     </section>
   </main>
 </template>

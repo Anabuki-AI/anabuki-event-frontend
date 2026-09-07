@@ -1,10 +1,13 @@
+import { ApiError } from '~/lib/api/error'
+import type { QuestionPayload } from './api/client'
+import { formatMultiplier } from './constants'
 import type { Question } from './types'
 
 /**
  * バックエンドの問題API未結合時に使う仮データ。
- * 実API連携の有効化は pages/admin/problems/index.vue の USE_MOCK を false にする。
+ * 実API連携への切替は api/client.ts の USE_MOCK を false にする。
  */
-export const MOCK_QUESTIONS: Question[] = [
+const mockQuestions: Question[] = [
   {
     id: 1,
     questionText: '穴吹カレッジのAIテクノロジー学科がある県はどこでしょう？',
@@ -41,3 +44,46 @@ export const MOCK_QUESTIONS: Question[] = [
     confidenceMultiplier: '1.20',
   },
 ]
+
+function findMockQuestion(id: number): Question {
+  const found = mockQuestions.find(question => question.id === id)
+  if (found == null) {
+    throw new ApiError(`問題Q${id}が見つかりません`, 404)
+  }
+  return found
+}
+
+export async function fetchMockQuestions(): Promise<Question[]> {
+  return [...mockQuestions]
+}
+
+export async function fetchMockQuestion(id: number): Promise<Question> {
+  return { ...findMockQuestion(id) }
+}
+
+export async function createMockQuestion(payload: QuestionPayload): Promise<Question> {
+  const nextId = Math.max(0, ...mockQuestions.map(question => question.id)) + 1
+  const created: Question = {
+    id: nextId,
+    questionText: payload.questionText,
+    choices: { ...payload.choices },
+    correctAnswer: payload.correctAnswer,
+    confidenceMultiplier: '1.00',
+  }
+  mockQuestions.push(created)
+  return { ...created }
+}
+
+export async function updateMockQuestion(id: number, payload: QuestionPayload): Promise<Question> {
+  const found = findMockQuestion(id)
+  found.questionText = payload.questionText
+  found.choices = { ...payload.choices }
+  found.correctAnswer = payload.correctAnswer
+  return { ...found }
+}
+
+export async function updateMockConfidenceMultiplier(id: number, confidenceMultiplier: string): Promise<Question> {
+  const found = findMockQuestion(id)
+  found.confidenceMultiplier = formatMultiplier(confidenceMultiplier)
+  return { ...found }
+}
