@@ -137,20 +137,20 @@ const { handleBack } = setupQuestionBack(() => {
         <!-- 保存 / キャンセル -->
         <div class="form-actions">
           <button
-            type="submit"
-            class="submit-button"
-            :class="{ 'is-submitting': isSubmitting }"
-            :disabled="!isSubmitEnabled"
-          >
-            {{ isSubmitting ? '保存中…' : '保存する' }}
-          </button>
-          <button
             type="button"
             class="button-cancel"
             :disabled="isSubmitting"
             @click="handleCancel"
           >
             キャンセル
+          </button>
+          <button
+            type="submit"
+            class="submit-button"
+            :class="{ 'is-submitting': isSubmitting }"
+            :disabled="!isSubmitEnabled"
+          >
+            {{ isSubmitting ? '保存中…' : '保存する' }}
           </button>
         </div>
 
