@@ -24,3 +24,7 @@ export function closeAnswers(): Promise<QuizState> {
 export function revealAnswer(): Promise<QuizState> {
   return act('/admin/quiz/reveal')
 }
+
+export function endQuiz(): Promise<QuizState> {
+  return act('/admin/quiz/end')
+}

@@ -17,12 +17,12 @@ const {
   isActing,
   errorMessage,
   noticeMessage,
-  phaseLabel,
   refresh,
   start,
   publish,
   close,
   reveal,
+  end,
 } = useQuizControl()
 </script>
 
@@ -38,21 +38,11 @@ const {
 
       <header class="quiz-control-header">
         <div>
-          <p class="eyebrow">
-            Admin
-          </p>
           <h1>クイズ出題管理画面</h1>
           <p class="muted-copy">
             イベント開始から問題公開・解答締め切り・答え表示までをこの画面から進行します。
           </p>
         </div>
-        <span
-          v-if="state"
-          class="quiz-phase-badge"
-          :data-phase="state.phase"
-        >
-          {{ phaseLabel }}
-        </span>
       </header>
 
       <p
@@ -61,6 +51,14 @@ const {
         role="status"
       >
         読み込み中…
+      </p>
+
+      <p
+        v-else-if="errorMessage && !state"
+        class="status-message error"
+        role="alert"
+      >
+        {{ errorMessage }}
       </p>
 
       <template v-else-if="state">
@@ -95,6 +93,7 @@ const {
               @publish="publish"
               @close="close"
               @reveal="reveal"
+              @end="end"
             />
             <QuizCurrentQuestionCard
               :key="state.currentQuestion?.id ?? 'none'"
