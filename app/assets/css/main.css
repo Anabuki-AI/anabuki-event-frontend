@@ -197,13 +197,16 @@ h1 {
 }
 
 /* スマホファースト: 基準幅は375px級。PC/タブレットは非対応端末 */
-.ranking-shell {
-  width: min(100%, 480px);
+/* ランキング専用ラッパ: ページ背景 #edeffa の上に全幅で表示する(.page-shell は他ページと共有のため使わない) */
+.ranking-page {
+  min-height: 100vh;
   padding: 20px 16px;
-  border: 1px solid rgb(19 34 56 / 8%);
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
+  background: #edeffa;
+}
+
+.ranking-shell {
+  width: 100%;
+  max-width: none;
 }
 
 .ranking-header {
@@ -264,7 +267,7 @@ h1 {
   padding: 12px 14px;
   border: 1px solid rgb(19 34 56 / 10%);
   border-radius: 14px;
-  background: linear-gradient(170deg, #fffdf3 0%, #fdf6dd 100%);
+  background: #ffffff;
   text-align: left;
 }
 
@@ -283,7 +286,7 @@ h1 {
 }
 
 .ranking-card-rank {
-  color: #8a6410;
+  color: #1769c2;
 }
 
 .ranking-card-name {
@@ -296,7 +299,7 @@ h1 {
 
 .ranking-card-points {
   margin: 0;
-  color: #8a6410;
+  color: #1769c2;
   font-size: 1rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
