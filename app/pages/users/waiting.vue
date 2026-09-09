@@ -1,33 +1,60 @@
 <script setup lang="ts">
-import { ref, useSeoMeta } from '#imports'
-import { reactionOptions } from '~/features/waiting/components/ReactionButton'
-import {
-  setupUserName,
-  setupWaitingRoom,
-} from '~/features/waiting/components/WaitingRoom'
-import { setupHelpDialog } from '~/features/waiting/components/HelpDialog'
+import { ref, watch } from 'vue'
+import { useRoute } from '#imports'
+import type { ReactionOption } from '~/features/waiting/types'
 
-useSeoMeta({
-  title: '待機画面',
-  description: 'Anabuki Eventのイベント待機画面です。',
-})
+const reactionOptions: ReactionOption[] = [
+  { emoji: '👏', label: '拍手' },
+  { emoji: '🎉', label: 'わーい' },
+  { emoji: '🙌', label: 'いつでも' },
+  { emoji: '😂', label: '笑' },
+  { emoji: '😢', label: 'かなしい' },
+  { emoji: '😲', label: 'おどろき' },
+  { emoji: '👍', label: 'いいね' },
+  { emoji: '❤️', label: 'ありがとう' },
+]
 
-const userName = setupUserName()
+const route = useRoute()
+
+// ユーザー登録画面からクエリで受け取る(状態管理は後の工程で整理)
+const userName = ref((() => {
+  const name = route.query.userName
+  return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
+})())
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)
 
-// 各TSモジュールのロジックを接続(旧3コンポーネントのscript)
-const {
-  isCountUpdated,
-  lastReactedEmoji,
-  handleReact,
-  isHelpOpen,
-  openHelp,
-  closeHelp,
-} = setupWaitingRoom(participantCount)
+// 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
+const isCountUpdated = ref(false)
+let countTimer: ReturnType<typeof setTimeout> | undefined
 
-const { panelRef, titleId } = setupHelpDialog(closeHelp)
+watch(participantCount, (next, prev) => {
+  if (next <= prev) {
+    return
+  }
+  isCountUpdated.value = false
+  // クラス付け外しを1フレーム分空けて再トリガーできるようにする
+  requestAnimationFrame(() => {
+    isCountUpdated.value = true
+    clearTimeout(countTimer)
+    countTimer = setTimeout(() => {
+      isCountUpdated.value = false
+    }, 500)
+  })
+})
+
+// 押された絵文字だけをバウンドさせる
+const lastReactedEmoji = ref('')
+let reactionTimer: ReturnType<typeof setTimeout> | undefined
+
+function handleReact(emoji: string) {
+  lastReactedEmoji.value = emoji
+  clearTimeout(reactionTimer)
+  reactionTimer = setTimeout(() => {
+    lastReactedEmoji.value = ''
+  }, 500)
+}
 </script>
 
 <template>
@@ -51,14 +78,12 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             </NuxtLink>
           </div>
         </div>
-        <button
-          type="button"
+        <NuxtLink
           class="help-button"
-          aria-haspopup="dialog"
-          @click="openHelp"
+          to="/users/help"
         >
           ヘルプ
-        </button>
+        </NuxtLink>
       </div>
 
       <div class="participant-panel">
@@ -91,39 +116,6 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             @click="handleReact(option.emoji)"
           >
             <span class="reaction-emoji" aria-hidden="true">{{ option.emoji }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="isHelpOpen"
-        class="help-dialog"
-        @click.self="closeHelp"
-      >
-        <div
-          ref="panelRef"
-          class="help-dialog-panel"
-          role="dialog"
-          aria-modal="true"
-          :aria-labelledby="titleId"
-          tabindex="-1"
-        >
-          <h2 :id="titleId">
-            ヘルプ
-          </h2>
-          <ul>
-            <li>この画面はイベントの待機画面です。</li>
-            <li>参加人数は自動で更新されます。</li>
-            <li>リアクションボタンで気持ちを伝えられます。</li>
-            <li>クイズが開始されると、画面は自動的に切り替わります。</li>
-            <li>ニックネームを変更したいときは名前の横の✏️ボタンを押してください。</li>
-          </ul>
-          <button
-            type="button"
-            class="help-dialog-close"
-            @click="closeHelp"
-          >
-            閉じる
           </button>
         </div>
       </div>
