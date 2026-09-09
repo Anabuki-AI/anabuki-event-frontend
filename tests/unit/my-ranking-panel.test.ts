@@ -3,17 +3,25 @@ import { describe, expect, it } from 'vitest'
 import MyRankingPanel from '../../app/features/rankings/components/MyRankingPanel.vue'
 
 describe('MyRankingPanel', () => {
-  it('renders the entry with rank, name, and locale-formatted points', () => {
+  it('renders the entry in the miro spec format: rank + あなたは + points', () => {
+    const wrapper = mount(MyRankingPanel, {
+      props: {
+        entry: { rank: 256, userName: 'alice', points: 0 },
+      },
+    })
+
+    expect(wrapper.find('.my-ranking-line').text()).toBe('256位 あなたは 0ポイント')
+    expect(wrapper.attributes('aria-busy')).toBe('false')
+  })
+
+  it('formats large points with locale separators', () => {
     const wrapper = mount(MyRankingPanel, {
       props: {
         entry: { rank: 42, userName: 'alice', points: 12345 },
       },
     })
 
-    expect(wrapper.text()).toContain('42位')
-    expect(wrapper.text()).toContain('alice')
-    expect(wrapper.text()).toContain('12,345 pt')
-    expect(wrapper.attributes('aria-busy')).toBe('false')
+    expect(wrapper.text()).toContain('42位 あなたは 12,345ポイント')
   })
 
   it('shows the loading message instead of an empty panel while fetching', () => {

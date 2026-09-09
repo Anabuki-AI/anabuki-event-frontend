@@ -15,7 +15,7 @@ defineProps<{
     >
       <span class="ranking-list-rank">{{ entry.rank }}位</span>
       <span class="ranking-list-name">{{ entry.userName }}</span>
-      <span class="ranking-list-points">{{ entry.points.toLocaleString('ja-JP') }} pt</span>
+      <span class="ranking-list-points">{{ entry.points.toLocaleString('ja-JP') }}ポイント</span>
     </li>
   </ol>
 </template>

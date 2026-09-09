@@ -23,7 +23,7 @@ defineProps<{
         {{ entry.userName }}
       </p>
       <p class="ranking-card-points">
-        {{ entry.points.toLocaleString('ja-JP') }} <span class="ranking-card-unit">pt</span>
+        {{ entry.points.toLocaleString('ja-JP') }}<span class="ranking-card-unit">ポイント</span>
       </p>
     </li>
   </ul>

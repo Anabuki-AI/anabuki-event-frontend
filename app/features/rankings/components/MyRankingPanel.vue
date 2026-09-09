@@ -20,33 +20,19 @@ withDefaults(
     aria-label="自分の順位"
     :aria-busy="loading"
   >
-    <template v-if="loading">
-      <p class="my-ranking-label">
-        あなたの順位
-      </p>
-      <p class="muted-copy">
-        順位を確認しています…
-      </p>
-    </template>
+    <p
+      v-if="loading"
+      class="muted-copy"
+    >
+      順位を確認しています…
+    </p>
 
-    <template v-else-if="entry">
-      <p class="my-ranking-label">
-        あなたの順位
-      </p>
-      <div class="my-ranking-body">
-        <p class="my-ranking-rank">
-          {{ entry.rank }}<span class="my-ranking-rank-unit">位</span>
-        </p>
-        <div class="my-ranking-detail">
-          <p class="my-ranking-name">
-            {{ entry.userName }}
-          </p>
-          <p class="my-ranking-points">
-            {{ entry.points.toLocaleString('ja-JP') }} pt
-          </p>
-        </div>
-      </div>
-    </template>
+    <p
+      v-else-if="entry"
+      class="my-ranking-line"
+    >
+      {{ entry.rank }}位 あなたは {{ entry.points.toLocaleString('ja-JP') }}ポイント
+    </p>
 
     <p
       v-else-if="errorMessage"

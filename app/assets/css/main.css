@@ -196,46 +196,48 @@ h1 {
   transform: translateY(-1px);
 }
 
+/* スマホファースト: 基準幅は375px級。PC/タブレットは非対応端末 */
 .ranking-shell {
-  width: min(100%, 720px);
-  padding: clamp(24px, 5vw, 44px);
+  width: min(100%, 480px);
+  padding: 20px 16px;
   border: 1px solid rgb(19 34 56 / 8%);
-  border-radius: 28px;
-  background: rgb(255 255 255 / 92%);
+  border-radius: 20px;
+  background: #ffffff;
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
 
 .ranking-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .ranking-header h1 {
-  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  font-size: 1.5rem;
 }
 
 .ranking-update {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .ranking-updated-at {
   margin: 0;
   color: #516176;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .ranking-refresh {
   min-height: 42px;
-  padding: 0 18px;
+  padding: 0 14px;
   border: 1px solid rgb(23 105 194 / 32%);
   border-radius: 12px;
   color: #1769c2;
+  font-size: 1rem;
   font-weight: 700;
   background: #fff;
 }
@@ -244,11 +246,11 @@ h1 {
   background: rgb(23 105 194 / 8%);
 }
 
-/* 上位3名のカード */
+/* 上位3名のカード: スマホでは縦1列 */
 .ranking-top-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -256,14 +258,14 @@ h1 {
 
 .ranking-card {
   display: grid;
-  gap: 6px;
-  justify-items: center;
-  padding: 22px 14px;
-  border: 1px solid rgb(176 137 32 / 22%);
-  border-radius: 20px;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 14px;
   background: linear-gradient(170deg, #fffdf3 0%, #fdf6dd 100%);
-  box-shadow: 0 10px 30px rgb(176 137 32 / 16%);
-  text-align: center;
+  text-align: left;
 }
 
 .ranking-card-medal {
@@ -271,12 +273,12 @@ h1 {
   align-items: baseline;
   gap: 6px;
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
 .ranking-card-medal [aria-hidden] {
-  font-size: 1.7rem;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -287,7 +289,7 @@ h1 {
 .ranking-card-name {
   margin: 0;
   color: #132238;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 750;
   overflow-wrap: anywhere;
 }
@@ -295,29 +297,32 @@ h1 {
 .ranking-card-points {
   margin: 0;
   color: #8a6410;
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .ranking-card-unit {
-  font-size: 0.85rem;
+  margin-left: 1px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
 /* 4位〜10位の一覧 */
 .ranking-list {
-  margin: 20px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .ranking-list-item {
   display: grid;
-  grid-template-columns: 72px 1fr auto;
+  grid-template-columns: 56px 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 12px 4px;
   border-bottom: 1px solid rgb(19 34 56 / 8%);
 }
 
@@ -344,7 +349,7 @@ h1 {
 
 /* 区切り線 */
 .ranking-divider {
-  margin: 28px 0;
+  margin: 20px 0;
   border: 0;
   border-top: 1px dashed rgb(19 34 56 / 22%);
 }
@@ -352,70 +357,24 @@ h1 {
 /* 自分の順位エリア */
 .my-ranking {
   display: grid;
-  gap: 12px;
-  padding: 18px;
-  border-radius: 18px;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
   background: rgb(23 105 194 / 6%);
 }
 
 .my-ranking-label {
   margin: 0;
   color: #1769c2;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.my-ranking-body {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-}
-
-.my-ranking-rank {
+.my-ranking-line {
   margin: 0;
   color: #132238;
-  font-size: 2.2rem;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-
-.my-ranking-rank-unit {
-  margin-left: 2px;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.my-ranking-detail {
-  display: grid;
-  gap: 4px;
-}
-
-.my-ranking-name {
-  margin: 0;
-  color: #132238;
-  font-size: 1.05rem;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.my-ranking-points {
-  margin: 0;
-  color: #516176;
-  font-weight: 650;
+  font-size: 1.125rem;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
-}
-
-/* モバイル: 上位カードは縦積み */
-@media (width < 560px) {
-  .ranking-top-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .ranking-list-item {
-    grid-template-columns: 56px 1fr auto;
-  }
 }

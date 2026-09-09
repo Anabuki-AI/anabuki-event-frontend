@@ -16,9 +16,9 @@ describe('RankingList', () => {
     const items = wrapper.findAll('li.ranking-list-item')
     expect(items).toHaveLength(3)
     expect(items[0].text()).toContain('4位')
-    expect(items[0].text()).toContain('200 pt')
+    expect(items[0].text()).toContain('200ポイント')
     expect(items[2].text()).toContain('6位')
-    expect(items[2].text()).toContain('120 pt')
+    expect(items[2].text()).toContain('120ポイント')
   })
 })
 
