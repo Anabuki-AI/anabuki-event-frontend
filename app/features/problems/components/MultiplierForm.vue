@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { updateConfidenceMultiplier } from '../api/client'
 import {
   CONFIDENCE_MULTIPLIER_MAX,
@@ -17,6 +18,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   saved: [question: Question]
 }>()
+
+const router = useRouter()
 
 const multiplierInput = ref(props.question.confidenceMultiplier)
 const errorMessage = ref('')
@@ -53,6 +56,11 @@ async function handleSubmit() {
   finally {
     isSubmitting.value = false
   }
+}
+
+/** キャンセルは履歴に依存せず一覧へ戻す（miro仕様: 問題一覧 ← 自信度倍率変更） */
+function handleCancel() {
+  void router.push('/admin/problems')
 }
 </script>
 
@@ -109,7 +117,7 @@ async function handleSubmit() {
         type="button"
         class="button-cancel"
         :disabled="isSubmitting"
-        @click="$router.back()"
+        @click="handleCancel"
       >
         キャンセル
       </button>

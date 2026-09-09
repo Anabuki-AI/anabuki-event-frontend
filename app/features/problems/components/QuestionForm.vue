@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { createQuestion, updateQuestion } from '../api/client'
 import type { QuestionPayload } from '../api/client'
 import { validateQuestionForm, hasFieldErrors, hasQuestionChanged } from '../validation'
@@ -16,6 +17,8 @@ const emit = defineEmits<{
 }>()
 
 const isEdit = computed(() => props.question != null)
+
+const router = useRouter()
 
 const initialForm: QuestionFormState = props.question
   ? {
@@ -49,6 +52,11 @@ function applyUpdate(next: QuestionFormState) {
   form.questionText = next.questionText
   form.choices = next.choices
   form.correctAnswer = next.correctAnswer
+}
+
+/** キャンセルは履歴に依存せず一覧へ戻す（miro仕様: 問題一覧 ← 編集/追加） */
+function handleCancel() {
+  void router.push('/admin/problems')
 }
 
 async function handleSubmit() {
@@ -99,6 +107,27 @@ async function handleSubmit() {
       @update="applyUpdate"
     />
 
+    <!-- miro仕様: 問題追加画面の要素は「フォーム / 画像アップロード / 保存 / キャンセル」。
+         画像アップロード用のテーブル・エンドポイントがbackendに未整備のため、
+         仮のUI(無効化)のみ置く。実API結合時に有効化する -->
+    <fieldset
+      v-if="!isEdit"
+      class="image-upload-field"
+    >
+      <legend class="edit-heading">
+        画像
+      </legend>
+      <label>
+        <span class="visually-hidden">問題の画像ファイル</span>
+        <input
+          type="file"
+          accept="image/*"
+          disabled
+        >
+        <span class="field-note">画像アップロードは準備中です。実API連携は後日対応予定です。</span>
+      </label>
+    </fieldset>
+
     <div class="form-actions">
       <button
         type="submit"
@@ -112,7 +141,7 @@ async function handleSubmit() {
         type="button"
         class="button-cancel"
         :disabled="isSubmitting"
-        @click="$router.back()"
+        @click="handleCancel"
       >
         キャンセル
       </button>

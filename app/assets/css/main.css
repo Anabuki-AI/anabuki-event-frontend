@@ -661,6 +661,27 @@ h1 {
 
 /* 問題フォーム（追加・編集共通） */
 
+/* 画像アップロードの仮UI（miro仕様: 追加画面の要素）。backend未整備のため無効化 */
+.image-upload-field {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed rgb(19 34 56 / 24%);
+  border-radius: 16px;
+}
+
+.image-upload-field input[type="file"] {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #c7d3e0;
+  border-radius: 10px;
+  color: #516176;
+  background: #fff;
+  font: inherit;
+}
+
 .question-edit-form textarea {
   width: 100%;
   padding: 12px 14px;
@@ -694,7 +715,7 @@ h1 {
   gap: 10px;
   align-items: center;
   color: #253750;
-  font-size: 0.9rem;
+  font-size: 14px; /* 補足・注釈は12-14px規定 */
   font-weight: 700;
 }
 
@@ -735,7 +756,7 @@ h1 {
   border: 1px solid #c7d3e0;
   border-radius: 10px;
   color: #253750;
-  font-size: 0.9rem;
+  font-size: 14px; /* 補足・注釈は12-14px規定 */
   cursor: pointer;
 }
 
@@ -769,7 +790,7 @@ h1 {
 .field-note {
   margin: 4px 0 0;
   color: #516176;
-  font-size: 0.82rem;
+  font-size: 13px; /* 補足・注釈は12-14px規定 */
   line-height: 1.5;
 }
 
@@ -842,7 +863,7 @@ h1 {
   padding: 16px;
   border: 1px solid rgb(19 34 56 / 10%);
   border-radius: 16px;
-  background: #f7f9fd;
+  background: #ffffff; /* 問題文を表示するパネルなので問題背景色に合わせる */
 }
 
 .multiplier-summary-row {
@@ -854,7 +875,7 @@ h1 {
 
 .multiplier-summary-row dt {
   color: #516176;
-  font-size: 0.85rem;
+  font-size: 13px; /* 補足・注釈は12-14px規定 */
   font-weight: 700;
 }
 
@@ -868,7 +889,7 @@ h1 {
   display: grid;
   gap: 8px;
   color: #253750;
-  font-size: 0.9rem;
+  font-size: 14px; /* 補足・注釈は12-14px規定 */
   font-weight: 700;
 }
 
