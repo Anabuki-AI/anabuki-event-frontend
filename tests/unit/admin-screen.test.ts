@@ -41,12 +41,12 @@ describe('運営者メイン画面', () => {
     expect(wrapper.text()).not.toContain('行えます。。')
   })
 
-  it('投票率ページへのリンクが /admin/voting-rate へ遷移する', () => {
+  it('投票率ページへのリンクが /event_operator/voting-rate へ遷移する', () => {
     const wrapper = mountAdminScreen()
 
     const link = wrapper.findAll('a').find((a) => a.text().includes('投票率ページ'))
     expect(link).toBeDefined()
-    expect(link!.attributes('href')).toBe('/admin/voting-rate')
+    expect(link!.attributes('href')).toBe('/event_operator/voting-rate')
   })
 
   it('投票率ページの説明文を表示する', () => {

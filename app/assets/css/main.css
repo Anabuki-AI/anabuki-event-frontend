@@ -155,6 +155,12 @@ h1 {
 
 /* ===== 運営者メイン画面 ===== */
 
+/* デザイン規約の背景色(#edeffa)は運営者ページにのみ上書きする
+   (page-shell自体は他ページと共用のため触らない) */
+.page-shell.admin-shell {
+  background: #edeffa;
+}
+
 .admin-card {
   display: grid;
   gap: 28px;
@@ -220,7 +226,7 @@ h1 {
 
 .admin-menu-description {
   color: #516176;
-  font-size: 0.88rem;
+  font-size: 0.875rem; /* 補助文言は12〜14pxの規約内(=14px) */
   line-height: 1.6;
 }
 
@@ -702,4 +708,4 @@ h1 {
   .admin-menu-arrow {
     display: none;
   }
-}
+

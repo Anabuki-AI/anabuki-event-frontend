@@ -6,7 +6,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <main class="page-shell">
+  <main class="page-shell admin-shell">
     <section class="admin-card">
       <div>
         <p class="eyebrow">
@@ -19,7 +19,7 @@ useSeoMeta({
       </div>
 
       <nav class="admin-menu" aria-label="管理機能メニュー">
-        <NuxtLink class="admin-menu-item" to="/admin/voting-rate">
+        <NuxtLink class="admin-menu-item" to="/event_operator/voting-rate">
           <span class="admin-menu-icon" aria-hidden="true">📊</span>
           <span class="admin-menu-body">
             <span class="admin-menu-label">投票率ページ</span>
