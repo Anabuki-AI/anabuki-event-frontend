@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { QuizPhase, QuizState } from '../types'
+import type { QuizState } from '../types'
 
 const props = defineProps<{
   state: QuizState
@@ -12,6 +12,7 @@ const emit = defineEmits<{
   publish: []
   close: []
   reveal: []
+  end: []
 }>()
 
 /** 進行ステップの定義。答え表示後に次の問題公開へ戻る */
@@ -20,6 +21,7 @@ const STEPS = [
   { key: 'publish', label: '問題公開' },
   { key: 'close', label: '解答締め切り' },
   { key: 'reveal', label: '答え表示' },
+  { key: 'end', label: 'イベント終了' },
 ] as const
 
 interface StepView {
@@ -30,18 +32,35 @@ interface StepView {
 
 const steps = computed<StepView[]>(() => {
   const phase = props.state.phase
-  const currentIndex: Record<QuizPhase, number> = {
-    IDLE: 0,
-    PUBLISHING: 1,
-    CLOSED: 2,
-    REVEALED: 3,
-    ENDED: 4,
-  }
-  const idx = currentIndex[phase]
+
+  // IDLEは「イベント開始前」と「開始済み・問題公開前」の両方で使われるため、
+  // startedAtも確認して現在の進行位置を決める
+  const currentIndex =
+    phase === 'IDLE'
+      ? props.state.startedAt === null
+        ? 0
+        : 1
+      : phase === 'PUBLISHING'
+        ? 2
+        : phase === 'CLOSED'
+          ? 3
+          : phase === 'REVEALED'
+            ? props.state.nextQuestion !== null
+              ? 1
+              : 4
+            : 4
+
   return STEPS.map((step, i) => ({
     key: step.key,
     label: step.label,
-    state: i < idx ? 'done' : i === idx ? 'current' : 'todo',
+    state:
+      phase === 'ENDED'
+        ? 'done'
+        : i < currentIndex
+          ? 'done'
+          : i === currentIndex
+            ? 'current'
+            : 'todo',
   }))
 })
 
@@ -57,8 +76,8 @@ const action = computed(() => {
       return { key: 'reveal', label: '答え表示', hint: '正解と解説を参加者に表示します。' }
     case 'REVEALED':
       return props.state.nextQuestion !== null
-        ? { key: 'publish', label: '次の問題を公開', hint: `次は Q${props.state.nextQuestion.id} です。` }
-        : null
+        ? { key: 'publish', label: '次の問題を公開する', hint: `次は Q${props.state.nextQuestion.id} です。` }
+        : { key: 'end', label: 'イベントを終了する', hint: 'すべての問題の出題が完了しました。イベントを終了します。' }
     case 'ENDED':
       return null
     default:
@@ -82,6 +101,9 @@ function handleAction() {
       break
     case 'reveal':
       emit('reveal')
+      break
+    case 'end':
+      emit('end')
       break
   }
 }

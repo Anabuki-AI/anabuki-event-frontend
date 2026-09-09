@@ -2,6 +2,7 @@ import type { QuizState } from './types'
 import { PHASE_LABELS } from './types'
 import {
   closeAnswers,
+  endQuiz,
   fetchQuizState,
   publishQuestion,
   revealAnswer,
@@ -50,6 +51,7 @@ export function useQuizControl() {
   const publish = () => act(publishQuestion, '問題を公開しました。参加者は解答できます。')
   const close = () => act(closeAnswers, '解答の受付を締め切りました。')
   const reveal = () => act(revealAnswer, '答えを表示しました。')
+  const end = () => act(endQuiz, 'イベントを終了しました。')
 
   // 5秒ごとに状態を同期（他管理者の操作を反映）
   let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -78,5 +80,6 @@ export function useQuizControl() {
     publish,
     close,
     reveal,
+    end,
   }
 }
