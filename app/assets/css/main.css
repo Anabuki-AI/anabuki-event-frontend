@@ -199,7 +199,8 @@ h1 {
   transform: translateY(-1px);
 }
 
-/* スマホファースト: 基準幅は375px級。PC/タブレットは非対応端末 */
+/* スマホ専用: 基準幅は375px級、対応端末はスマホのみ(CLAUDE_FRONT.md)。
+   PC等の広い画面でもスマホ幅のまま収まるよう、コンテンツに上限幅を置く */
 /* ランキング専用ラッパ: ページ背景 #edeffa の上に全幅で表示する(.page-shell は他ページと共有のため使わない) */
 .ranking-page {
   min-height: 100vh;
@@ -224,9 +225,16 @@ h1 {
   letter-spacing: 0.06em;
 }
 
+/* スマホ専用のコンテンツ幅。背景は画面いっぱい、中身は最大480pxで中央に寄せる */
+.ranking-page .quiz-header,
+.ranking-shell {
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .ranking-shell {
   width: 100%;
-  max-width: none;
   padding: 12px 16px 20px; /* ヘッダー下のコンテンツ。画面全体を1枚の背景で使う */
 }
 
@@ -236,7 +244,7 @@ h1 {
   gap: 12px;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .ranking-header h1 {
@@ -374,7 +382,7 @@ h1 {
 
 /* 区切り線 */
 .ranking-divider {
-  margin: 20px 0;
+  margin: 16px 0; /* スマホ専用幅で画面を有効に使う。従来20px */
   border: 0;
   border-top: 1px dashed rgb(19 34 56 / 22%);
 }
