@@ -28,6 +28,11 @@ const {
 
 <template>
   <main class="ranking-page">
+    <header class="quiz-header">
+      <p class="quiz-header-title">
+        クイズ大会
+      </p>
+    </header>
     <section class="ranking-shell">
       <header class="ranking-header">
         <div>

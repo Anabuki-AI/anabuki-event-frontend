@@ -203,13 +203,31 @@ h1 {
 /* ランキング専用ラッパ: ページ背景 #edeffa の上に全幅で表示する(.page-shell は他ページと共有のため使わない) */
 .ranking-page {
   min-height: 100vh;
-  padding: 20px 16px;
+  padding: 0; /* フルスクリーン化: 外枠なしで画面全体を使う。上はクイズ大会ヘッダーが張り付く */
   background: #edeffa;
+}
+
+/* クイズ大会ヘッダー。feature/user-registration の quiz-header パターンに合わせ
+   メインカラーの下線でヘッダー区間を明示し、下線を画面の端から端まで引く */
+.ranking-page .quiz-header {
+  margin: 0 0 6px;
+  padding: 8px 16px 12px;
+  background: #edeffa;
+  border-bottom: 3px solid #1769c2;
+}
+
+.quiz-header-title {
+  margin: 0;
+  color: #1769c2; /* eyebrowと統一(user-registration実装に倣う) */
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
 }
 
 .ranking-shell {
   width: 100%;
   max-width: none;
+  padding: 12px 16px 20px; /* ヘッダー下のコンテンツ。画面全体を1枚の背景で使う */
 }
 
 .ranking-header {
@@ -268,7 +286,8 @@ h1 {
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  border: 1px solid rgb(19 34 56 / 10%);
+  /* フルスクリーン化: カード外枠を廃止し、背景#edeffaの上に白パネルを直接置く */
+  border: 0;
   border-radius: 14px;
   background: #ffffff;
   text-align: left;
