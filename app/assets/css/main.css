@@ -948,3 +948,48 @@ h1 {
   border-color: #1769c2;
   background: rgb(23 105 194 / 6%);
 }
+
+/* ===== タブレット横置き対応(1024px級) =====
+   運営者・管理者ページはタブレット横置きが標準操作端末(CLAUDE_FRONT.md)。
+   横置きの幅を活かし、時間パネル・進行パネル・公開中問題を横並びに広げる。
+   操作ボタンは指で押しやすく大きめを維持する */
+@media (width >= 900px) {
+  .quiz-control-card {
+    width: min(100%, 1120px);
+    padding: 32px 36px;
+  }
+
+  .quiz-control-grid {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .quiz-clock-panel {
+    padding: 24px;
+  }
+
+  .quiz-phase-panel {
+    padding: 24px;
+  }
+
+  .quiz-action-button {
+    /* 横置きタブレットは指操作。誤タップを避け44px以上を大きく確保 */
+    min-height: 56px;
+    padding: 0 34px;
+    font-size: 17px;
+  }
+
+  .quiz-question-card {
+    padding: 22px 24px;
+  }
+
+  .quiz-question-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+  }
+
+  .quiz-refresh-button {
+    min-height: 36px;
+    padding: 0 14px;
+  }
+}
