@@ -524,6 +524,60 @@ h1 {
   line-height: 1.6;
 }
 
+/* ===== タブレット横置き対応(1024px級) =====
+   運営者・管理者ページはタブレット横置きが標準操作端末(CLAUDE_FRONT.md)。
+   幅を活かしてヘッダーを横並びにし、一覧の操作リンクを指で押しやすい大きさに広げる */
+@media (width >= 900px) {
+  .problems-card {
+    width: min(100%, 1080px);
+  }
+
+  .problems-header {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+  }
+
+  .add-question-link {
+    justify-self: end;
+  }
+
+  .question-list {
+    gap: 16px;
+  }
+
+  .question-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'head head'
+      'choices actions';
+    align-items: center;
+    column-gap: 24px;
+    /* 横置きタブレットは指操作のため44px以上のタッチターゲットを確保 */
+    padding: 22px 24px;
+  }
+
+  .question-row-head {
+    grid-area: head;
+  }
+
+  .question-choices {
+    grid-area: choices;
+  }
+
+  .question-row-foot {
+    grid-area: actions;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .row-action-link {
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
 .question-count {
   margin: 0;
   color: #516176;
