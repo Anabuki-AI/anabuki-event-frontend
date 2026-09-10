@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import AdminScreen from '../../app/pages/admin/index.vue'
+import AdminScreen from '../../app/pages/event_operator/index.vue'
 
 vi.stubGlobal('useSeoMeta', vi.fn())
 

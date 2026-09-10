@@ -19,7 +19,7 @@ useSeoMeta({
         <NuxtLink class="primary-link" to="/users/new">
           ユーザー登録を試す
         </NuxtLink>
-        <NuxtLink class="home-secondary-link" to="/admin">
+        <NuxtLink class="home-secondary-link" to="/event_operator">
           運営者メイン画面へ
         </NuxtLink>
       </div>
