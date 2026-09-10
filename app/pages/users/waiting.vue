@@ -58,10 +58,10 @@ function handleReact(emoji: string) {
 </script>
 
 <template>
-  <main class="page-shell">
-    <section class="form-card waiting-card">
+  <section class="form-card waiting-card quiz-page">
       <div class="waiting-header">
         <div class="waiting-user">
+          <p class="quiz-header-title">クイズ大会</p>
           <p class="eyebrow-main">
             Waiting room
           </p>
@@ -120,5 +120,4 @@ function handleReact(emoji: string) {
         </div>
       </div>
     </section>
-  </main>
 </template>
