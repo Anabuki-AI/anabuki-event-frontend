@@ -226,7 +226,7 @@ h1 {
 .waiting-user-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .waiting-user-row .waiting-user-name {
@@ -234,9 +234,10 @@ h1 {
 }
 
 .name-edit-button {
+  margin-top: 6px;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -244,7 +245,7 @@ h1 {
   border: 1px solid #c7d3e0;
   border-radius: 9999px;
   background: #fff;
-  font-size: 1rem;
+  font-size: 0.75rem;
   line-height: 1;
   text-decoration: none;
   transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
