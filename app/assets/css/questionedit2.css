@@ -1,0 +1,281 @@
+/**
+ * 問題追加画面（/event_operator/question-add）専用。
+ * ページ単位で question-add.vue から読み込む。
+ * 他ページへの漏洩を防ぐため、すべてテンプレートルート（.question-add-shell）配下でネームスペースする。
+ * 使用色は #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb の5色のみ。
+ */
+
+.question-add-shell {
+  min-height: 100vh;
+  background: #edeffa;
+}
+
+.question-add-shell .question-add-card {
+  min-height: 100vh; /* 画面全体に表示 */
+  padding: clamp(20px, 4vw, 48px);
+  background: #ffffff;
+  display: grid;
+  gap: 28px;
+  align-content: start;
+}
+
+.question-add-shell .question-add-card h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.question-add-shell .question-add-header {
+  display: grid;
+  gap: 8px;
+}
+
+/* 「クイズ大会」タイトル(Event operatorと同色) */
+.question-add-shell .quiz-header-title {
+  margin: 0;
+  color: #1769c2; /* eyebrow(Event operator)と統一 */
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.question-add-shell .question-add-form {
+  display: grid;
+  gap: 24px;
+}
+
+.question-add-shell .question-add-field {
+  display: grid;
+  gap: 8px;
+}
+
+.question-add-shell .question-add-label {
+  color: #132238;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.question-add-shell .question-add-textarea {
+  min-height: 120px;
+  padding: 12px 16px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #132238;
+  font: inherit;
+  line-height: 1.7;
+  resize: vertical;
+  outline: none;
+}
+
+.question-add-shell .question-add-textarea::placeholder {
+  color: #cdcfdb;
+}
+
+.question-add-shell .question-add-textarea:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.question-add-shell .question-add-textarea:disabled {
+  opacity: 0.65;
+}
+
+.question-add-shell .question-add-file-input {
+  padding: 10px 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #132238;
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.question-add-shell .question-add-file-input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.question-add-shell .question-add-hint {
+  margin: 0;
+  color: #132238;
+  font-size: 0.75rem;
+}
+
+.question-add-shell .question-add-preview {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #cdcfdb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.question-add-shell .question-add-preview-image {
+  max-width: 100%;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.question-add-shell .question-add-file-name {
+  margin: 0;
+  color: #132238;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* --- 選択肢（4択固定）と正解選択 --- */
+
+.question-add-shell .question-add-choices {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+
+/* fieldsetのlegendはグリッドアイテムになれないため、親をgridにして位置を揃える */
+.question-add-shell .question-add-choices legend {
+  display: block;
+  padding: 0;
+}
+
+.question-add-shell .question-add-choice-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.question-add-shell .question-add-choice-mark {
+  color: #132238;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.question-add-shell .question-add-choice-input {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid #cdcfdb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #132238;
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.question-add-shell .question-add-choice-input::placeholder {
+  color: #cdcfdb;
+}
+
+.question-add-shell .question-add-choice-input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px #cdcfdb;
+}
+
+.question-add-shell .question-add-choice-input:disabled {
+  opacity: 0.65;
+}
+
+.question-add-shell .question-add-correct {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.question-add-shell .question-add-correct-radio {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #1769c2;
+  cursor: pointer;
+}
+
+.question-add-shell .question-add-correct-radio:disabled {
+  cursor: not-allowed;
+}
+
+.question-add-shell .question-add-correct-text {
+  color: #132238;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* 正解として選択中の行はチェック項目を目立たせる（文字色とボーダーのみ・控えめな強調） */
+.question-add-shell .question-add-correct-text.is-selected {
+  color: #1769c2;
+  font-weight: 700;
+}
+
+.question-add-shell .question-add-choice-row:has(.question-add-correct-radio:checked) {
+  border-color: #1769c2;
+}
+
+.question-add-shell .question-add-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.question-add-shell .question-add-save {
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  color: #ffffff;
+  background: #1769c2;
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.question-add-shell .question-add-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.question-add-shell .question-add-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.question-add-shell .question-add-cancel {
+  min-height: 44px;
+  padding: 0 24px;
+  border: 1px solid #cdcfdb;
+  border-radius: 14px;
+  color: #132238;
+  background: #ffffff;
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.question-add-shell .question-add-cancel:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.question-add-shell .question-add-clear {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: #ffffff;
+  color: #1769c2;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: underline;
+  transition: transform 150ms ease;
+}
+
+.question-add-shell .question-add-status {
+  margin: 0;
+  color: #1769c2;
+  font-size: 1rem;
+  font-weight: 700;
+}

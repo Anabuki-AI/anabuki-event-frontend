@@ -37,13 +37,21 @@ const { handleBack } = setupQuestionBack(() => {
       <p class="eyebrow">
         Edit question
       </p>
-       <NuxtLink
-            class="back-link"
-            :to="CANEL_FALLBACK_ROUTE"
-            @click.prevent="handleBack"
-          >
-            ← 例）問題一覧へ戻る
-        </NuxtLink>
+      <NuxtLink
+        class="back-link"
+        :to="CANEL_FALLBACK_ROUTE"
+        @click.prevent="handleBack"
+      >
+        ← 例）問題一覧へ戻る
+      </NuxtLink>
+      <NuxtLink
+        class="question-add-button"
+        to="/event_operator/questione"
+        target="_blank"
+        rel="noopener"
+      >
+        編集する
+      </NuxtLink>
     </header>
 
     <main class="page-shell">

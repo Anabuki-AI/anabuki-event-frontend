@@ -1,5 +1,4 @@
 :root {
-  color: #132238;
   background: #f3f7fb;
   font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
   font-synthesis: none;
@@ -13,10 +12,6 @@
 body {
   min-width: 320px;
   margin: 0;
-}
-
-a {
-  color: inherit;
 }
 
 button,
@@ -34,25 +29,7 @@ button:disabled {
 }
 
 .page-shell {
-  min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 32px 20px;
-  background:
-    radial-gradient(circle at top left, rgb(80 155 255 / 18%), transparent 34%),
-    linear-gradient(145deg, #f7fbff 0%, #edf4fb 100%);
-}
-
-.hero-card,
-.form-card {
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
-}
-
-.form-card {
-  display: grid;
-  gap: 28px;
-  background: #edeffa;
 }
 
 .eyebrow {
@@ -74,18 +51,10 @@ button:disabled {
   line-height: 1.8;
 }
 
-/* ヘッダー直下に置くタイトル・説明文 */
+/* ヘッダー直下に置く説明文。フォームの左右paddingに合わせて内側に揃える */
 .muted-copy {
   font-size: 0.95rem;
-}
-
-/* PC帯域: フォームの左右paddingに合わせて説明文も内側に揃え、横のずれによる
-   「余白が大きく見える」感覚を解消。縦マージンは維持 */
-@media (width >= 768px) {
-  .quiz-page h1,
-  .quiz-page .muted-copy {
-    padding: 0 clamp(8px, 2vw, 24px);
-  }
+  padding: 0 clamp(8px, 2vw, 24px);
 }
 
 .primary-link,
@@ -123,7 +92,6 @@ button:disabled {
 
 .user-form {
   display: grid;
-  gap: 18px;
 }
 
 .user-form label {
@@ -220,7 +188,6 @@ button:disabled {
 /* 「問題文」「選択肢」「正解」の見出し */
 .edit-heading {
   margin: 0;
-  color: #132238;
   font-size: 1.5rem; /* 24px。入力文字(20px)より大きく階層を明示 */
   font-weight: 750;
   letter-spacing: -0.01em;
@@ -231,7 +198,6 @@ button:disabled {
 .quiz-page {
   width: 100%; /* 画面全体に表示(隙間なし) */
   margin: 0;
-  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -248,6 +214,30 @@ button:disabled {
   padding: 14px clamp(16px, 5vw, 48px) 16px;
   background: #edeffa; /* プロジェクト規定の背景色 */
   border-bottom: 3px solid #1769c2; /* メインカラーの下線(ヘッダー=画面全幅) */
+}
+
+/* 「編集する」ボタン: ヘッダー内の右上に固定配置(別タブで問題追加画面を開く) */
+.question-header .question-add-button {
+  position: absolute;
+  top: 14px;   /* 上に少し余白 */
+  right: clamp(16px, 5vw, 48px); /* 右に少し余白(画面の余白と揃える) */
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid #3c3c43;
+  border-radius: 9999px;
+  color: #3c3c43;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.question-header .question-add-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
 }
 
 /* 「クイズ大会」タイトル(user-registrationと同様、メインカラー表記) */
@@ -282,11 +272,6 @@ button:disabled {
 
 .question-header .back-link {
   margin-bottom: 12px;
-}
-
-.question-header .muted-copy {
-  margin: 10px 0 0;
-  font-size: 0.95rem;
 }
 
 .edit-section {
@@ -388,11 +373,16 @@ button:disabled {
   transform: translateY(-1px);
 }
 
-/* PC・iPad Air(820×1180)基準の調整。カード自体がページの土台(.quiz-page)のため
-   追加の幅指定は不要。フォーム間隔と2カラム化のみ行う */
+/* PC・iPad Air横画面(1180×820)基準の調整。カード自体がページの土台(.quiz-page)のため
+   幅は画面いっぱい。フォーム間隔と2カラム化を行う */
 @media (width >= 768px) {
+  .quiz-page {
+    gap: 12px; /* 横画面では縦の余白を詰める */
+    padding: 16px clamp(24px, 4vw, 64px) 32px;
+  }
+
   .question-edit-form {
-    gap: 24px;
+    gap: 20px;
     max-width: 100%; /* カード(quiz-page)の幅いっぱいまで広げる */
     padding: 0 clamp(8px, 2vw, 24px);
   }
