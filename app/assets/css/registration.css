@@ -1,5 +1,4 @@
 :root {
-  color: #132238;
   background: #edeffa;
   font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
   font-synthesis: none;
@@ -15,10 +14,6 @@ body {
   margin: 0;
 }
 
-a {
-  color: inherit;
-}
-
 button,
 input {
   font: inherit;
@@ -28,29 +23,17 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
 
 .page-shell {
-  min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 32px 20px;
-  background:
-    radial-gradient(circle at top left, rgb(80 155 255 / 18%), transparent 34%),
-    linear-gradient(145deg, #f7fbff 0%, #edf4fb 100%);
 }
 
 .hero-card,
 .form-card {
-  background: #edeffa; /* プロジェクト規定の背景色 */
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
 
 .form-card {
-  display: grid;
   gap: 2px;
 }
 
@@ -65,7 +48,6 @@ button:disabled {
 
 .form-card h1 {
   margin: 0;
-  font-size: clamp(2rem);
   line-height: 1.05;
   letter-spacing: -0.04em;
 }
@@ -161,7 +143,6 @@ button:disabled {
 /* 画面全体: カードを最外側とし、ヘッダー+コンテンツを縦に積む。
    上下左右に余白を確保し、画面いっぱいに張らない */
 .quiz-page {
-  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -174,6 +155,7 @@ button:disabled {
    ネガティブマージンで親(.quiz-page)の左右paddingを打ち消し、下線を画面の端から端まで引く */
 .quiz-header {
   margin: 0 calc(-1 * clamp(16px, 5vw, 48px)) 6px;
+  position: relative; /* ヘルプボタンを絶対配置するための基準 */
   padding: 8px clamp(16px, 5vw, 48px) 16px; /* 上paddingを0にし、「クイズ大会」をカード最上部に張り付かせる */
   background: #edeffa; /* プロジェクト規定の背景色 */
   border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
@@ -189,6 +171,30 @@ button:disabled {
 
 .quiz-header .eyebrow {
   margin: 0 0 10px;
+}
+
+/* ヘルプボタン: ヘッダー内の右上に固定配置(別タブでヘルプ画面を開く) */
+.quiz-header .help-button {
+  position: absolute;
+  top: 14px;
+  right: clamp(16px, 5vw, 48px);
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid #3c3c43;
+  border-radius: 9999px;
+  color: #3c3c43;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.quiz-header .help-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
 }
 
 .quiz-header h1 {
@@ -279,13 +285,6 @@ button:disabled {
 /* 利用規約を開くボタン(details summary の代替) */
 .terms-open-button {
   width: 100%;
-  min-height: 48px;
-  border: 1px solid #c7d3e0;
-  border-radius: 12px;
-  color: #1769c2;
-  background: #fff;
-  font-weight: 700;
-  transition: background 150ms ease, border-color 150ms ease;
 }
 
 .terms-open-button:hover {
@@ -322,37 +321,7 @@ button:disabled {
   font-weight: 750;
 }
 
-.terms-dialog-actions {
-  display: grid;
-  gap: 8px;
-}
-
-.terms-dialog-agree {
-  min-height: 48px;
-  border: 0;
-  border-radius: 12px;
-  color: #fff;
-  background: #1769c2;
-  font-weight: 750;
-}
-
-.terms-dialog-agree:hover {
-  background: #0f57a4;
-}
-
 /* 利用規約の折りたたみ+スクロール領域 */
-.terms-details {
-  display: grid;
-  gap: 10px;
-}
-
-.terms-summary {
-  width: fit-content;
-  color: #1769c2;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-}
 
 .terms-scroll {
   max-height: 40vh;
@@ -403,38 +372,10 @@ button:disabled {
   background: #f0f3f8;
 }
 
-.check-row input,
-.radio-option input {
+.check-row input {
   width: 18px;
   height: 18px;
   accent-color: #1769c2;
-}
-
-.survey-label {
-  color: #253750;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.radio-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
-}
-
-.radio-list {
-  display: grid;
-  gap: 6px;
-}
-
-.radio-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px; /* タッチターゲット確保 */
-  color: #253750;
-  font-size: 1rem;
-  font-weight: 500;
 }
 
 /* プルダウン(inputと同じ見た目に統一)。font:inheritはiOSのfocus時ズーム防止に必須 */
@@ -458,13 +399,6 @@ button:disabled {
 /* 登録ボタン(必須入力が揃うまでグレー) */
 .submit-button {
   width: 100%;
-  min-height: 48px;
-  border: 0;
-  border-radius: 14px;
-  color: #fff;
-  background: #1769c2;
-  font-weight: 750;
-  transition: transform 150ms ease, background 150ms ease;
 }
 
 .submit-button:hover:not(:disabled) {

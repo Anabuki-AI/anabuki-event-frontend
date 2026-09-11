@@ -25,6 +25,14 @@ const isEditMode = computed(() => route.query.mode === 'edit')
       <p v-else class="eyebrow">
         Create account
       </p>
+      <NuxtLink
+        class="help-button"
+        to="/users/help-registration"
+        target="_blank"
+        rel="noopener"
+      >
+        ヘルプ
+      </NuxtLink>
     </header>
     <main class="page-shell">
       <NicknameEditForm v-if="isEditMode" />
