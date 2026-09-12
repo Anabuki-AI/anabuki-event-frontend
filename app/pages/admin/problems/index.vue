@@ -1,14 +1,28 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { fetchQuestions } from '~/features/problems/api/client'
+import { CHOICE_KEYS } from '~/features/problems/constants'
 import type { Question } from '~/features/problems/types'
-import QuestionRow from '~/features/problems/components/QuestionRow.vue'
+import { setupAdminDrawer } from '~/features/admin/components/AdminDrawer'
+import {
+  correctChoiceText,
+  formatCorrectBadge,
+  formatMultiplierChip,
+  formatQuestionId,
+} from '~/features/problems/components/QuestionRow'
 import { toApiError } from '~/lib/api/error'
 
 useSeoMeta({
   title: '問題管理画面',
   description: '登録されている問題の一覧を確認し、編集・追加・自信度倍率変更へ移動できます。',
 })
+
+const {
+  isDrawerOpen,
+  closeDrawer,
+  toggleDrawer,
+  handleDrawerKeydown,
+} = setupAdminDrawer()
 
 const questions = ref<Question[]>([])
 const isLoading = ref(true)
@@ -33,6 +47,57 @@ onMounted(loadQuestions)
 
 <template>
   <main class="page-shell">
+    <!-- ハンバーガーメニュー(ドロワー)。運営者メイン画面と同じAdminDrawerを使う -->
+    <button
+      type="button"
+      class="admin-drawer-toggle"
+      aria-label="メニューを開く"
+      :aria-expanded="isDrawerOpen"
+      @click="toggleDrawer"
+    >
+      <span aria-hidden="true">☰</span>
+    </button>
+
+    <div
+      v-if="isDrawerOpen"
+      class="admin-drawer-backdrop"
+      @click="closeDrawer"
+    />
+    <nav
+      v-if="isDrawerOpen"
+      class="admin-drawer"
+      aria-label="管理機能メニュー"
+      @keydown="handleDrawerKeydown"
+    >
+      <div class="admin-drawer-head">
+        <p class="admin-drawer-title">メニュー</p>
+        <button
+          type="button"
+          class="admin-drawer-close"
+          aria-label="メニューを閉じる"
+          @click="closeDrawer"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <NuxtLink class="admin-drawer-link" to="/event_operator" @click="closeDrawer">
+        <span class="admin-drawer-icon" aria-hidden="true">🏠</span>
+        運営者メイン
+      </NuxtLink>
+      <NuxtLink class="admin-drawer-link" to="/event_operator/voting-rate" @click="closeDrawer">
+        <span class="admin-drawer-icon" aria-hidden="true">📊</span>
+        投票率ページ
+      </NuxtLink>
+      <NuxtLink class="admin-drawer-link" to="/admin/quiz-control" @click="closeDrawer">
+        <span class="admin-drawer-icon" aria-hidden="true">🎮</span>
+        出題管理
+      </NuxtLink>
+      <NuxtLink class="admin-drawer-link" to="/admin/problems" @click="closeDrawer">
+        <span class="admin-drawer-icon" aria-hidden="true">📝</span>
+        問題管理
+      </NuxtLink>
+    </nav>
+
     <section class="admin-card problems-card">
       <header class="problems-header">
         <div>
@@ -97,11 +162,55 @@ onMounted(loadQuestions)
         >
           全 {{ questions.length }} 問
         </p>
-        <QuestionRow
+
+        <!-- 1行はsummary(問題番号+問題文+正解)。選択肢・倍率・操作は折り畳み内 -->
+        <details
           v-for="question in questions"
           :key="question.id"
-          :question="question"
-        />
+          class="question-row"
+        >
+          <summary class="question-row-summary">
+            <span class="question-id">{{ formatQuestionId(question.id) }}</span>
+            <span class="question-text">{{ question.questionText }}</span>
+            <span
+              class="correct-badge"
+              :title="`正解: ${correctChoiceText(question)}`"
+            >
+              {{ formatCorrectBadge(question) }}
+            </span>
+          </summary>
+
+          <div class="question-row-detail">
+            <ul class="question-choices">
+              <li
+                v-for="key in CHOICE_KEYS"
+                :key="key"
+                :class="{ 'is-correct': key === question.correctAnswer }"
+              >
+                <span class="choice-key">{{ key }}</span>
+                {{ question.choices[key] }}
+              </li>
+            </ul>
+
+            <div class="question-row-foot">
+              <span class="multiplier-chip">{{ formatMultiplierChip(question) }}</span>
+              <div class="question-row-actions">
+                <NuxtLink
+                  class="row-action-link"
+                  :to="`/admin/problems/${question.id}/edit`"
+                >
+                  編集
+                </NuxtLink>
+                <NuxtLink
+                  class="row-action-link"
+                  :to="`/admin/problems/${question.id}/multiplier`"
+                >
+                  倍率変更
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
   </main>

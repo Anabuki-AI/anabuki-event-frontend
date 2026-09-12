@@ -546,30 +546,14 @@ h1 {
     gap: 16px;
   }
 
-  .question-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'head head'
-      'choices actions';
-    align-items: center;
-    column-gap: 24px;
+  .question-row-summary {
     /* 横置きタブレットは指操作のため44px以上のタッチターゲットを確保 */
-    padding: 22px 24px;
+    min-height: 56px;
+    padding: 16px 24px;
   }
 
-  .question-row-head {
-    grid-area: head;
-  }
-
-  .question-choices {
-    grid-area: choices;
-  }
-
-  .question-row-foot {
-    grid-area: actions;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  .question-row-detail {
+    padding: 8px 24px 22px;
   }
 
   .row-action-link {
@@ -590,18 +574,49 @@ h1 {
 }
 
 .question-row {
-  display: grid;
-  gap: 12px;
-  padding: 18px 20px;
+  padding: 0;
   border: 1px solid rgb(19 34 56 / 10%);
   border-radius: 18px;
   background: #ffffff; /* 問題背景は指定色 */
+  overflow: hidden;
 }
 
-.question-row-head {
+/* 1行表示(レビュー指摘): summary=問題番号+問題文+正解バッジ */
+.question-row-summary {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none; /* 既定の▶マーカーを消し、独自の開閉アイコンを使う */
+}
+
+.question-row-summary::-webkit-details-marker {
+  display: none;
+}
+
+.question-row-summary::after {
+  content: '▸';
+  flex-shrink: 0;
+  margin-left: auto;
+  color: #516176;
+  font-size: 1rem;
+  transition: transform 150ms ease;
+}
+
+.question-row[open] .question-row-summary::after {
+  transform: rotate(90deg);
+}
+
+.question-row-summary:hover {
+  background: rgb(23 105 194 / 4%);
+}
+
+.question-row-detail {
+  display: grid;
+  gap: 12px;
+  padding: 4px 20px 18px;
+  border-top: 1px solid rgb(19 34 56 / 8%);
 }
 
 .question-id {
@@ -613,10 +628,15 @@ h1 {
 .question-text {
   flex: 1;
   margin: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1; /* 一覧は1行に收める(レビュー指摘)。全文は折り畳み内・編集画面で確認できる */
   color: #132238;
   font-size: 16px; /* 本文は16px規定 */
   font-weight: 700;
   line-height: 1.6;
+  text-overflow: ellipsis;
 }
 
 .correct-badge {
@@ -1063,4 +1083,96 @@ h1 {
   .reaction-emoji {
     font-size: 1.6rem; /* 4列に並べた際の拡大サイズ */
   }
+}
+/* ===== ハンバーガーメニュー(ドロワー) =====
+   運営者メイン画面と共通のナビ。開閉状態はfeatures/admin/components/AdminDrawer.tsが持つ */
+.admin-drawer-toggle {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px; /* タッチターゲット44px以上 */
+  border: 1px solid rgb(19 34 56 / 12%);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgb(34 75 120 / 14%);
+  font-size: 1.3rem;
+}
+
+.admin-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(19 34 56 / 40%);
+}
+
+.admin-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 60;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: min(84vw, 320px);
+  padding: 16px 14px;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 0 60px rgb(19 34 56 / 24%);
+}
+
+.admin-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.admin-drawer-title {
+  margin: 0;
+  color: #516176;
+  font-size: 0.875rem; /* 補助文言は12〜14pxの規約内 */
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.admin-drawer-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #516176;
+  font-size: 1.4rem;
+}
+
+.admin-drawer-close:hover {
+  background: rgb(23 105 194 / 8%);
+}
+
+.admin-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px; /* タッチターゲット44px以上 */
+  padding: 10px 14px;
+  border-radius: 14px;
+  color: #132238;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.admin-drawer-link:hover {
+  background: rgb(23 105 194 / 8%);
+  color: #1769c2;
+}
+
+.admin-drawer-icon {
+  font-size: 1.2rem;
 }
