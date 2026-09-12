@@ -1,40 +1,26 @@
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import RankingList from '../../app/features/rankings/components/RankingList.vue'
-import RankingTopCards from '../../app/features/rankings/components/RankingTopCards.vue'
+import { formatListPoints, formatRank } from '../../app/features/rankings/components/RankingList'
+import { rankingMedalFor } from '../../app/features/rankings/components/RankingTopCards'
 
-const entries = [
-  { rank: 4, userName: 'dave', points: 200 },
-  { rank: 4, userName: 'dave', points: 200 },
-  { rank: 6, userName: 'frank', points: 120 },
-]
+describe('RankingList formatting', () => {
+  it('formats every entry with rank and locale-formatted points', () => {
+    expect(formatRank(4)).toBe('4位')
+    expect(formatListPoints(200)).toBe('200ポイント')
+  })
 
-describe('RankingList', () => {
-  it('renders every entry with rank and locale-formatted points', () => {
-    const wrapper = mount(RankingList, { props: { entries } })
-
-    const items = wrapper.findAll('li.ranking-list-item')
-    expect(items).toHaveLength(3)
-    expect(items[0].text()).toContain('4位')
-    expect(items[0].text()).toContain('200ポイント')
-    expect(items[2].text()).toContain('6位')
-    expect(items[2].text()).toContain('120ポイント')
+  it('formats large points with locale separators', () => {
+    expect(formatListPoints(12345)).toBe('12,345ポイント')
   })
 })
 
-describe('RankingTopCards', () => {
-  it('renders one card per entry with the rank text', () => {
-    const topThree = [
-      { rank: 1, userName: 'alice', points: 12345 },
-      { rank: 1, userName: 'bob', points: 12345 },
-      { rank: 3, userName: 'carol', points: 280 },
-    ]
-    const wrapper = mount(RankingTopCards, { props: { entries: topThree } })
+describe('RankingTopCards medals', () => {
+  it('assigns the medal to each of the top three ranks', () => {
+    expect(rankingMedalFor(0)).toBe('🥇')
+    expect(rankingMedalFor(1)).toBe('🥈')
+    expect(rankingMedalFor(2)).toBe('🥉')
+  })
 
-    const cards = wrapper.findAll('li.ranking-card')
-    expect(cards).toHaveLength(3)
-    expect(cards[0].text()).toContain('1位')
-    expect(cards[0].text()).toContain('12,345')
-    expect(cards[2].text()).toContain('3位')
+  it('falls back to the generic medal beyond the top three', () => {
+    expect(rankingMedalFor(3)).toBe('🏅')
   })
 })

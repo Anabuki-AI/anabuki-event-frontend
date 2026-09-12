@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import MyRankingPanel from '~/features/rankings/components/MyRankingPanel.vue'
-import RankingList from '~/features/rankings/components/RankingList.vue'
-import RankingTopCards from '~/features/rankings/components/RankingTopCards.vue'
+import { myRankingViewState, formatMyRankingLine } from '~/features/rankings/components/MyRankingPanel'
+import { formatListPoints, formatRank } from '~/features/rankings/components/RankingList'
+import { rankingMedalFor } from '~/features/rankings/components/RankingTopCards'
 import { useRankings } from '~/features/rankings/composables/use-rankings'
 
 useSeoMeta({
@@ -74,18 +74,69 @@ const {
       </p>
 
       <template v-else>
-        <RankingTopCards :entries="topThree" />
-        <RankingList :entries="rest" />
+        <!-- 上位3名のカード(旧RankingTopCards.vue) -->
+        <ul class="ranking-top-cards">
+          <li
+            v-for="(entry, index) in topThree"
+            :key="entry.userId"
+            class="ranking-card"
+          >
+            <p class="ranking-card-medal">
+              <span aria-hidden="true">{{ rankingMedalFor(index) }}</span>
+              <span class="ranking-card-rank">{{ formatRank(entry.rank) }}</span>
+            </p>
+            <p class="ranking-card-name">
+              {{ entry.userName }}
+            </p>
+            <p class="ranking-card-points">
+              {{ entry.points.toLocaleString('ja-JP') }}<span class="ranking-card-unit">ポイント</span>
+            </p>
+          </li>
+        </ul>
+
+        <!-- 4位以下の一覧(旧RankingList.vue) -->
+        <ol class="ranking-list">
+          <li
+            v-for="entry in rest"
+            :key="entry.userId"
+            class="ranking-list-item"
+          >
+            <span class="ranking-list-rank">{{ formatRank(entry.rank) }}</span>
+            <span class="ranking-list-name">{{ entry.userName }}</span>
+            <span class="ranking-list-points">{{ formatListPoints(entry.points) }}</span>
+          </li>
+        </ol>
       </template>
 
       <hr class="ranking-divider">
 
-      <MyRankingPanel
+      <!-- 自分の順位パネル(旧MyRankingPanel.vue) -->
+      <section
         v-if="myUserId !== null"
-        :entry="myRanking"
-        :error-message="myRankingError"
-        :loading="isMyRankingLoading"
-      />
+        class="my-ranking"
+        aria-label="自分の順位"
+        :aria-busy="isMyRankingLoading"
+      >
+        <p
+          v-if="myRankingViewState(myRanking, myRankingError, isMyRankingLoading) === 'loading'"
+          class="muted-copy"
+        >
+          順位を確認しています…
+        </p>
+        <p
+          v-else-if="myRanking"
+          class="my-ranking-line"
+        >
+          {{ formatMyRankingLine(myRanking) }}
+        </p>
+        <p
+          v-else-if="myRankingError"
+          class="status-message error"
+          role="alert"
+        >
+          {{ myRankingError }}
+        </p>
+      </section>
       <section
         v-else-if="myRankingNotFound"
         class="my-ranking"
