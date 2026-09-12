@@ -161,15 +161,24 @@ h1 {
   background: #edeffa;
 }
 
+/* 画面中央のカードに集約せず、画面全体を使い切る(レビュー指摘)。
+   上書きはadmin-shell配下に限定し、共用のpage-shellには影響させない */
+.page-shell.admin-shell {
+  place-items: start center;
+  padding: 0;
+  padding-bottom: 0;
+}
+
 .admin-card {
   display: grid;
   gap: 28px;
-  width: min(100%, 680px);
+  width: 100%;
+  max-width: none;
   padding: clamp(28px, 6vw, 56px);
-  border: 1px solid rgb(19 34 56 / 8%);
-  border-radius: 28px;
+  border: none;
+  border-radius: 0;
   background: #fff;
-  box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
+  box-shadow: none;
 }
 
 .admin-card h1 {
@@ -236,14 +245,103 @@ h1 {
   font-weight: 750;
 }
 
+/* ===== ハンバーガーメニュー(ドロワー) =====
+   管理画面共通のナビ。開閉状態はfeatures/admin/components/AdminDrawer.tsが持つ */
+.admin-drawer-toggle {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px; /* タッチターゲット44px以上 */
+  border: 1px solid rgb(19 34 56 / 12%);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgb(34 75 120 / 14%);
+  font-size: 1.3rem;
+}
+
+.admin-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(19 34 56 / 40%);
+}
+
+.admin-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 60;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: min(84vw, 320px);
+  padding: 16px 14px;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 0 60px rgb(19 34 56 / 24%);
+}
+
+.admin-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.admin-drawer-title {
+  margin: 0;
+  color: #516176;
+  font-size: 0.875rem; /* 補助文言は12〜14pxの規約内 */
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.admin-drawer-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #516176;
+  font-size: 1.4rem;
+}
+
+.admin-drawer-close:hover {
+  background: rgb(23 105 194 / 8%);
+}
+
+.admin-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px; /* タッチターゲット44px以上 */
+  padding: 10px 14px;
+  border-radius: 14px;
+  color: #132238;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.admin-drawer-link:hover {
+  background: rgb(23 105 194 / 8%);
+  color: #1769c2;
+}
+
+.admin-drawer-icon {
+  font-size: 1.2rem;
+}
+
 /* ===== タブレット横置き対応(1024px級) =====
    運営者・管理者ページはタブレット横置きが標準操作端末(CLAUDE_FRONT.md)。
    縦置き時の縦1列メニューを、横置きの広さを活かした横並びグリッドに広げる */
 @media (width >= 900px) {
-  .admin-card {
-    width: min(100%, 960px);
-  }
-
   .admin-menu {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
@@ -736,5 +834,4 @@ h1 {
   .admin-menu-arrow {
     display: none;
   }
-
 }
