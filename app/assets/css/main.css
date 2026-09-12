@@ -603,8 +603,21 @@ h1 {
   letter-spacing: -0.02em;
 }
 
+/* page-shellの中央寄せ・余白も含めて画面いっぱいを使う(レビュー指摘)。
+   上書きはquiz-control配下のクラスに限定し、共用のpage-shellには影響させない */
+.page-shell:has(.quiz-control-card) {
+  place-items: start center;
+  padding: 0;
+  padding-bottom: 0;
+  background: #edeffa;
+}
+
 .quiz-control-card {
-  width: min(100%, 980px);
+  width: 100%;
+  max-width: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .quiz-control-header {
@@ -955,7 +968,6 @@ h1 {
    操作ボタンは指で押しやすく大きめを維持する */
 @media (width >= 900px) {
   .quiz-control-card {
-    width: min(100%, 1120px);
     padding: 32px 36px;
   }
 
