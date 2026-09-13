@@ -28,15 +28,6 @@
   gap: 8px;
 }
 
-/* 「クイズ大会」タイトル(Event operatorと同色) */
-.question-add-shell .quiz-header-title {
-  margin: 0;
-  color: #1769c2; /* eyebrow(Event operator)と統一 */
-  font-size: clamp(1.05rem, 3vw, 1.3rem);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
 .question-add-shell .question-add-form {
   display: grid;
   gap: 24px;
@@ -221,6 +212,8 @@
 .question-add-shell .question-add-actions {
   display: flex;
   align-items: center;
+  align-items: center;
+  justify-content: flex-end; /* 右寄せに配置 */
   gap: 16px;
   flex-wrap: wrap;
 }

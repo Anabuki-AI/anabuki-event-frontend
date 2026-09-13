@@ -5,6 +5,8 @@ import {
   setupQuestionEdit,
   setupQuestionBack,
 } from '~/features/questions/components/QuestionEditForm'
+// --- 追加・修正ポイント 1: question.vue のコンポーネントをインポート ---
+import QuestionPopup from './event_operator/questione.vue'
 
 useSeoMeta({
   title: '問題編集',
@@ -28,6 +30,18 @@ const { handleBack } = setupQuestionBack(() => {
   handleCancel()
   return true
 })
+
+// --- 追加・修正ポイント 2: モーダル（ポップアップ）表示フラグと何問目かの状態管理 ---
+const isEditOpen = ref(false)
+const currentQuestionIndex = ref(1) // 現在表示中の問題番号
+
+function openEdit() {
+  isEditOpen.value = true
+}
+
+function closeEdit() {
+  isEditOpen.value = false
+}
 </script>
 
 <template>
@@ -44,14 +58,14 @@ const { handleBack } = setupQuestionBack(() => {
       >
         ← 例）問題一覧へ戻る
       </NuxtLink>
-      <NuxtLink
+      <!-- --- 追加・修正ポイント 3: NuxtLinkからbuttonに変更し、openEditを発火 --- -->
+      <button
+        type="button"
         class="question-add-button"
-        to="/event_operator/questione"
-        target="_blank"
-        rel="noopener"
+        @click="openEdit"
       >
         編集する
-      </NuxtLink>
+      </button>
     </header>
 
     <main class="page-shell">
@@ -178,5 +192,14 @@ const { handleBack } = setupQuestionBack(() => {
         </p>
       </form>
     </main>
+    <!-- --- 追加・修正ポイント 4: isEditOpen が true の時だけオーバーレイ表示 --- -->
+    <div v-if="isEditOpen" class="modal-overlay" @click.self="closeEdit">
+      <div class="modal-container">
+        <QuestionPopup
+          :question-index="currentQuestionIndex"
+          @close="closeEdit"
+        />
+      </div>
+    </div>
   </section>
 </template>

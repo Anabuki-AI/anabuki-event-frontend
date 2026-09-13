@@ -3,7 +3,18 @@ import { ref } from 'vue'
 import { useQuestionAdd } from '~/features/question-edit/use-question-edit.ts'
 import '~/assets/css/questionedit2.css'
 
-useSeoMeta({
+// --- 追加・修正ポイント 1: Props と Emits の定義 ---
+const props = withDefaults(defineProps<{
+  questionIndex?: number
+}>(), {
+  questionIndex: 1, // デフォルトで1問目を表示
+})
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+useSeoMeta
+({
   title: '問題編集画面',
   description: 'クイズ大会の問題を編集します。',
 })
@@ -45,11 +56,19 @@ const {
 // （クリアしないと、キャンセル後に同じファイルを再選択してもchangeが発火しない）
 const fileInput = ref<HTMLInputElement | null>(null)
 
+
 function handleCancel() {
   cancel()
   if (fileInput.value) {
     fileInput.value.value = ''
   }
+  emit('close')
+}
+
+// 保存成功時にも閉じる処理を呼び出すためのラッパー
+function handleSave() {
+  save()
+  // 必要に応じて保存成功後にモーダルを閉じる処理を追加可能
 }
 </script>
 
@@ -57,11 +76,9 @@ function handleCancel() {
   <main class="page-shell question-add-shell">
     <section class="question-add-card" aria-label="問題の新規登録">
       <header class="question-add-header">
-        <p class="quiz-header-title">クイズ大会</p>
-        <p class="eyebrow">
-          Event operator
-        </p>
-        <h1>問題編集画面</h1>
+        <h1>問題編集</h1>
+        <!-- --- 追加・修正ポイント 3: 受け取った問番号を表示 --- -->
+        <h2>問{{ questionIndex }}</h2>
         <p class="muted-copy">
           クイズ大会で出題する問題文・添付画像・4つの選択肢と正解を入力して登録します。
         </p>
@@ -166,18 +183,18 @@ function handleCancel() {
         <div class="question-add-actions">
           <button
             type="button"
+            class="question-add-cancel"
+            @click="handleCancel()"
+          >
+            キャンセル
+          </button>
+           <button
+            type="button"
             class="question-add-save"
             :disabled="!canSave"
             @click="save()"
           >
             保存する
-          </button>
-          <button
-            type="button"
-            class="question-add-cancel"
-            @click="handleCancel()"
-          >
-            キャンセル
           </button>
         </div>
       </form>
