@@ -13,6 +13,7 @@ import { setupRegistrationForm } from '~/features/registration/components/Regist
 
 const {
   form,
+  otherSchoolName,
   userNameStatus,
   userNameMessage,
   isDepartmentRequired,
@@ -169,11 +170,13 @@ function closeTermsDialog() {
         </p>
       </label>
 
-      <!-- 学生種別が学生の場合のみ表示。カレッジ学生=学校プルダウン/他校=学校名入力 -->
+      <!-- 学生種別が学生の場合のみ表示。穴吹カレッジ生=学校プルダウン/他校生=学校名入力 -->
       <label
         v-if="isSchoolRequired"
       >
         <span>学校名<span class="required-badge">*</span></span>
+
+        <!-- 額生活「その他の学校」以外はプルダウン-->
         <select
           v-if="isDepartmentRequired"
           v-model="form.school"
@@ -193,9 +196,11 @@ function closeTermsDialog() {
             {{ option.label }}
           </option>
         </select>
+
+        <!-- 他校の学生 または 「その他の学校」選択時は手入力（otherSchoolName にバインド）-->
         <input
           v-else
-          v-model.trim="form.school"
+          v-model.trim="otherSchoolName"
           type="text"
           name="school"
           autocomplete="organization"

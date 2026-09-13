@@ -29,3 +29,8 @@ export function validateRequiredOption(value: string, label: string): string {
 export function validateDepartmentSelection(value: string, isRequired: boolean): string {
   return isRequired && value === '' ? '学科を選択してください' : ''
 }
+
+/** その他の学校(入力)で選択された場合の学校名チェック。プレースホルダ値以外の値が入っていれば有効 */
+export function validateOtherSchoolName(school: string, isRequired: boolean): string {
+  return isRequired && (school === '' || school === 'other_school') ? '学校名を入力してください' : ''
+}

@@ -35,6 +35,9 @@ export function setupRegistrationForm() {
     agreedTerms: false,
   })
 
+  // その他の学校(入力)で入力された学校名。「他校の学生」に切り替えても記憶される
+  const otherSchoolName = ref('')
+
   // --- ユーザーネーム重複チェック(デバウンス+競合ガード) ---
   const userNameStatus = ref<UserNameStatus>('idle')
   const checkedUserName = ref('')
@@ -92,21 +95,39 @@ export function setupRegistrationForm() {
   })
 
   // --- アンケート必須バリデーション ---
-  const isDepartmentRequired = computed(() => form.studentType === DEPARTMENT_REQUIRED_VALUE)
+  const isOtherSchoolSelected = computed(() => form.studentType === DEPARTMENT_REQUIRED_VALUE && form.school === SCHOOL_OTHER_VALUE)
+  const isDepartmentRequired = computed(() => form.studentType === DEPARTMENT_REQUIRED_VALUE && !isOtherSchoolSelected.value)
 
   // 学生種別に応じて学校・学科欄を出し分け、選択値の整合を保つ
   const isSchoolRequired = computed(() => form.studentType === DEPARTMENT_REQUIRED_VALUE || form.studentType === 'other_student')
   const isOtherSchool = computed(() => form.school === SCHOOL_OTHER_VALUE)
 
+  // 学生種別が変わった時のクリーンアップ
   watch(() => form.studentType, (value) => {
-    // 学生でない場合は学校・学科の選択を解除
-    if (value !== DEPARTMENT_REQUIRED_VALUE && value !== 'other_student') {
-      form.school = ''
-    }
-    if (value !== DEPARTMENT_REQUIRED_VALUE) {
+    // 他校の学生の場合は手入力モード扱いにする
+    if (value === 'other_student') {
+      form.school = SCHOOL_OTHER_VALUE
       form.department = ''
+    } else if (value === DEPARTMENT_REQUIRED_VALUE) {
+      // 「学生」に切り替わった場合は選択状態をリセット(プルダウン初期化へ)
+      form.school = ''
+      form.department = ''  
+    } else {
+      // 学生でない場合はすべてクリア
+      form.school = ''
+      form.department = ''
+      otherSchoolName.value = ''
     }
   })
+
+  // 学校選択肢が変わった時のクリーンアップ
+  watch(() => form.school, (value) => {
+    // 「その他の学校」以外が選ばれたら手入力値をクリア
+    if (value !== SCHOOL_OTHER_VALUE) {
+      otherSchoolName.value = ''
+    }
+  })
+
 
   const showFieldErrors = ref(false)
 
@@ -115,7 +136,10 @@ export function setupRegistrationForm() {
     gender: validateRequiredOption(form.gender, '性別'),
     ageGroup: validateRequiredOption(form.ageGroup, '年代'),
     studentType: validateRequiredOption(form.studentType, '学生種別'),
-    school: validateDepartmentSelection(form.school, isSchoolRequired.value).replace('学科', '学校'),
+    // その他の学校(入力)を選択時は入力値を、それ以外は学校選択値を検査
+    school: isOtherSchool.value
+      ? validateRequiredOption(otherSchoolName.value, '学校名')
+      : validateRequiredOption(form.school, '学校名'),
     department: validateDepartmentSelection(form.department, isDepartmentRequired.value),
   }))
 
@@ -132,7 +156,7 @@ export function setupRegistrationForm() {
     && form.gender !== ''
     && form.ageGroup !== ''
     && form.studentType !== ''
-    && (!isSchoolRequired.value || form.school !== '')
+    && (!isSchoolRequired.value || (isOtherSchool.value ? otherSchoolName.value.trim() !== '' : form.school !== ''))
     && (!isDepartmentRequired.value || form.department !== ''),
   )
 
@@ -145,7 +169,12 @@ export function setupRegistrationForm() {
     submitErrorMessage.value = ''
 
     try {
-      const created = await createRegistration({ ...form })
+      // その他の学校(入力)の場合は入力値を、それ以外は学校選択値を送信する
+      const payload: RegistrationRequest = {
+        ...form,
+        school: isOtherSchool.value ? otherSchoolName.value.trim() : form.school,
+      }
+      const created = await createRegistration(payload)
       // TODO: 本番実装では待機画面(/users/waiting)へ遷移する。現在は暫定の完了画面
       await navigateTo({
         path: '/users/complete',
@@ -162,6 +191,7 @@ export function setupRegistrationForm() {
 
   return {
     form,
+    otherSchoolName,
     userNameStatus,
     userNameMessage,
     isDepartmentRequired,
