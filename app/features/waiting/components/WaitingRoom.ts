@@ -38,23 +38,10 @@ export function setupWaitingRoom(participantCount: Ref<number>) {
     }, 500)
   }
 
-  const isHelpOpen = ref(false)
-
-  function openHelp() {
-    isHelpOpen.value = true
-  }
-
-  function closeHelp() {
-    isHelpOpen.value = false
-  }
-
   return {
     isCountUpdated,
     lastReactedEmoji,
     handleReact,
-    isHelpOpen,
-    openHelp,
-    closeHelp,
   }
 }
 

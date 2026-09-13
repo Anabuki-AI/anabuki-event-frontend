@@ -1,3 +1,21 @@
+export const operationGuideItems: OperationGuideItem[] = [
+    {
+        id: 'user-registration',
+        title: 'ユーザー登録',
+        description: 'クイズ大会に参加するためのユーザー情報を登録する画面です。',
+    },
+    {
+        id: 'waiting-room',
+        title: '待機画面',
+        description: 'クイズ開始まで待機し、参加人数やリアクションを確認する画面です。',
+    },
+    {
+        id: 'nickname-edit',
+        title: 'ニックネーム編集',
+        description: '登録したニックネームを変更する画面です。',
+    },
+]
+
 export type HelpSection = {
     title: string
     content: string
@@ -6,6 +24,13 @@ export type HelpSection = {
 export type FaqItem = {
     question: string
     answer: string
+}
+
+export type OperationGuideItem = {
+    id: string
+    title: string
+    description: string
+    manualHref?: string
 }
 
 export const helpSections: HelpSection[] = [

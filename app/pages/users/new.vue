@@ -10,9 +10,21 @@ useSeoMeta({
 <template>
   <main class="page-shell">
     <section class="form-card">
-      <NuxtLink class="back-link" to="/">
-        ← ホームへ戻る
-      </NuxtLink>
+      <div class="page-header-actions">
+        <NuxtLink
+          class="back-link"
+          to="/"
+        >
+          ← ホームへ戻る
+        </NuxtLink>
+
+        <NuxtLink
+          class="help-button"
+          to="/help#user-registration"
+        >
+          ヘルプ
+        </NuxtLink>
+      </div>
       <div>
         <p class="eyebrow">
           Create account
