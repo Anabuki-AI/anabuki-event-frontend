@@ -18,12 +18,21 @@ const currentName = computed(() => {
 <template>
   <main class="page-shell">
     <section class="form-card">
-      <NuxtLink
-        class="back-link"
-        :to="{ path: '/users/waiting', query: { userName: currentName } }"
-      >
-        ← 待機画面へ戻る
-      </NuxtLink>
+      <div class="page-header-actions">
+        <NuxtLink
+          class="back-link"
+          :to="{ path: '/users/waiting', query: { userName: currentName } }"
+        >
+          ← 待機画面へ戻る
+        </NuxtLink>
+
+        <NuxtLink
+          class="help-button"
+          to="/help#nickname-edit"
+        >
+          ヘルプ
+        </NuxtLink>
+      </div>
       <div>
         <p class="eyebrow">
           Edit nickname

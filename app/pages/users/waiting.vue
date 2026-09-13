@@ -5,7 +5,6 @@ import {
   setupUserName,
   setupWaitingRoom,
 } from '~/features/waiting/components/WaitingRoom'
-import { setupHelpDialog } from '~/features/waiting/components/HelpDialog'
 
 useSeoMeta({
   title: '待機画面',
@@ -22,12 +21,8 @@ const {
   isCountUpdated,
   lastReactedEmoji,
   handleReact,
-  isHelpOpen,
-  openHelp,
-  closeHelp,
 } = setupWaitingRoom(participantCount)
 
-const { panelRef, titleId } = setupHelpDialog(closeHelp)
 </script>
 
 <template>
@@ -51,14 +46,12 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             </NuxtLink>
           </div>
         </div>
-        <button
-          type="button"
+        <NuxtLink
           class="help-button"
-          aria-haspopup="dialog"
-          @click="openHelp"
+          to="/help#waiting-room"
         >
           ヘルプ
-        </button>
+        </NuxtLink>
       </div>
 
       <div class="participant-panel">
@@ -91,39 +84,6 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             @click="handleReact(option.emoji)"
           >
             <span class="reaction-emoji" aria-hidden="true">{{ option.emoji }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="isHelpOpen"
-        class="help-dialog"
-        @click.self="closeHelp"
-      >
-        <div
-          ref="panelRef"
-          class="help-dialog-panel"
-          role="dialog"
-          aria-modal="true"
-          :aria-labelledby="titleId"
-          tabindex="-1"
-        >
-          <h2 :id="titleId">
-            ヘルプ
-          </h2>
-          <ul>
-            <li>この画面はイベントの待機画面です。</li>
-            <li>参加人数は自動で更新されます。</li>
-            <li>リアクションボタンで気持ちを伝えられます。</li>
-            <li>クイズが開始されると、画面は自動的に切り替わります。</li>
-            <li>ニックネームを変更したいときは名前の横の✏️ボタンを押してください。</li>
-          </ul>
-          <button
-            type="button"
-            class="help-dialog-close"
-            @click="closeHelp"
-          >
-            閉じる
           </button>
         </div>
       </div>
