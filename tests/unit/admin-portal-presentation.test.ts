@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   adminWorkflowSteps,
   getAccessRequestStateCopy,
-} from '~/features/admin/portal-presentation'
-import type { AccessRequestStatus } from '~/features/admin/types'
+} from '~/admin/portal-presentation'
+import type { AccessRequestStatus } from '~/admin/types'
 
 const accessRequestStatuses = [
   ['PENDING', '承認待ち'],

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { adminAuthApi } from '~/features/admin/api/admin-auth'
-import { useAdminPortal } from '~/features/admin/composables/useAdminPortal'
-import type { AccessRequest, AdminSession } from '~/features/admin/types'
+import { adminAuthApi } from '~/admin/api/admin-auth'
+import { useAdminPortal } from '~/admin/composables/useAdminPortal'
+import type { AccessRequest, AdminSession } from '~/admin/types'
 import { ApiError } from '~/lib/api/error'
 
-vi.mock('~/features/admin/api/admin-auth', () => ({
+vi.mock('~/admin/api/admin-auth', () => ({
   adminAuthApi: {
     configuration: vi.fn(), session: vi.fn(), ownRequest: vi.fn(), apply: vi.fn(),
     exchange: vi.fn(), logout: vi.fn(), pendingRequests: vi.fn(), decide: vi.fn(),

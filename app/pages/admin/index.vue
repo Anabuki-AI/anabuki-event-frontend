@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminPortal from '~/features/admin/components/AdminPortal.vue'
+import AdminPortal from '~/admin/components/AdminPortal.vue'
 
 definePageMeta({ alias: ['/admin/login'] })
 useHead({
