@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import PortalIcon from './PortalIcon.vue'
+import {
+  adminWorkflowSteps,
+  formatAdminDate,
+  getAccessRequestStateCopy,
+} from '../portal-presentation'
 import { useAdminPortal } from '../composables/useAdminPortal'
+import type { AccessRequestDecision } from '../types'
 
 const {
   session,
@@ -28,61 +34,14 @@ const oauthFailed = computed(() => route.query.auth_error === 'google')
 const googleStartUrl = computed(
   () => `${config.public.apiBase.replace(/\/$/, '')}/auth/google/start`,
 )
-const confirmation = ref<{ id: number; decision: 'approve' | 'reject' } | null>(
-  null,
-)
+const confirmation = ref<{
+  id: number
+  decision: AccessRequestDecision
+} | null>(null)
 const logoutConfirmation = ref(false)
 const mainContent = ref<HTMLElement | null>(null)
 const requestStatus = computed(() => accessRequest.value?.status)
-const requestCopy = computed(() => {
-  switch (requestStatus.value) {
-    case 'PENDING':
-      return {
-        label: '承認待ち',
-        title: 'あと一歩。承認をお待ちください。',
-        description:
-          '利用申請を受け付けました。運営担当の管理者へ、下の申請番号とメールアドレスを伝えてください。',
-      }
-    case 'APPROVED':
-      return {
-        label: '承認済み',
-        title: '準備が整いました。',
-        description:
-          '管理者から利用が承認されました。このブラウザで管理セッションに切り替えて、管理ポータルへ進んでください。',
-      }
-    case 'REJECTED':
-      return {
-        label: '申請が却下されました',
-        title: '運営担当者へご確認ください。',
-        description:
-          '今回の申請は承認されませんでした。必要な権限について管理者に確認したうえで、再申請できます。',
-      }
-    case 'CANCELLED':
-      return {
-        label: '申請が取り消されました',
-        title: 'もう一度、ログインから。',
-        description:
-          '有効期限切れやログイン状態の変更により、この申請は無効になりました。ログアウトして、再度 Google でログインしてください。',
-      }
-    default:
-      return {
-        label: '本人確認済み',
-        title: '管理者に利用を申請しましょう。',
-        description:
-          'Google アカウントを確認できました。はじめて利用する方は、管理者の承認が必要です。',
-      }
-  }
-})
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  }).format(new Date(value))
-}
+const requestCopy = computed(() => getAccessRequestStateCopy(requestStatus.value))
 
 async function confirmDecision() {
   if (!confirmation.value) return
@@ -141,7 +100,7 @@ async function confirmLogout() {
       <main id="admin-content" ref="mainContent" class="auth-content" tabindex="-1">
         <ol class="progress" aria-label="管理画面の利用手順">
           <li
-            v-for="(label, index) in ['ログイン', '利用申請', '運営開始']"
+            v-for="(label, index) in adminWorkflowSteps"
             :key="label"
             :class="{ current: step === index + 1, complete: step > index + 1 }"
             :aria-current="step === index + 1 ? 'step' : undefined"
@@ -210,7 +169,7 @@ async function confirmLogout() {
           <h1 id="application-title" class="state-title">{{ requestCopy.title }}</h1>
           <p class="intro">{{ requestCopy.description }}</p>
           <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">ログイン中のアカウント</span><strong>{{ session.email }}</strong></div></div>
-          <dl v-if="accessRequest" class="request-meta"><div><dt>申請番号</dt><dd>#{{ accessRequest.id }}</dd></div><div><dt>有効期限（日本時間）</dt><dd>{{ formatDate(accessRequest.expiresAt) }}</dd></div></dl>
+          <dl v-if="accessRequest" class="request-meta"><div><dt>申請番号</dt><dd>#{{ accessRequest.id }}</dd></div><div><dt>有効期限（日本時間）</dt><dd>{{ formatAdminDate(accessRequest.expiresAt) }}</dd></div></dl>
           <button v-if="!accessRequest || requestStatus === 'REJECTED'" class="primary-button" :disabled="busy" @click="focusAfter(apply)">{{ busy ? '確認しています…' : requestStatus === 'REJECTED' ? 'もう一度利用を申請する' : '管理者へ利用を申請する' }} <PortalIcon name="arrow" /></button>
           <button v-else-if="requestStatus === 'APPROVED'" class="primary-button" :disabled="busy" @click="focusAfter(enter)">{{ busy ? '管理セッションに切り替えています…' : '管理ポータルへ進む' }} <PortalIcon name="arrow" /></button>
           <button v-else-if="requestStatus === 'PENDING'" class="secondary-button" :disabled="busy" @click="refresh"><PortalIcon name="refresh" />{{ busy ? '確認しています…' : '承認状況を確認する' }}</button>
@@ -223,12 +182,12 @@ async function confirmLogout() {
           <h1 id="management-title" class="state-title">運営を、はじめましょう。</h1>
           <p class="intro">アカウントとチームの利用申請を確認できます。</p>
           <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">{{ session.accessSource === 'ENVIRONMENT_ACCESS' ? '環境設定による管理アクセス' : '承認済みの管理アクセス' }}</span><strong>{{ session.email }}</strong></div></div>
-          <p class="session-expiry">セッション有効期限：{{ formatDate(session.expiresAt) }}（日本時間）</p>
+          <p class="session-expiry">セッション有効期限：{{ formatAdminDate(session.expiresAt) }}（日本時間）</p>
           <div v-if="canApprove" class="approval-inbox">
             <div class="inbox-heading"><h2>チームの利用申請 <span>{{ pendingRequests.length }}</span></h2><button class="icon-button" aria-label="利用申請を更新" :disabled="busy" @click="refresh"><PortalIcon name="refresh" /></button></div>
             <p class="inbox-description">申請者本人と確認してから承認してください。</p>
             <div v-if="pendingRequests.length === 0" class="empty-inbox"><span class="empty-icon"><PortalIcon name="check" /></span><strong>承認待ちの申請はありません</strong><p>新しい申請は、更新ボタンで確認できます。</p></div>
-            <ul v-else class="request-list"><li v-for="item in pendingRequests" :key="item.id"><div class="request-identity"><span class="account-avatar" aria-hidden="true">{{ item.email[0]?.toUpperCase() }}</span><div><strong>{{ item.email }}</strong><p>申請 #{{ item.id }} · {{ formatDate(item.expiresAt) }} まで</p></div></div><div class="request-actions"><button class="small-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'reject' }">却下</button><button class="small-button approve-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'approve' }">承認する</button></div></li></ul>
+            <ul v-else class="request-list"><li v-for="item in pendingRequests" :key="item.id"><div class="request-identity"><span class="account-avatar" aria-hidden="true">{{ item.email[0]?.toUpperCase() }}</span><div><strong>{{ item.email }}</strong><p>申請 #{{ item.id }} · {{ formatAdminDate(item.expiresAt) }} まで</p></div></div><div class="request-actions"><button class="small-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'reject' }">却下</button><button class="small-button approve-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'approve' }">承認する</button></div></li></ul>
           </div>
           <button class="logout-button" :disabled="busy" @click="logoutConfirmation = true"><PortalIcon name="logout" />ログアウト</button>
         </section>

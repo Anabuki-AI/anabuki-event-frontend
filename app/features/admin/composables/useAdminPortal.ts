@@ -1,5 +1,10 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { adminAuthApi, type AccessRequest, type AdminSession } from '../api/admin-auth'
+import { adminAuthApi } from '../api/admin-auth'
+import type {
+  AccessRequest,
+  AccessRequestDecision,
+  AdminSession,
+} from '../types'
 import { ApiError } from '~/lib/api/error'
 
 export function useAdminPortal() {
@@ -126,7 +131,7 @@ export function useAdminPortal() {
     })
   }
 
-  function decide(id: number, decision: 'approve' | 'reject') {
+  function decide(id: number, decision: AccessRequestDecision) {
     return run(async () => {
       await adminAuthApi.decide(id, decision)
       pendingRequests.value = pendingRequests.value.filter(item => item.id !== id)
