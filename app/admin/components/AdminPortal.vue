@@ -80,7 +80,7 @@ async function confirmLogout() {
         <p class="eyebrow">QUIZ EVENT MANAGEMENT</p>
         <h2>運営を、<br ><em>はじめましょう。</em></h2>
         <p class="lead">
-          クイズ大会を支える運営チームのための、
+          クイズ大会を支える運営チームのための、<br >
           安全な管理者ポータルです。
         </p>
       </div>
