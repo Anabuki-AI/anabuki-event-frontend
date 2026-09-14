@@ -8,7 +8,8 @@ export async function request<T>(path: NitroFetchRequest, options: NitroFetchOpt
     return await $fetch<T>(path, {
       baseURL: config.public.apiBase,
       ...options,
-    })
+      // ofetchのFetchOptionsとNuxtアプリの$fetch(Nitro型)のmethod型差異を吸収する
+    } as Parameters<typeof $fetch>[1])
   }
   catch (error) {
     throw toApiError(error)

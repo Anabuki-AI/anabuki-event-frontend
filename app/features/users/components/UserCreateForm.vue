@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { createUser } from '../api/create-user'
-import type { UserResponse } from '../types'
 import { toApiError } from '~/lib/api/error'
 
 const form = reactive({
@@ -12,16 +11,15 @@ const form = reactive({
 
 const isSubmitting = ref(false)
 const errorMessage = ref('')
-const createdUser = ref<UserResponse | null>(null)
 
 async function handleSubmit() {
   errorMessage.value = ''
-  createdUser.value = null
   isSubmitting.value = true
 
   try {
-    createdUser.value = await createUser({ ...form })
+    const user = await createUser({ ...form })
     form.password = ''
+    await navigateTo({ path: '/users/waiting', query: { userName: user.userName } })
   }
   catch (error) {
     errorMessage.value = toApiError(error).message
@@ -72,10 +70,6 @@ async function handleSubmit() {
 
     <p v-if="errorMessage" class="status-message error" role="alert">
       {{ errorMessage }}
-    </p>
-
-    <p v-if="createdUser" class="status-message success" role="status">
-      {{ createdUser.userName }} さんを登録しました（ID: {{ createdUser.id }}）。
     </p>
   </form>
 </template>
