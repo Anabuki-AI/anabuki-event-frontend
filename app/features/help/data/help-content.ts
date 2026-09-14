@@ -29,7 +29,7 @@ export type FaqItem = {
 export type OperationGuideItem = {
     id: string
     title: string
-    description: string
+    description?: string
     manualHref?: string
 }
 

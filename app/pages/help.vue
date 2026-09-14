@@ -79,7 +79,10 @@ useSeoMeta({
               {{ item.title }}
             </h3>
 
-            <p class="help-operation-description">
+            <p
+              v-if="item.description"
+              class="help-operation-description"
+            >
               {{ item.description }}
             </p>
 
