@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AdminPortal from '~/features/admin/components/AdminPortal.vue'
 
-definePageMeta({ alias: ['/admin/login'] })
 useHead({
   title: '管理者ログイン',
   meta: [{ name: 'robots', content: 'noindex, nofollow' }],

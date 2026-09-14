@@ -12,6 +12,8 @@ export default defineNuxtConfig({
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
+      // Enable only once the server implements docs/admin-monitoring-contract.md.
+      adminMonitoringEnabled: false,
     },
   },
   routeRules: {

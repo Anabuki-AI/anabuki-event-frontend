@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import PortalIcon from './PortalIcon.vue'
+import AdminConsole from './AdminConsole.vue'
 import { useAdminPortal } from '../composables/useAdminPortal'
 
 const {
@@ -28,9 +29,13 @@ const oauthFailed = computed(() => route.query.auth_error === 'google')
 const googleStartUrl = computed(
   () => `${config.public.apiBase.replace(/\/$/, '')}/auth/google/start`,
 )
-const confirmation = ref<{ id: number; decision: 'approve' | 'reject' } | null>(
-  null,
-)
+// All deep links share the same authenticated gate; applicants retain their flow.
+watch([ready, isManager, () => route.path], () => {
+  const path = route.path.replace(/\/$/, '')
+  if (!ready.value || !/^\/admin(?:\/|$)/.test(path)) return
+  if (isManager.value && path === '/admin/login') void navigateTo('/admin', { replace: true })
+  if (!isManager.value && path !== '/admin/login') void navigateTo('/admin/login', { replace: true })
+})
 const logoutConfirmation = ref(false)
 const mainContent = ref<HTMLElement | null>(null)
 const requestStatus = computed(() => accessRequest.value?.status)
@@ -84,13 +89,6 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-async function confirmDecision() {
-  if (!confirmation.value) return
-  const { id, decision } = confirmation.value
-  confirmation.value = null
-  await decide(id, decision)
-}
-
 async function focusAfter(action: () => Promise<void>) {
   await action()
   await nextTick()
@@ -108,7 +106,19 @@ async function confirmLogout() {
 </script>
 
 <template>
-  <div class="admin-portal">
+  <AdminConsole
+    v-if="ready && isManager && session"
+    :session="session"
+    :pending-requests="pendingRequests"
+    :busy="busy"
+    :can-approve="canApprove"
+    :error="error"
+    :notice="notice"
+    :refresh="refresh"
+    :logout="logout"
+    :decide="decide"
+  />
+  <div v-else class="admin-portal">
     <a class="skip-link" href="#admin-content">ログイン操作へ移動</a>
 
     <aside class="editorial-panel" aria-label="管理者ポータルのご案内">
@@ -229,20 +239,6 @@ async function confirmLogout() {
           <button v-else-if="requestStatus === 'PENDING'" class="secondary-button" :disabled="busy" @click="refresh"><PortalIcon name="refresh" />{{ busy ? '確認しています…' : '承認状況を確認する' }}</button>
           <p v-if="requestStatus === 'PENDING'" class="secure-note"><span class="live-dot" />10秒ごとに自動確認します。別のブラウザを開かずにお待ちください。</p>
           <div class="device-note"><PortalIcon name="lock" /><p>申請はこの端末・ブラウザに紐づいています。ログインから20分以内に、承認と管理セッションへの切り替えを完了してください。</p></div>
-        </section>
-
-        <section v-else class="management-section" aria-labelledby="management-title" :aria-busy="busy">
-          <span class="state-badge approved"><PortalIcon name="check" />管理者としてログイン中</span>
-          <h1 id="management-title" class="state-title">運営を、はじめましょう。</h1>
-          <p class="intro">アカウントとチームの利用申請を確認できます。</p>
-          <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">{{ session.accessSource === 'ENVIRONMENT_ACCESS' ? '環境設定による管理アクセス' : '承認済みの管理アクセス' }}</span><strong>{{ session.email }}</strong></div></div>
-          <p class="session-expiry">セッション有効期限：{{ formatDate(session.expiresAt) }}（日本時間）</p>
-          <div v-if="canApprove" class="approval-inbox">
-            <div class="inbox-heading"><h2>チームの利用申請 <span>{{ pendingRequests.length }}</span></h2><button class="icon-button" aria-label="利用申請を更新" :disabled="busy" @click="refresh"><PortalIcon name="refresh" /></button></div>
-            <p class="inbox-description">申請者本人と確認してから承認してください。</p>
-            <div v-if="pendingRequests.length === 0" class="empty-inbox"><span class="empty-icon"><PortalIcon name="check" /></span><strong>承認待ちの申請はありません</strong><p>新しい申請は、更新ボタンで確認できます。</p></div>
-            <ul v-else class="request-list"><li v-for="item in pendingRequests" :key="item.id"><div class="request-identity"><span class="account-avatar" aria-hidden="true">{{ item.email[0]?.toUpperCase() }}</span><div><strong>{{ item.email }}</strong><p>申請 #{{ item.id }} · {{ formatDate(item.expiresAt) }} まで</p></div></div><div class="request-actions"><button class="small-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'reject' }">却下</button><button class="small-button approve-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'approve' }">承認する</button></div></li></ul>
-          </div>
           <button class="logout-button" :disabled="busy" @click="logoutConfirmation = true"><PortalIcon name="logout" />ログアウト</button>
         </section>
       </main>
@@ -250,13 +246,6 @@ async function confirmLogout() {
       <footer class="workspace-footer"><p>管理機能はPCでの利用を推奨しています。</p><span>ANABUKI EVENT</span></footer>
     </section>
 
-    <div v-if="confirmation" class="modal-backdrop" role="presentation">
-      <section class="confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="decision-title">
-        <p class="eyebrow">CONFIRMATION</p><h2 id="decision-title">{{ confirmation.decision === 'approve' ? 'この申請を承認しますか？' : 'この申請を却下しますか？' }}</h2>
-        <p>{{ confirmation.decision === 'approve' ? '承認すると、申請者はこの端末から管理ポータルへ進めます。' : '却下した申請者は、必要に応じて再申請できます。' }}</p>
-        <div class="modal-actions"><button class="small-button" @click="confirmation = null">戻る</button><button class="small-button approve-button" :disabled="busy" @click="confirmDecision">{{ confirmation.decision === 'approve' ? '承認する' : '却下する' }}</button></div>
-      </section>
-    </div>
     <div v-if="logoutConfirmation" class="modal-backdrop" role="presentation">
       <section class="confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-title">
         <p class="eyebrow">SIGN OUT</p><h2 id="logout-title">ログアウトしますか？</h2><p>承認待ちの利用申請がある場合は取り消されます。</p>
