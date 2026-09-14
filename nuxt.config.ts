@@ -14,13 +14,9 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
     },
   },
-  nitro: {
-    devProxy: {
-      '/api': {
-        target: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
-        changeOrigin: true,
-      },
-    },
+  routeRules: {
+    '/admin': { headers: { 'cache-control': 'no-store' } },
+    '/admin/**': { headers: { 'cache-control': 'no-store' } },
   },
   typescript: {
     typeCheck: true,
