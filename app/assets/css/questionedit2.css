@@ -28,6 +28,14 @@
   gap: 8px;
 }
 
+.question-add-shell .question-add-header h1,
+.question-add-shell .question-add-header h2,
+.question-add-shell .question-add-header .muted-copy {
+margin: 0;
+}
+
+
+
 .question-add-shell .question-add-form {
   display: grid;
   gap: 24px;
