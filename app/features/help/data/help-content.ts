@@ -5,6 +5,10 @@ export const operationGuideItems: OperationGuideItem[] = [
         description: 'クイズ大会に参加するためのユーザー情報を登録する画面です。',
     },
     {
+        id: 'registration-complete',
+        title: 'ユーザー登録完了',
+    },
+    {
         id: 'waiting-room',
         title: '待機画面',
         description: 'クイズ開始まで待機し、参加人数やリアクションを確認する画面です。',
@@ -13,6 +17,42 @@ export const operationGuideItems: OperationGuideItem[] = [
         id: 'nickname-edit',
         title: 'ニックネーム編集',
         description: '登録したニックネームを変更する画面です。',
+    },
+    {
+        id: 'answer',
+        title: 'クイズ回答',
+    },
+    {
+        id: 'rankings',
+        title: 'ランキング',
+    },
+    {
+        id: 'admin-top',
+        title: '管理者トップ',
+    },
+    {
+        id: 'problem-management',
+        title: '問題管理',
+    },
+    {
+        id: 'problem-create',
+        title: '問題作成',
+    },
+    {
+        id: 'problem-edit',
+        title: '問題編集',
+    },
+    {
+        id: 'problem-multiplier',
+        title: '倍率設定',
+    },
+    {
+        id: 'quiz-control',
+        title: 'クイズ出題管理',
+    },
+    {
+        id: 'voting-rate',
+        title: '投票率確認',
     },
 ]
 
