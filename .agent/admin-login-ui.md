@@ -1,7 +1,5 @@
 # Admin login UI — implementation handoff
 
-> UI design revision: see [admin-login-redesign.md](./admin-login-redesign.md) for the current lavender management-console design, reference interpretation, updated copy, and 13-state browser/accessibility verification. The original design description below is historical; the authentication contract remains current.
-
 ## Request and workspace
 
 User: admin login UI を追加する。既存の申請・認証の方式を調査して最適化する。既存の他 UI の見た目は踏襲せず、Astra に独立した良い UI を実装させる。

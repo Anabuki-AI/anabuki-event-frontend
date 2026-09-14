@@ -1,11 +1,9 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'arrow' | 'lock' | 'check' | 'refresh' | 'logout' | 'clock' | 'info' | 'console' | 'team'
+  name: 'arrow' | 'lock' | 'check' | 'refresh' | 'logout' | 'clock' | 'info'
 }>()
 
 const paths = {
-  console: 'M4 4h16v16H4V4Zm0 5h16M9 9v11',
-  team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M15 3.13a4 4 0 0 1 0 7.75M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
   arrow: 'M5 12h14m-6-6 6 6-6 6',
   lock: 'M7 10V7a5 5 0 0 1 10 0v3M6 10h12a1 1 0 0 1 1 1v9H5v-9a1 1 0 0 1 1-1Zm6 4v2',
   check: 'm5 12 4 4L19 6',
