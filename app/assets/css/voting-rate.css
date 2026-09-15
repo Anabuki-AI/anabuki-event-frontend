@@ -3,37 +3,65 @@
  * ページ単位で voting-rate.vue から読み込む。
  * 他ページへの漏洩を防ぐため、すべてテンプレートルート（.voting-rate-shell）配下でネームスペースする。
  * 使用色は #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb の5色のみ。
+ * 共通 .page-shell の中央配置・余白には依存せず、全画面レイアウトをこのファイルで上書きする。
  */
 
 .voting-rate-shell {
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  display: block;
   background: #edeffa;
 }
 
 .voting-rate-shell .voting-card {
-  width: min(100%, 860px);
-  padding: clamp(28px, 4vw, 48px);
-  border: 1px solid #cdcfdb;
-  border-radius: 28px;
-  background: #ffffff;
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 16px clamp(24px, 4vw, 48px) 20px;
+  border: 0;
+  border-radius: 0;
+  background: #edeffa;
   display: grid;
-  gap: 28px;
+  align-content: start;
+  gap: 12px;
 }
 
-.voting-rate-shell .voting-card h1 {
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
+.voting-rate-shell .back-link {
+  color: #132238;
+  font-size: 0.875rem;
 }
 
 .voting-rate-shell .voting-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
+}
+
+.voting-rate-shell .eyebrow {
+  margin: 0 0 2px;
+  font-size: 0.75rem;
+}
+
+.voting-rate-shell .voting-card h1 {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.voting-rate-shell .muted-copy {
+  margin: 8px 0 0;
+  color: #132238;
+  font-size: 0.875rem;
+  line-height: 1.6;
 }
 
 .voting-rate-shell .voting-refresh {
   min-height: 44px;
-  padding: 0 24px;
+  padding: 0 22px;
   border: 0;
   border-radius: 14px;
   color: #ffffff;
@@ -49,7 +77,7 @@
 .voting-rate-shell .voting-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -57,10 +85,10 @@
 
 .voting-rate-shell .summary-item {
   display: grid;
-  gap: 6px;
-  padding: 18px 20px;
+  gap: 2px;
+  padding: 10px 16px;
   border: 1px solid #cdcfdb;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #ffffff;
 }
 
@@ -72,7 +100,7 @@
 
 .voting-rate-shell .summary-value {
   color: #132238;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   letter-spacing: -0.02em;
 }
 
@@ -84,24 +112,25 @@
 
 .voting-rate-shell .question-panel {
   display: grid;
-  gap: 14px;
-  padding: 22px 24px;
+  gap: 10px;
+  padding: 14px 18px;
   border: 1px solid #cdcfdb;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #ffffff;
 }
 
 .voting-rate-shell .question-select-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
 }
 
 .voting-rate-shell .question-select {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: fit-content;
   color: #132238;
   font-size: 0.875rem;
@@ -139,12 +168,12 @@
   color: #132238;
   font-size: 1rem;
   font-weight: 600;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 .voting-rate-shell .option-list {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -152,10 +181,10 @@
 
 .voting-rate-shell .option-item {
   display: grid;
-  gap: 10px;
-  padding: 18px 20px;
+  gap: 8px;
+  padding: 10px 16px;
   border: 1px solid #cdcfdb;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #ffffff;
 }
 
@@ -188,7 +217,7 @@
 }
 
 .voting-rate-shell .option-bar {
-  height: 12px;
+  height: 10px;
   border-radius: 999px;
   background: #cdcfdb;
   overflow: hidden;
@@ -203,5 +232,5 @@
 .voting-rate-shell .voting-note {
   margin: 0;
   color: #132238;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
