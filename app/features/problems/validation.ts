@@ -37,19 +37,24 @@ export function hasQuestionChanged(form: QuestionFormState, baseline: QuestionFo
   return JSON.stringify(form) !== JSON.stringify(baseline)
 }
 
-/** 自信度倍率の入力値チェック。空でない数値で min〜max 内 */
-export function validateMultiplierInput(value: string, min: number, max: number): string {
-  if (value.trim() === '') {
+/**
+ * 自信度倍率の入力値チェック。空でない数値で min〜max 内。
+ * input[type="number"] + v-model はVueが自動でNumber型にキャストするため、
+ * 呼び出し側がstring型として渡していても実行時はnumberが来ることがある
+ */
+export function validateMultiplierInput(value: string | number, min: number, max: number): string {
+  const text = String(value)
+  if (text.trim() === '') {
     return '自信度倍率を入力してください'
   }
-  const numeric = Number(value)
+  const numeric = Number(text)
   if (Number.isNaN(numeric)) {
     return '数値で入力してください'
   }
   if (numeric < min || numeric > max) {
     return `${min}〜${max}の範囲で入力してください`
   }
-  const decimals = value.split('.')[1]
+  const decimals = text.split('.')[1]
   if (decimals != null && decimals.length > 2) {
     return '小数点以下は2桁までで入力してください'
   }

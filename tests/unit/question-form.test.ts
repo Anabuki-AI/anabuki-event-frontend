@@ -11,7 +11,6 @@ const editQuestion: Question = {
   questionText: '日本の首都はどこでしょう？',
   choices: { A: '東京', B: '大阪', C: '札幌', D: '福岡' },
   correctAnswer: 'A',
-  confidenceMultiplier: '1.00',
 }
 
 function createTestRouter() {

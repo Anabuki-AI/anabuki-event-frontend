@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createMockQuestion,
+  fetchMockConfidenceMultipliers,
   fetchMockQuestion,
   fetchMockQuestions,
   updateMockConfidenceMultiplier,
@@ -29,7 +30,6 @@ describe('モック問題API', () => {
 
     expect(question.id).toBe(2)
     expect(question.questionText).toContain('政令指定都市')
-    expect(question.confidenceMultiplier).toBe('1.50')
   })
 
   it('存在しないIDは404のApiErrorになる', async () => {
@@ -47,29 +47,34 @@ describe('モック問題API', () => {
     expect(reloaded.questionText).not.toBe('書き換えた')
   })
 
-  it('追加すると採番ID・既定倍率1.00で登録される', async () => {
+  it('追加すると採番IDで登録される', async () => {
     const before = await fetchMockQuestions()
     const created = await createMockQuestion(payload)
 
     expect(created.id).toBe(before.length + 1)
-    expect(created.confidenceMultiplier).toBe('1.00')
     expect(created.choices.C).toBe('う')
     expect(await fetchMockQuestions()).toHaveLength(before.length + 1)
   })
 
-  it('編集は問題内容のみ更新し倍率を保持する', async () => {
-    const target = await fetchMockQuestion(4)
+  it('編集は問題内容のみ更新する', async () => {
     const updated = await updateMockQuestion(4, payload)
 
     expect(updated.questionText).toBe('テスト用の問題文です')
-    expect(updated.confidenceMultiplier).toBe(target.confidenceMultiplier)
+    expect(updated.choices.C).toBe('う')
+  })
+})
+
+describe('モック自信度倍率API（自信度あり/普通/なし3段階の共通設定値）', () => {
+  it('既定値は高:2.00・普通:1.00・低:0.50', async () => {
+    const current = await fetchMockConfidenceMultipliers()
+
+    expect(current).toEqual({ high: '2.00', normal: '1.00', low: '0.50' })
   })
 
-  it('倍率変更は問題文を変えず小数2桁に整形して保存する', async () => {
-    const target = await fetchMockQuestion(5)
-    const updated = await updateMockConfidenceMultiplier(5, '1.5')
+  it('1段階だけ変更しても他の段階には影響しない', async () => {
+    const updated = await updateMockConfidenceMultiplier('high', '3')
 
-    expect(updated.confidenceMultiplier).toBe('1.50')
-    expect(updated.questionText).toBe(target.questionText)
+    expect(updated).toEqual({ high: '3.00', normal: '1.00', low: '0.50' })
+    expect(await fetchMockConfidenceMultipliers()).toEqual({ high: '3.00', normal: '1.00', low: '0.50' })
   })
 })

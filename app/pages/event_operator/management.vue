@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { fetchQuestions } from '~/features/problems/api/client'
-import { CHOICE_KEYS } from '~/features/problems/constants'
-import type { Question } from '~/features/problems/types'
+import { fetchConfidenceMultipliers, fetchQuestions } from '~/features/problems/api/client'
+import { CHOICE_KEYS, CONFIDENCE_LEVEL_LABELS, CONFIDENCE_LEVELS } from '~/features/problems/constants'
+import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '~/features/problems/types'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import {
   correctChoiceText,
   formatCorrectBadge,
-  formatMultiplierChip,
   formatQuestionId,
 } from '~/features/problems/components/QuestionRow'
+import ConfidenceMultiplierModal from '~/features/problems/components/ConfidenceMultiplierModal.vue'
 import { toApiError } from '~/lib/api/error'
 
 useSeoMeta({
@@ -26,18 +26,40 @@ const {
 const questions = ref<Question[]>([])
 const isLoading = ref(true)
 const errorMessage = ref('')
+const isMultiplierModalOpen = ref(false)
+// 自信度あり/普通/なし3段階の倍率。問題数の隣に現在値を表示するため一覧読み込みと合わせて取得する
+const confidenceMultipliers = ref<ConfidenceMultipliers | null>(null)
 
 async function loadQuestions() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    questions.value = await fetchQuestions()
+    const [loadedQuestions, loadedMultipliers] = await Promise.all([
+      fetchQuestions(),
+      fetchConfidenceMultipliers(),
+    ])
+    questions.value = loadedQuestions
+    confidenceMultipliers.value = loadedMultipliers
   }
   catch (error) {
     errorMessage.value = toApiError(error).message
   }
   finally {
     isLoading.value = false
+  }
+}
+
+function openMultiplierModal() {
+  isMultiplierModalOpen.value = true
+}
+
+function closeMultiplierModal() {
+  isMultiplierModalOpen.value = false
+}
+
+function handleMultiplierUpdated(level: ConfidenceLevel, value: string) {
+  if (confidenceMultipliers.value != null) {
+    confidenceMultipliers.value[level] = value
   }
 }
 
@@ -68,17 +90,14 @@ onMounted(loadQuestions)
       <nav v-if="isSidebarExpanded" class="admin-sidebar-nav">
         <NuxtLink class="admin-sidebar-link" to="/event_operator">運営者メイン</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
-        <NuxtLink class="admin-sidebar-link" to="/admin/quiz-control">出題管理</NuxtLink>
-        <NuxtLink class="admin-sidebar-link" to="/event_operator/problem-management">問題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/admin/quiz-control">イベント開始</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/management">問題管理</NuxtLink>
       </nav>
     </aside>
 
     <section class="admin-card problems-card">
       <header class="problems-header">
         <div>
-          <p class="eyebrow">
-            Admin
-          </p>
           <h1>問題管理</h1>
           <p class="muted-copy">
             登録済みの問題を確認し、各問題の編集や、新しい問題の追加ができます。
@@ -91,10 +110,6 @@ onMounted(loadQuestions)
           ＋ 問題を追加
         </NuxtLink>
       </header>
-
-      <p class="mock-notice">
-        現在は仮のデータを表示しています。実API連携は後ほど有効になります。（この文は削除予定）
-      </p>
 
       <p
         v-if="isLoading"
@@ -131,12 +146,33 @@ onMounted(loadQuestions)
         v-else
         class="question-list"
       >
-        <p
-          class="question-count"
-          role="status"
-        >
-          全 {{ questions.length }} 問
-        </p>
+        <div class="question-count-row">
+          <div class="question-count-group">
+            <p
+              class="question-count"
+              role="status"
+            >
+              全 {{ questions.length }} 問
+            </p>
+            <template v-if="confidenceMultipliers">
+              <span
+                v-for="level in CONFIDENCE_LEVELS"
+                :key="level"
+                class="multiplier-chip"
+              >
+                {{ CONFIDENCE_LEVEL_LABELS[level] }} ×{{ confidenceMultipliers[level] }}
+              </span>
+            </template>
+          </div>
+          <button
+            type="button"
+            class="multiplier-manage-button"
+            aria-haspopup="dialog"
+            @click="openMultiplierModal"
+          >
+            倍率を変更
+          </button>
+        </div>
 
         <!-- 問題数が多い(本番26問)ため、一覧部分だけを内側スクロールさせる -->
         <div class="question-rows">
@@ -158,19 +194,28 @@ onMounted(loadQuestions)
             </summary>
 
             <div class="question-row-detail">
-              <ul class="question-choices">
-                <li
-                  v-for="key in CHOICE_KEYS"
-                  :key="key"
-                  :class="{ 'is-correct': key === question.correctAnswer }"
+              <div
+                v-if="question.imageUrl"
+                class="question-image"
+              >
+                <img
+                  :src="question.imageUrl"
+                  :alt="`${formatQuestionId(question.id)}の画像`"
                 >
-                  <span class="choice-key">{{ key }}</span>
-                  {{ question.choices[key] }}
-                </li>
-              </ul>
+              </div>
 
-              <div class="question-row-foot">
-                <span class="multiplier-chip">{{ formatMultiplierChip(question) }}</span>
+              <div class="question-choices-row">
+                <ul class="question-choices">
+                  <li
+                    v-for="key in CHOICE_KEYS"
+                    :key="key"
+                    :class="{ 'is-correct': key === question.correctAnswer }"
+                  >
+                    <span class="choice-key">{{ key }}</span>
+                    {{ question.choices[key] }}
+                  </li>
+                </ul>
+
                 <div class="question-row-actions">
                   <NuxtLink
                     class="row-action-link"
@@ -185,5 +230,11 @@ onMounted(loadQuestions)
         </div>
       </div>
     </section>
+
+    <ConfidenceMultiplierModal
+      v-if="isMultiplierModalOpen"
+      @close="closeMultiplierModal"
+      @updated="handleMultiplierUpdated"
+    />
   </main>
 </template>

@@ -24,6 +24,10 @@
   height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* .admin-card(main.css)はgap未指定のため、末尾がalign-items: endの.problems-headerでは
+     ヘッダーの操作ボタンと本文側の要素(倍率を変更ボタン等)が隙間なく接してしまう。
+     ヘッダーと本文の間に明示的な余白を設ける */
+  gap: 12px;
   overflow: hidden;
   border: none;
   /* 左はサイドバーに接するため角丸なし、右は隙間ができるため角丸をつける */
@@ -50,11 +54,55 @@
   line-height: 1.6;
 }
 
-.question-count {
+.question-count-row {
+  display: flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.question-count-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.question-count {
   margin: 0;
   color: #516176;
   font-size: 14px;
+}
+
+.multiplier-chip {
+  padding: 5px 12px;
+  border: 1px solid rgb(23 105 194 / 32%);
+  border-radius: 999px;
+  color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+  font-size: 13px; /* 補足は12-14px規定 */
+  font-weight: 750;
+}
+
+.multiplier-manage-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #1769c2;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 750;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.multiplier-manage-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
 }
 
 .question-list {
@@ -159,15 +207,30 @@
   font-weight: 750;
 }
 
+/* 問題に画像が設定されている場合だけ表示する枠。imageUrl未設定時はDOM自体が
+   描画されないため、余白も含めてスペースは残らない */
+.question-image {
+  overflow: hidden;
+  border-radius: 14px;
+  background: #eef2f8;
+}
+
+.question-image img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+}
+
 .question-choices {
   display: grid;
-  grid-template-columns: 1fr; /* PC画面では1列で読みやすく */
-  gap: 6px;
+  grid-template-columns: repeat(2, 1fr); /* A,B / C,D の2行2列 */
+  gap: 8px 20px;
   margin: 0;
   padding: 0;
   list-style: none;
   color: #253750;
-  font-size: 14px; /* 一覧の選択肢は補足扱い。本文は問題文 */
+  font-size: 16px; /* 本文は16px規定 */
 }
 
 .question-choices li {
@@ -186,25 +249,25 @@
   font-weight: 750;
 }
 
-.question-row-foot {
+/* 編集ボタンをC,D行(選択肢ブロックの下端)に揃えて右側に配置する。
+   .question-choicesの列構成には触れず、隣に置いた.question-row-actionsを
+   align-items: flex-endで下端合わせにするだけで実現する */
+.question-choices-row {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
+  gap: 12px 20px;
 }
 
-.multiplier-chip {
-  padding: 5px 12px;
-  border: 1px solid rgb(23 105 194 / 32%);
-  border-radius: 999px;
-  color: #1769c2;
-  background: rgb(23 105 194 / 6%);
-  font-size: 13px; /* 補足は12-14px規定 */
-  font-weight: 750;
+.question-choices-row .question-choices {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .question-row-actions {
   display: flex;
+  flex-shrink: 0;
   gap: 10px;
 }
 
@@ -269,5 +332,132 @@
   .row-action-link {
     justify-content: center;
     min-height: 44px;
+  }
+}
+
+/* ===== 自信度倍率の設定モーダル(ConfidenceMultiplierModal.vue) =====
+   自信度あり/普通/なしの3段階(常に3行固定)を編集するモーダル。
+   overlay/panelの基本形はmain.cssの.help-dialogを踏襲する */
+.multiplier-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: start center;
+  padding: 20px;
+  background: rgb(19 34 56 / 45%);
+}
+
+.multiplier-modal-panel {
+  width: min(100%, 520px);
+  max-height: 86dvh;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 26px;
+  border: none;
+  border-radius: 22px;
+  background: #edeffa;
+  box-shadow: 0 24px 80px rgb(34 75 120 / 30%);
+}
+
+.multiplier-modal-panel:focus-visible {
+  outline: 3px solid #1769c2;
+  outline-offset: 2px;
+}
+
+.multiplier-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.multiplier-modal-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.multiplier-modal-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  color: #516176;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.multiplier-modal-close:hover {
+  color: #132238;
+  background: rgb(19 34 56 / 6%);
+}
+
+.multiplier-modal-note {
+  margin: 8px 0 0;
+}
+
+.multiplier-modal-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.multiplier-modal-row {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.multiplier-modal-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.multiplier-modal-row-controls .multiplier-input-label {
+  flex: 1;
+  gap: 0;
+}
+
+.multiplier-modal-row-label {
+  flex-shrink: 0;
+  width: 6.5rem;
+  color: #253750;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.multiplier-modal-save {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 18px;
+}
+
+.multiplier-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+@media (width <= 480px) {
+  .multiplier-modal-row-controls {
+    flex-wrap: wrap;
+  }
+
+  .multiplier-modal-row-label {
+    width: auto;
   }
 }

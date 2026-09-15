@@ -1,7 +1,8 @@
-import type { ChoiceKey, Question } from '../types'
+import type { ChoiceKey, ConfidenceLevel, ConfidenceMultipliers, Question } from '../types'
 import { request } from '~/lib/api/client'
 import {
   createMockQuestion,
+  fetchMockConfidenceMultipliers,
   fetchMockQuestion,
   fetchMockQuestions,
   updateMockConfidenceMultiplier,
@@ -22,7 +23,7 @@ interface QuestionApiModel {
   choiceC: string
   choiceD: string
   correctAnswer: ChoiceKey
-  confidenceMultiplier: string
+  imageUrl?: string
 }
 
 function toQuestion(model: QuestionApiModel): Question {
@@ -36,7 +37,7 @@ function toQuestion(model: QuestionApiModel): Question {
       D: model.choiceD,
     },
     correctAnswer: model.correctAnswer,
-    confidenceMultiplier: model.confidenceMultiplier,
+    imageUrl: model.imageUrl,
   }
 }
 
@@ -95,13 +96,20 @@ export async function updateQuestion(id: number, payload: QuestionPayload): Prom
   return toQuestion(model)
 }
 
-export async function updateConfidenceMultiplier(id: number, confidenceMultiplier: string): Promise<Question> {
+/** 自信度倍率は問題ごとではなく、「自信度あり/普通/なし」3段階に共通で適用される設定値 */
+export async function fetchConfidenceMultipliers(): Promise<ConfidenceMultipliers> {
   if (USE_MOCK) {
-    return updateMockConfidenceMultiplier(id, confidenceMultiplier)
+    return fetchMockConfidenceMultipliers()
   }
-  const model = await request<QuestionApiModel>(`/admin/questions/${id}/confidence-multiplier`, {
+  return request<ConfidenceMultipliers>('/admin/confidence-multipliers')
+}
+
+export async function updateConfidenceMultiplier(level: ConfidenceLevel, value: string): Promise<ConfidenceMultipliers> {
+  if (USE_MOCK) {
+    return updateMockConfidenceMultiplier(level, value)
+  }
+  return request<ConfidenceMultipliers>(`/admin/confidence-multipliers/${level}`, {
     method: 'PATCH',
-    body: { confidenceMultiplier: Number(confidenceMultiplier) },
+    body: { confidenceMultiplier: Number(value) },
   })
-  return toQuestion(model)
 }
