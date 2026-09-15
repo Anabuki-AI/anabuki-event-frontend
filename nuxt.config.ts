@@ -8,6 +8,7 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
     },
   },
+  css: ['~/assets/css/questionedit.css'],
   runtimeConfig: {
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
@@ -23,6 +24,11 @@ export default defineNuxtConfig({
         changeOrigin: true,
       },
     },
+  routeRules: {
+    '/admin': { headers: { 'cache-control': 'no-store' } },
+    '/admin/**': { headers: { 'cache-control': 'no-store' } },
+    '/operator': { headers: { 'cache-control': 'no-store' } },
+    '/operator/**': { headers: { 'cache-control': 'no-store' } },
   },
   typescript: {
     typeCheck: true,
