@@ -28,6 +28,10 @@ pnpm dev
 
 開発サーバーは通常 `http://localhost:3000` で起動します。Rails backend はデフォルトで `http://localhost:8080` を参照し、Nuxt のサーバールートが開発・本番ともに `/api` へのリクエストを転送します。本番起動時も `NUXT_BACKEND_BASE_URL` で転送先を指定できます。
 
+## 参加登録
+
+`/participants/new` は表示名とアンケート回答を `POST /api/participants` に送ります。成功時にRailsが発行するHttpOnly Cookieセッションを使用し、`/participants/waiting` は `GET /api/participants/me` で現在のUUID参加者を解決します。クライアント側には認証トークン・参加者IDを保存せず、未認証時は参加登録画面へ戻します。
+
 ## 管理者ログイン
 
 `/admin` または `/admin/login` から利用できます。Google ログイン → 利用申請 → 管理者の承認 → 管理セッションへの切り替え、という既存 Rails API のフローに接続しています。承認済み・環境アクセスのアカウントは申請をスキップします。ログイン後は管理ポータルに申請承認用の受信箱が表示されます。

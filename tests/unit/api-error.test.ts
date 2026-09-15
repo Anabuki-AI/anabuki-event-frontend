@@ -4,13 +4,13 @@ import { ApiError, toApiError } from '../../app/lib/api/error'
 describe('toApiError', () => {
   it('normalizes a backend error response', () => {
     const error = toApiError({
-      data: { error: 'Email is already registered' },
+      data: { error: 'Participant registration failed' },
       statusCode: 409,
       message: 'Request failed',
     })
 
     expect(error).toBeInstanceOf(ApiError)
-    expect(error.message).toBe('Email is already registered')
+    expect(error.message).toBe('Participant registration failed')
     expect(error.statusCode).toBe(409)
   })
 

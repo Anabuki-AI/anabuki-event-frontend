@@ -9,11 +9,9 @@ useSeoMeta({
   <main class="page-shell">
     <section class="form-card waiting-card">
       <div class="waiting-header">
-        <div class="waiting-user">
-          <p class="eyebrow-main">
-            ヘルプ
-          </p>
-        </div>
+        <p class="eyebrow-main">
+          ヘルプ
+        </p>
       </div>
 
       <div class="help-screen-body">
@@ -21,12 +19,11 @@ useSeoMeta({
           <li>この画面はイベントの待機画面です。</li>
           <li>参加人数は自動で更新されます。</li>
           <li>リアクションボタンで気持ちを伝えられます。</li>
-          <li>クイズが開始されると、画面は自動的に切り替わります。</li>
-          <li>ニックネームを変更したいときは待機画面の✏️ボタンを押してください。</li>
+          <li>クイズが開始されると、画面が自動的に切り替わります。</li>
         </ul>
       </div>
 
-      <NuxtLink class="primary-link" to="/users/waiting">
+      <NuxtLink class="primary-link" to="/participants/waiting">
         待機画面へ戻る
       </NuxtLink>
     </section>

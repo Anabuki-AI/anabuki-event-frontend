@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRoute } from '#imports'
+import { onMounted, ref, watch } from 'vue'
+import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
+import type { Participant } from '~/features/participants/types'
 import type { ReactionOption } from '~/features/waiting/types'
 
 const reactionOptions: ReactionOption[] = [
@@ -14,27 +15,28 @@ const reactionOptions: ReactionOption[] = [
   { emoji: '❤️', label: 'ありがとう' },
 ]
 
-const route = useRoute()
-
-// ユーザー登録画面からクエリで受け取る(状態管理は後の工程で整理)
-const userName = ref((() => {
-  const name = route.query.userName
-  return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
-})())
-
-// デザイン確認用の仮データ。API連携は後の工程で置き換える。
+const participant = ref<Participant>()
 const participantCount = ref(12)
-
-// 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
 const isCountUpdated = ref(false)
+const lastReactedEmoji = ref('')
 let countTimer: ReturnType<typeof setTimeout> | undefined
+let reactionTimer: ReturnType<typeof setTimeout> | undefined
 
-watch(participantCount, (next, prev) => {
-  if (next <= prev) {
+onMounted(async () => {
+  try {
+    participant.value = await getCurrentParticipant()
+  }
+  catch {
+    await navigateTo('/participants/new')
+  }
+})
+
+watch(participantCount, (next, previous) => {
+  if (next <= previous) {
     return
   }
+
   isCountUpdated.value = false
-  // クラス付け外しを1フレーム分空けて再トリガーできるようにする
   requestAnimationFrame(() => {
     isCountUpdated.value = true
     clearTimeout(countTimer)
@@ -43,10 +45,6 @@ watch(participantCount, (next, prev) => {
     }, 500)
   })
 })
-
-// 押された絵文字だけをバウンドさせる
-const lastReactedEmoji = ref('')
-let reactionTimer: ReturnType<typeof setTimeout> | undefined
 
 function handleReact(emoji: string) {
   lastReactedEmoji.value = emoji
@@ -58,41 +56,27 @@ function handleReact(emoji: string) {
 </script>
 
 <template>
-  <section class="form-card waiting-card quiz-page">
+  <main class="page-shell">
+    <p v-if="!participant" class="status-message" role="status">
+      参加情報を確認しています…
+    </p>
+
+    <section v-else class="form-card waiting-card quiz-page">
       <div class="waiting-header">
         <div class="waiting-user">
           <p class="quiz-header-title">クイズ大会</p>
-          <p class="eyebrow-main">
-            Waiting room
-          </p>
-          <div class="waiting-user-row">
-            <p class="waiting-user-name">
-              {{ userName }} さん
-            </p>
-            <NuxtLink
-              class="name-edit-button"
-              :to="{ path: '/users/name/edit', query: { userName } }"
-              aria-label="ニックネームを編集する"
-            >
-              <span aria-hidden="true">✏️</span>
-            </NuxtLink>
-          </div>
+          <p class="eyebrow-main">Waiting room</p>
+          <p class="waiting-user-name">{{ participant.displayName }} さん</p>
         </div>
-        <NuxtLink
-          class="help-button"
-          to="/users/help"
-        >
+        <NuxtLink class="help-button" to="/participants/help">
           ヘルプ
         </NuxtLink>
       </div>
 
       <div class="participant-panel">
-        <p class="participant-label">
-          参加人数
-        </p>
+        <p class="participant-label">参加人数</p>
         <p class="participant-count" :class="{ 'is-updated': isCountUpdated }">
-          {{ participantCount }}
-          <span class="participant-unit">人</span>
+          {{ participantCount }} <span class="participant-unit">人</span>
         </p>
       </div>
 
@@ -102,9 +86,7 @@ function handleReact(emoji: string) {
       </p>
 
       <div class="reaction-section">
-        <h2 class="reaction-title">
-          リアクション
-        </h2>
+        <h2 class="reaction-title">リアクション</h2>
         <div class="reaction-bar">
           <button
             v-for="option in reactionOptions"
@@ -120,4 +102,5 @@ function handleReact(emoji: string) {
         </div>
       </div>
     </section>
+  </main>
 </template>

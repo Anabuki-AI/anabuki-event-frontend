@@ -91,7 +91,7 @@ h1 {
 }
 
 .primary-link,
-.user-form button {
+.participant-form button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -107,7 +107,7 @@ h1 {
 }
 
 .primary-link:hover,
-.user-form button:hover:not(:disabled) {
+.participant-form button:hover:not(:disabled) {
   background: #0f57a4;
   transform: translateY(-1px);
 }
@@ -123,12 +123,12 @@ h1 {
   color: #1769c2;
 }
 
-.user-form {
+.participant-form {
   display: grid;
   gap: 18px;
 }
 
-.user-form label {
+.participant-form label {
   display: grid;
   gap: 8px;
   color: #253750;
@@ -136,7 +136,8 @@ h1 {
   font-weight: 700;
 }
 
-.user-form input {
+.participant-form input:not([type='checkbox']),
+.participant-form select {
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
@@ -147,9 +148,22 @@ h1 {
   outline: none;
 }
 
-.user-form input:focus {
+.participant-form input:not([type='checkbox']):focus,
+.participant-form select:focus {
   border-color: #1769c2;
   box-shadow: 0 0 0 4px rgb(23 105 194 / 12%);
+}
+
+.participant-form .terms-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.field-error {
+  color: #912018;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .status-message {
