@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AdminPortal from '~/features/admin/components/AdminPortal.vue'
+import AdminPortal from '~/admin/components/AdminPortal.vue'
 
 // Separate route params, not aliases: Vue Router treats aliases as the same
 // location and suppresses navigation between them.

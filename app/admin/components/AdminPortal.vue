@@ -2,6 +2,11 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import PortalIcon from './PortalIcon.vue'
 import AdminConsole from './AdminConsole.vue'
+import {
+  adminWorkflowSteps,
+  formatAdminDate,
+  getAccessRequestStateCopy,
+} from '../portal-presentation'
 import { useAdminPortal } from '../composables/useAdminPortal'
 
 const {
@@ -39,55 +44,7 @@ watch([ready, isManager, () => route.path], () => {
 const logoutConfirmation = ref(false)
 const mainContent = ref<HTMLElement | null>(null)
 const requestStatus = computed(() => accessRequest.value?.status)
-const requestCopy = computed(() => {
-  switch (requestStatus.value) {
-    case 'PENDING':
-      return {
-        label: '承認待ち',
-        title: 'あと一歩。承認をお待ちください。',
-        description:
-          '利用申請を受け付けました。運営担当の管理者へ、下の申請番号とメールアドレスを伝えてください。',
-      }
-    case 'APPROVED':
-      return {
-        label: '承認済み',
-        title: '準備が整いました。',
-        description:
-          '管理者から利用が承認されました。このブラウザで管理セッションに切り替えて、管理ポータルへ進んでください。',
-      }
-    case 'REJECTED':
-      return {
-        label: '申請が却下されました',
-        title: '運営担当者へご確認ください。',
-        description:
-          '今回の申請は承認されませんでした。必要な権限について管理者に確認したうえで、再申請できます。',
-      }
-    case 'CANCELLED':
-      return {
-        label: '申請が取り消されました',
-        title: 'もう一度、ログインから。',
-        description:
-          '有効期限切れやログイン状態の変更により、この申請は無効になりました。ログアウトして、再度 Google でログインしてください。',
-      }
-    default:
-      return {
-        label: '本人確認済み',
-        title: '管理者に利用を申請しましょう。',
-        description:
-          'Google アカウントを確認できました。はじめて利用する方は、管理者の承認が必要です。',
-      }
-  }
-})
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  }).format(new Date(value))
-}
+const requestCopy = computed(() => getAccessRequestStateCopy(requestStatus.value))
 
 async function focusAfter(action: () => Promise<void>) {
   await action()
@@ -131,22 +88,9 @@ async function confirmLogout() {
         <p class="eyebrow">QUIZ EVENT MANAGEMENT</p>
         <h2>運営を、<br ><em>はじめましょう。</em></h2>
         <p class="lead">
-          クイズ大会を支える運営チームのための、
+          クイズ大会を支える運営チームのための、<br >
           安全な管理者ポータルです。
         </p>
-      </div>
-
-      <div class="question-cards" aria-label="ご利用の流れ">
-        <article class="question-card question-card--one">
-          <span class="card-index">01</span>
-          <p class="card-question">Q. はじめて利用するには？</p>
-          <p>Google アカウントでログイン後、利用申請を送信します。</p>
-        </article>
-        <article class="question-card question-card--two">
-          <span class="card-index">02</span>
-          <p class="card-question">Q. いつ使えるようになる？</p>
-          <p>運営担当者による承認後、このまま管理画面へ進めます。</p>
-        </article>
       </div>
 
       <p class="school-name">
@@ -164,7 +108,7 @@ async function confirmLogout() {
       <main id="admin-content" ref="mainContent" class="auth-content" tabindex="-1">
         <ol class="progress" aria-label="管理画面の利用手順">
           <li
-            v-for="(label, index) in ['ログイン', '利用申請', '運営開始']"
+            v-for="(label, index) in adminWorkflowSteps"
             :key="label"
             :class="{ current: step === index + 1, complete: step > index + 1 }"
             :aria-current="step === index + 1 ? 'step' : undefined"
@@ -233,7 +177,7 @@ async function confirmLogout() {
           <h1 id="application-title" class="state-title">{{ requestCopy.title }}</h1>
           <p class="intro">{{ requestCopy.description }}</p>
           <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">ログイン中のアカウント</span><strong>{{ session.email }}</strong></div></div>
-          <dl v-if="accessRequest" class="request-meta"><div><dt>申請番号</dt><dd>#{{ accessRequest.id }}</dd></div><div><dt>有効期限（日本時間）</dt><dd>{{ formatDate(accessRequest.expiresAt) }}</dd></div></dl>
+          <dl v-if="accessRequest" class="request-meta"><div><dt>申請番号</dt><dd>#{{ accessRequest.id }}</dd></div><div><dt>有効期限（日本時間）</dt><dd>{{ formatAdminDate(accessRequest.expiresAt) }}</dd></div></dl>
           <button v-if="!accessRequest || requestStatus === 'REJECTED'" class="primary-button" :disabled="busy" @click="focusAfter(apply)">{{ busy ? '確認しています…' : requestStatus === 'REJECTED' ? 'もう一度利用を申請する' : '管理者へ利用を申請する' }} <PortalIcon name="arrow" /></button>
           <button v-else-if="requestStatus === 'APPROVED'" class="primary-button" :disabled="busy" @click="focusAfter(enter)">{{ busy ? '管理セッションに切り替えています…' : '管理ポータルへ進む' }} <PortalIcon name="arrow" /></button>
           <button v-else-if="requestStatus === 'PENDING'" class="secondary-button" :disabled="busy" @click="refresh"><PortalIcon name="refresh" />{{ busy ? '確認しています…' : '承認状況を確認する' }}</button>
@@ -261,7 +205,7 @@ async function confirmLogout() {
 .editorial-panel { position:relative; display:flex; min-height:100vh; flex-direction:column; overflow:hidden; padding:48px clamp(32px, 7vw, 104px) 38px; background:var(--sage); }.editorial-panel::before { content:""; position:absolute; right:-160px; top:160px; width:390px; height:390px; border:1px solid #b5cdbb; border-radius:50%; }.editorial-panel::after { content:""; position:absolute; left:-80px; bottom:88px; width:220px; height:220px; border:1px solid #bfd3c3; border-radius:50%; }
 .brand { position:relative; z-index:1; display:flex; align-items:center; gap:12px; color:inherit; font-size:18px; font-weight:760; letter-spacing:.05em; text-decoration:none; }.brand small { display:block; margin-top:2px; color:#486758; font-size:10px; font-weight:600; letter-spacing:.12em; }.brand-mark { display:grid; grid-template-columns:repeat(2, 10px); gap:3px; }.brand-mark i { display:block; width:10px; height:10px; background:var(--deep-sage); }.brand-mark i:nth-child(2),.brand-mark i:nth-child(3) { background:#789d83; }
 .editorial-copy { position:relative; z-index:1; margin-top:clamp(70px, 14vh, 160px); }.eyebrow { margin:0 0 14px; color:#527261; font-size:11px; font-weight:750; letter-spacing:.14em; }.editorial-copy h2 { margin:0; font-family:ui-serif, Georgia, "Hiragino Mincho ProN", serif; font-size:clamp(38px, 4vw, 61px); font-weight:500; letter-spacing:-.08em; line-height:1.2; }.editorial-copy h2 em { color:var(--deep-sage); font-style:normal; }.lead { max-width:360px; margin:28px 0 0; color:#496153; font-size:15px; line-height:1.9; }
-.question-cards { position:relative; z-index:1; display:grid; gap:12px; max-width:440px; margin-top:54px; }.question-card { position:relative; padding:20px 54px 20px 24px; border:1px solid #bfd0c2; background:#eff5ef; box-shadow:0 14px 28px -28px #2c4d3899; }.question-card--two { margin-left:30px; background:#f5f8f2; }.card-index { position:absolute; right:18px; top:18px; color:#87a98f; font-size:11px; font-weight:750; }.card-question { margin:0 0 8px; color:var(--deep-sage); font-size:13px; font-weight:750; }.question-card p:last-child { margin:0; color:#52675a; font-size:12px; line-height:1.7; }.school-name { position:relative; z-index:1; margin:auto 0 0; color:#466353; font-size:12px; }.school-name span { display:block; margin-top:5px; color:#6b8373; font-size:11px; }
+.school-name { position:relative; z-index:1; margin:auto 0 0; color:#466353; font-size:12px; }.school-name span { display:block; margin-top:5px; color:#6b8373; font-size:11px; }
 .workspace-panel { display:flex; min-width:0; flex-direction:column; padding:34px clamp(32px, 7vw, 112px) 26px; }.workspace-header { display:flex; justify-content:space-between; align-items:center; gap:20px; min-height:36px; }.private-label,.participant-link { display:flex; align-items:center; gap:8px; color:#597066; font-size:12px; }.private-label svg { width:15px; }.participant-link { color:#466555; text-decoration:none; }.participant-link svg { width:16px; transition:transform .2s; }.participant-link:hover svg { transform:translateX(3px); }
 .auth-content { width:min(100%, 520px); margin:auto; padding:64px 0; }.progress { display:flex; align-items:center; margin:0 0 55px; padding:0; list-style:none; color:#94a29a; font-size:11px; font-weight:650; }.progress li { display:flex; align-items:center; gap:7px; white-space:nowrap; }.progress li:not(:last-child)::after { width:clamp(20px, 4vw, 64px); height:1px; margin:0 12px; background:#d9e3dc; content:""; }.step-number { display:grid; width:22px; height:22px; place-items:center; border:1px solid #c8d8cc; border-radius:50%; font-size:9px; }.step-number svg { width:12px; }.progress .current,.progress .complete { color:var(--deep-sage); }.progress .current .step-number { border-color:var(--deep-sage); background:var(--deep-sage); color:#fff; }.progress .complete .step-number { border-color:#91ad99; background:#e3eee5; }
 .auth-content h1 { margin:0; font-family:ui-serif, Georgia, "Hiragino Mincho ProN", serif; font-size:39px; font-weight:500; letter-spacing:-.06em; line-height:1.3; }.intro { margin:18px 0 0; color:var(--muted); font-size:14px; line-height:1.85; }.login-section,.application-section,.management-section,.loading-state { animation:appear .25s ease-out; }.login-section .google-button { margin-top:35px; }.google-button,.primary-button,.secondary-button { display:flex; box-sizing:border-box; align-items:center; justify-content:center; gap:12px; width:100%; min-height:52px; padding:12px 18px; border-radius:5px; font-size:14px; font-weight:650; text-decoration:none; cursor:pointer; }.google-button { color:#31423a; border:1px solid #b9c8bd; background:#fff; box-shadow:0 3px 8px #1d362008; }.google-button:hover:not(:disabled) { border-color:#71927a; background:#f8fbf8; }.google-button svg:last-child,.primary-button svg:last-child { width:17px; margin-left:auto; }.google-button:disabled,.primary-button:disabled,.secondary-button:disabled,.small-button:disabled,.icon-button:disabled { cursor:not-allowed; opacity:.65; }.secure-note { display:flex; align-items:center; gap:7px; margin:14px 0 0; color:#6b7d72; font-size:11px; line-height:1.5; }.secure-note svg { width:14px; }.configuration-note { margin-top:15px; padding:14px; border-left:3px solid #c59c56; background:#fff9ed; color:#775e32; font-size:12px; line-height:1.7; }.configuration-note p { margin:0; }.text-button { display:inline-flex; align-items:center; gap:5px; margin:9px 0 0; padding:0; border:0; color:inherit; background:transparent; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }.text-button svg { width:14px; }
@@ -271,7 +215,7 @@ async function confirmLogout() {
 .session-expiry { margin:11px 0 0; color:var(--muted); font-size:11px; }.approval-inbox { margin-top:34px; }.inbox-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }.inbox-heading h2 { margin:0; font-size:16px; }.inbox-heading h2 span { display:inline-grid; min-width:22px; height:22px; margin-left:5px; place-items:center; border-radius:50%; color:#476d55; background:#e8f1e9; font-size:11px; }.icon-button { display:grid; width:38px; height:38px; place-items:center; border:1px solid var(--line); color:#527061; background:#fff; cursor:pointer; }.icon-button svg { width:16px; }.inbox-description { margin:8px 0 0; color:var(--muted); font-size:12px; }.empty-inbox { display:grid; justify-items:center; gap:7px; margin-top:16px; padding:24px; border:1px solid #dce7de; background:#f7faf7; text-align:center; }.empty-icon { color:#568265; }.empty-inbox strong { font-size:13px; }.empty-inbox p { margin:0; color:var(--muted); font-size:11px; }.request-list { margin:14px 0 0; padding:0; list-style:none; }.request-list > li { padding:15px; border:1px solid var(--line); }.request-list > li + li { margin-top:9px; }.request-identity { display:flex; gap:10px; align-items:center; }.request-identity strong { font-size:13px; overflow-wrap:anywhere; }.request-identity p { margin:4px 0 0; color:var(--muted); font-size:11px; }.request-actions,.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:13px; }.small-button,.logout-button { min-height:40px; padding:8px 13px; border:1px solid #b7c9bb; background:#fff; color:#466553; font-size:12px; font-weight:650; cursor:pointer; }.approve-button { color:#fff; border-color:var(--deep-sage); background:var(--deep-sage); }.logout-button { display:flex; align-items:center; gap:7px; margin:32px 0 0; }.logout-button svg { width:15px; }.workspace-footer { display:flex; justify-content:space-between; gap:12px; color:#829188; font-size:10px; }.workspace-footer p { margin:0; }.workspace-footer span { font-weight:700; letter-spacing:.12em; }
 .modal-backdrop { position:fixed; z-index:5; inset:0; display:grid; place-items:center; padding:20px; background:#1e302855; }.confirmation-dialog { width:min(100%, 390px); padding:28px; background:#fff; box-shadow:0 20px 60px #15251d55; }.confirmation-dialog h2 { margin:0; font-family:ui-serif, Georgia, serif; font-size:24px; font-weight:500; }.confirmation-dialog > p:last-of-type { color:var(--muted); font-size:13px; line-height:1.7; }.spinner { display:inline-block; width:17px; height:17px; border:2px solid #d7e4d9; border-top-color:var(--deep-sage); border-radius:50%; animation:rotate .8s linear infinite; }.loading-state .spinner { margin-bottom:20px; }.loading-state > p:last-child { color:var(--muted); font-size:13px; }.loading-state h1 { margin-bottom:14px; }
 button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid #1769c2; outline-offset:3px; } @keyframes rotate { to { transform:rotate(360deg); } } @keyframes appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
-@media (max-width: 850px) { .admin-portal { grid-template-columns:1fr; }.editorial-panel { min-height:auto; padding:28px 32px; }.editorial-copy { margin-top:42px; }.editorial-copy h2 { font-size:35px; }.question-cards,.school-name { display:none; }.workspace-panel { min-height:calc(100vh - 245px); padding:24px 32px; }.auth-content { margin:25px auto; padding:32px 0; } }
+@media (max-width: 850px) { .admin-portal { grid-template-columns:1fr; }.editorial-panel { min-height:auto; padding:28px 32px; }.editorial-copy { margin-top:42px; }.editorial-copy h2 { font-size:35px; }.school-name { display:none; }.workspace-panel { min-height:calc(100vh - 245px); padding:24px 32px; }.auth-content { margin:25px auto; padding:32px 0; } }
 @media (max-width: 500px) { .editorial-panel { padding:24px 20px; }.editorial-copy { margin-top:34px; }.editorial-copy h2 { font-size:29px; }.lead { margin-top:13px; font-size:13px; }.workspace-panel { padding:20px; }.private-label { display:none; }.auth-content { margin-top:16px; padding-top:20px; }.progress { margin-bottom:38px; }.progress li { gap:5px; font-size:10px; }.progress li:not(:last-child)::after { width:18px; margin:0 7px; }.auth-content h1 { font-size:31px; }.state-title { font-size:28px !important; }.workspace-footer { flex-direction:column; }.request-meta { grid-template-columns:1fr; }.editorial-panel::before { display:none; } }
 @media (prefers-reduced-motion:reduce) { .admin-portal *, .admin-portal *::before, .admin-portal *::after { animation:none !important; transition:none !important; } }
 </style>

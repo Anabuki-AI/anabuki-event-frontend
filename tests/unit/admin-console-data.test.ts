@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { adminConsoleApi } from '~/features/admin/api/admin-console'
-import { useAdminConsoleData } from '~/features/admin/composables/useAdminConsoleData'
-import { unconfiguredMonitoring } from '~/features/admin/monitoring-contract'
+import { adminConsoleApi } from '~/admin/api/admin-console'
+import { useAdminConsoleData } from '~/admin/composables/useAdminConsoleData'
+import { unconfiguredMonitoring } from '~/admin/monitoring-contract'
 import { ApiError } from '~/lib/api/error'
 
-vi.mock('~/features/admin/api/admin-console', () => ({ adminConsoleApi: { accounts: vi.fn(), health: vi.fn(), monitoring: vi.fn() } }))
+vi.mock('~/admin/api/admin-console', () => ({ adminConsoleApi: { accounts: vi.fn(), health: vi.fn(), monitoring: vi.fn() } }))
 const api = vi.mocked(adminConsoleApi)
 let wrapper: VueWrapper
 let data: ReturnType<typeof useAdminConsoleData>

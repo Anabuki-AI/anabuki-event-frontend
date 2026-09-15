@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import MonitoringPanel from '~/features/admin/components/MonitoringPanel.vue'
-import { isMonitoringStale, parseMonitoringSnapshot, unconfiguredMonitoring, type MonitoringSource } from '~/features/admin/monitoring-contract'
-import { accessSourceLabel, consolePages, formatConsoleDate, getConsolePage } from '~/features/admin/console-presentation'
+import MonitoringPanel from '~/admin/components/MonitoringPanel.vue'
+import { isMonitoringStale, parseMonitoringSnapshot, unconfiguredMonitoring, type MonitoringSource } from '~/admin/monitoring-contract'
+import { accessSourceLabel, consolePages, formatConsoleDate, getConsolePage } from '~/admin/console-presentation'
 
 let wrapper: VueWrapper
 function render(overrides: Partial<MonitoringSource> = {}) {
