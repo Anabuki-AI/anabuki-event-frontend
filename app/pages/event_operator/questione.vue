@@ -4,7 +4,7 @@ import { useQuestionAdd } from '~/features/question-edit/use-question-edit.ts'
 import '~/assets/css/questionedit2.css'
 
 // --- 追加・修正ポイント 1: Props と Emits の定義 ---
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   questionIndex?: number
 }>(), {
   questionIndex: 1, // デフォルトで1問目を表示
@@ -13,8 +13,9 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
-useSeoMeta
-({
+
+
+useSeoMeta({
   title: '問題編集画面',
   description: 'クイズ大会の問題を編集します。',
 })
@@ -63,12 +64,6 @@ function handleCancel() {
     fileInput.value.value = ''
   }
   emit('close')
-}
-
-// 保存成功時にも閉じる処理を呼び出すためのラッパー
-function handleSave() {
-  save()
-  // 必要に応じて保存成功後にモーダルを閉じる処理を追加可能
 }
 </script>
 
