@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
-import PortalIcon from './PortalIcon.vue'
 import {
   adminWorkflowSteps,
   formatAdminDate,
   getAccessRequestStateCopy,
 } from '../portal-presentation'
 import { useAdminPortal } from '../composables/useAdminPortal'
+import { buildGoogleStartUrl, isGoogleAuthError } from '~/lib/auth/google'
 import type { AccessRequestDecision } from '../types'
 
 const {
@@ -30,9 +30,9 @@ const {
 } = useAdminPortal()
 const config = useRuntimeConfig()
 const route = useRoute()
-const oauthFailed = computed(() => route.query.auth_error === 'google')
+const oauthFailed = computed(() => isGoogleAuthError(route.query))
 const googleStartUrl = computed(
-  () => `${config.public.apiBase.replace(/\/$/, '')}/auth/google/start`,
+  () => buildGoogleStartUrl(config.public.apiBase, 'admin'),
 )
 const confirmation = ref<{
   id: number
@@ -133,12 +133,7 @@ async function confirmLogout() {
           </div>
 
           <a v-if="configured && !departing" class="google-button" :href="googleStartUrl" @click="departing = true">
-            <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
-              <path fill="#4285F4" d="M43.61 24.46c0-1.36-.12-2.66-.35-3.92H24v7.42h11a9.4 9.4 0 0 1-4.08 6.18v5.14h6.61c3.87-3.56 6.08-8.81 6.08-14.82Z" />
-              <path fill="#34A853" d="M24 44c5.52 0 10.15-1.83 13.53-4.95l-6.61-5.14c-1.83 1.23-4.18 1.96-6.92 1.96-5.32 0-9.82-3.59-11.43-8.41H5.74v5.3A20 20 0 0 0 24 44Z" />
-              <path fill="#FBBC05" d="M12.57 27.46a12 12 0 0 1 0-6.92v-5.3H5.74a20 20 0 0 0 0 17.52l6.83-5.3Z" />
-              <path fill="#EA4335" d="M24 12.13c3 0 5.68 1.03 7.8 3.05l5.85-5.86A19.6 19.6 0 0 0 24 4 20 20 0 0 0 5.74 15.24l6.83 5.3C14.18 15.72 18.68 12.13 24 12.13Z" />
-            </svg>
+            <GoogleLogo />
             Google でログイン <PortalIcon name="arrow" />
           </a>
           <button v-else class="google-button" disabled>
