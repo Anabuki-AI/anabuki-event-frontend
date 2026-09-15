@@ -1,7 +1,4 @@
 import type { AccessRequestStatus } from './types'
-export { formatJapanDateTime as formatAdminDate } from '~/lib/format/datetime'
-
-export const adminWorkflowSteps = ['ログイン', '利用申請', '運営開始'] as const
 
 interface AccessRequestStateCopy {
   label: string
@@ -11,9 +8,9 @@ interface AccessRequestStateCopy {
 
 const initialAccessRequestCopy: AccessRequestStateCopy = {
   label: '本人確認済み',
-  title: '管理者に利用を申請しましょう。',
+  title: '運営管理者に利用を申請しましょう。',
   description:
-    'Google アカウントを確認できました。はじめて利用する方は、管理者の承認が必要です。',
+    'Google アカウントを確認できました。はじめて利用する方は、運営管理者の承認が必要です。',
 }
 
 const accessRequestCopyByStatus = {
@@ -27,13 +24,13 @@ const accessRequestCopyByStatus = {
     label: '承認済み',
     title: '準備が整いました。',
     description:
-      '管理者から利用が承認されました。このブラウザで管理セッションに切り替えて、管理ポータルへ進んでください。',
+      '運営管理者から利用が承認されました。このブラウザで運営セッションに切り替えて、イベント運営を始めてください。',
   },
   REJECTED: {
     label: '申請が却下されました',
     title: '運営担当者へご確認ください。',
     description:
-      '今回の申請は承認されませんでした。必要な権限について管理者に確認したうえで、再申請できます。',
+      '今回の申請は承認されませんでした。必要な権限について運営管理者に確認したうえで、再申請できます。',
   },
   CANCELLED: {
     label: '申請が取り消されました',

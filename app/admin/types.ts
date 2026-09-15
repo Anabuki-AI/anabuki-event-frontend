@@ -11,21 +11,6 @@ export interface AdminSession {
   expiresAt: string
 }
 
-export type AccessRequestStatus =
-  | 'PENDING'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'CANCELLED'
-
-export type AccessRequestDecision = 'approve' | 'reject'
-
-export interface AccessRequest {
-  id: number
-  email: string
-  status: AccessRequestStatus
-  createdAt: string
-  expiresAt: string
-  cancelledAt: string | null
-  cancellationReason: string | null
-  decidedAt: string | null
-}
+// Access-request shapes follow the same contract in the admin and operator
+// portals, so they live in the shared auth module.
+export type { AccessRequest, AccessRequestDecision, AccessRequestStatus } from '~/lib/auth/access-request'

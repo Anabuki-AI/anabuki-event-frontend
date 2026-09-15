@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
 import type { Participant } from '~/features/participants/types'
-import { reactionOptions } from '~/features/waiting/components/ReactionButton'
-import {
-  setupWaitingRoom,
-} from '~/features/waiting/components/WaitingRoom'
-import { setupHelpDialog } from '~/features/waiting/components/HelpDialog'
+import type { ReactionOption } from '~/features/waiting/types'
 
 useSeoMeta({
   title: '待機画面',
   description: 'Anabuki Eventのイベント待機画面です。',
 })
+
+const reactionOptions: ReactionOption[] = [
+  { emoji: '👏', label: '拍手' },
+  { emoji: '🎉', label: 'わーい' },
+  { emoji: '🙌', label: 'いつでも' },
+  { emoji: '😂', label: '笑' },
+  { emoji: '😢', label: 'かなしい' },
+  { emoji: '😲', label: 'おどろき' },
+  { emoji: '👍', label: 'いいね' },
+  { emoji: '❤️', label: 'ありがとう' },
+]
 
 const participant = ref<Participant>()
 const participantError = ref('')
@@ -28,17 +35,33 @@ onMounted(async () => {
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)
+const isCountUpdated = ref(false)
+let countTimer: ReturnType<typeof setTimeout> | undefined
 
-const {
-  isCountUpdated,
-  lastReactedEmoji,
-  handleReact,
-  isHelpOpen,
-  openHelp,
-  closeHelp,
-} = setupWaitingRoom(participantCount)
+watch(participantCount, (next, previous) => {
+  if (next <= previous) {
+    return
+  }
+  isCountUpdated.value = false
+  requestAnimationFrame(() => {
+    isCountUpdated.value = true
+    clearTimeout(countTimer)
+    countTimer = setTimeout(() => {
+      isCountUpdated.value = false
+    }, 500)
+  })
+})
 
-const { panelRef, titleId } = setupHelpDialog(closeHelp)
+const lastReactedEmoji = ref('')
+let reactionTimer: ReturnType<typeof setTimeout> | undefined
+
+function handleReact(emoji: string) {
+  lastReactedEmoji.value = emoji
+  clearTimeout(reactionTimer)
+  reactionTimer = setTimeout(() => {
+    lastReactedEmoji.value = ''
+  }, 500)
+}
 </script>
 
 <template>
@@ -47,9 +70,10 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
       {{ participantError || '参加情報を確認しています…' }}
     </p>
 
-    <section v-else class="form-card waiting-card">
+    <section v-else class="form-card waiting-card quiz-page">
       <div class="waiting-header">
         <div class="waiting-user">
+          <p class="quiz-header-title">クイズ大会</p>
           <p class="eyebrow-main">
             Waiting room
           </p>
@@ -59,14 +83,12 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             </p>
           </div>
         </div>
-        <button
-          type="button"
+        <NuxtLink
           class="help-button"
-          aria-haspopup="dialog"
-          @click="openHelp"
+          to="/participants/help"
         >
           ヘルプ
-        </button>
+        </NuxtLink>
       </div>
 
       <div class="participant-panel">
@@ -99,38 +121,6 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             @click="handleReact(option.emoji)"
           >
             <span class="reaction-emoji" aria-hidden="true">{{ option.emoji }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="isHelpOpen"
-        class="help-dialog"
-        @click.self="closeHelp"
-      >
-        <div
-          ref="panelRef"
-          class="help-dialog-panel"
-          role="dialog"
-          aria-modal="true"
-          :aria-labelledby="titleId"
-          tabindex="-1"
-        >
-          <h2 :id="titleId">
-            ヘルプ
-          </h2>
-          <ul>
-            <li>この画面はイベントの待機画面です。</li>
-            <li>参加人数は自動で更新されます。</li>
-            <li>リアクションボタンで気持ちを伝えられます。</li>
-            <li>クイズが開始されると、画面は自動的に切り替わります。</li>
-          </ul>
-          <button
-            type="button"
-            class="help-dialog-close"
-            @click="closeHelp"
-          >
-            閉じる
           </button>
         </div>
       </div>
