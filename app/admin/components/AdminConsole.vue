@@ -3,7 +3,6 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { AccessRequest, AdminSession } from '../api/admin-auth'
 import { accessSourceLabel, consolePages, formatConsoleDate, getConsolePage } from '../console-presentation'
 import { useAdminConsoleData } from '../composables/useAdminConsoleData'
-import PortalIcon from './PortalIcon.vue'
 import MonitoringPanel from './MonitoringPanel.vue'
 
 const props = defineProps<{

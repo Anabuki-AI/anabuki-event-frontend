@@ -2,7 +2,6 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { conditionLabels, monitoringStateLabels, monitoringStateDescriptions, providerLabels, isMonitoringStale, type MonitoringSnapshot } from '../monitoring-contract'
 import { formatConsoleDate } from '../console-presentation'
-import PortalIcon from './PortalIcon.vue'
 
 defineProps<{ snapshot: MonitoringSnapshot; loading: boolean; error: string; enabled: boolean }>()
 defineEmits<{ refresh: [] }>()
