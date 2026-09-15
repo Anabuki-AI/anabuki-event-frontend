@@ -1,35 +1,67 @@
 <script setup lang="ts">
-import { ref, useSeoMeta } from '#imports'
-import { reactionOptions } from '~/features/waiting/components/ReactionButton'
-import {
-  setupUserName,
-  setupWaitingRoom,
-} from '~/features/waiting/components/WaitingRoom'
+import { ref, watch } from 'vue'
+import { useRoute } from '#imports'
+import type { ReactionOption } from '~/features/waiting/types'
 
-useSeoMeta({
-  title: '待機画面',
-  description: 'Anabuki Eventのイベント待機画面です。',
-})
+const reactionOptions: ReactionOption[] = [
+  { emoji: '👏', label: '拍手' },
+  { emoji: '🎉', label: 'わーい' },
+  { emoji: '🙌', label: 'いつでも' },
+  { emoji: '😂', label: '笑' },
+  { emoji: '😢', label: 'かなしい' },
+  { emoji: '😲', label: 'おどろき' },
+  { emoji: '👍', label: 'いいね' },
+  { emoji: '❤️', label: 'ありがとう' },
+]
 
-const userName = setupUserName()
+const route = useRoute()
+
+// ユーザー登録画面からクエリで受け取る(状態管理は後の工程で整理)
+const userName = ref((() => {
+  const name = route.query.userName
+  return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
+})())
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)
 
-// 各TSモジュールのロジックを接続(旧3コンポーネントのscript)
-const {
-  isCountUpdated,
-  lastReactedEmoji,
-  handleReact,
-} = setupWaitingRoom(participantCount)
+// 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
+const isCountUpdated = ref(false)
+let countTimer: ReturnType<typeof setTimeout> | undefined
 
+watch(participantCount, (next, prev) => {
+  if (next <= prev) {
+    return
+  }
+  isCountUpdated.value = false
+  // クラス付け外しを1フレーム分空けて再トリガーできるようにする
+  requestAnimationFrame(() => {
+    isCountUpdated.value = true
+    clearTimeout(countTimer)
+    countTimer = setTimeout(() => {
+      isCountUpdated.value = false
+    }, 500)
+  })
+})
+
+// 押された絵文字だけをバウンドさせる
+const lastReactedEmoji = ref('')
+let reactionTimer: ReturnType<typeof setTimeout> | undefined
+
+function handleReact(emoji: string) {
+  lastReactedEmoji.value = emoji
+  clearTimeout(reactionTimer)
+  reactionTimer = setTimeout(() => {
+    lastReactedEmoji.value = ''
+  }, 500)
+}
 </script>
 
 <template>
-  <main class="page-shell">
-    <section class="form-card waiting-card">
+  <section class="form-card waiting-card quiz-page">
       <div class="waiting-header">
         <div class="waiting-user">
+          <p class="quiz-header-title">クイズ大会</p>
           <p class="eyebrow-main">
             Waiting room
           </p>
@@ -48,7 +80,7 @@ const {
         </div>
         <NuxtLink
           class="help-button"
-          to="/help#waiting-room"
+          to="/users/help"
         >
           ヘルプ
         </NuxtLink>
@@ -88,5 +120,4 @@ const {
         </div>
       </div>
     </section>
-  </main>
 </template>
