@@ -2,13 +2,17 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-08-10',
   devtools: { enabled: true },
   modules: ['@nuxt/eslint'],
-  css: ['~/assets/css/main.css', '~/assets/css/management.css'],
+  css: [
+    '~/assets/css/registration.css',
+    '~/assets/css/main.css',
+    '~/assets/css/management.css',
+    '~/assets/css/questionedit.css',
+  ],
   app: {
     head: {
       viewport: 'width=device-width, initial-scale=1',
     },
   },
-  css: ['~/assets/css/questionedit.css'],
   runtimeConfig: {
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
@@ -24,6 +28,7 @@ export default defineNuxtConfig({
         changeOrigin: true,
       },
     },
+  },
   routeRules: {
     '/admin': { headers: { 'cache-control': 'no-store' } },
     '/admin/**': { headers: { 'cache-control': 'no-store' } },

@@ -6,9 +6,15 @@ import {
   validateMultiplierInput,
 } from '../../app/features/problems/validation'
 import { formatMultiplier } from '../../app/features/problems/constants'
-import type { QuestionFormState } from '../../app/features/problems/types'
+import type { QuestionFormState as ProblemQuestionFormState } from '../../app/features/problems/types'
+import type { QuestionFormState as LegacyQuestionFormState } from '../../app/features/questions/types'
+import {
+  hasQuestionChanged as hasLegacyQuestionChanged,
+  validateCorrectAnswer,
+  validateRequiredText,
+} from '../../app/features/questions/validation'
 
-function validForm(): QuestionFormState {
+function validForm(): ProblemQuestionFormState {
   return {
     questionText: '日本の首都はどこでしょう?',
     choices: { A: '東京', B: '大阪', C: '札幌', D: '福岡' },
@@ -105,12 +111,8 @@ describe('formatMultiplier', () => {
 
   it('不正値はそのまま返す', () => {
     expect(formatMultiplier('abc')).toBe('abc')
-import type { QuestionFormState } from '../../app/features/questions/types'
-import {
-  hasQuestionChanged,
-  validateCorrectAnswer,
-  validateRequiredText,
-} from '../../app/features/questions/validation'
+  })
+})
 
 describe('validateRequiredText', () => {
   it('空文字はラベル付きエラーメッセージを返す', () => {
@@ -136,29 +138,29 @@ describe('validateCorrectAnswer', () => {
   })
 })
 
-const BASELINE: QuestionFormState = {
+const BASELINE: LegacyQuestionFormState = {
   questionText: '日本の首都はどこでしょう?',
   choices: { A: '東京', B: '大阪', C: '札幌', D: '福岡' },
   correctAnswer: 'A',
 }
 
-describe('hasQuestionChanged', () => {
+describe('legacy hasQuestionChanged', () => {
   it('同一内容は変更なしと判定する', () => {
-    expect(hasQuestionChanged({ ...BASELINE, choices: { ...BASELINE.choices } }, BASELINE)).toBe(false)
+    expect(hasLegacyQuestionChanged({ ...BASELINE, choices: { ...BASELINE.choices } }, BASELINE)).toBe(false)
   })
 
   it('問題文の変更を検出する', () => {
     const form = { ...BASELINE, questionText: '変更後の問題文', choices: { ...BASELINE.choices } }
-    expect(hasQuestionChanged(form, BASELINE)).toBe(true)
+    expect(hasLegacyQuestionChanged(form, BASELINE)).toBe(true)
   })
 
   it('選択肢の変更を検出する', () => {
     const form = { ...BASELINE, choices: { A: '京都', B: '大阪', C: '札幌', D: '福岡' } }
-    expect(hasQuestionChanged(form, BASELINE)).toBe(true)
+    expect(hasLegacyQuestionChanged(form, BASELINE)).toBe(true)
   })
 
   it('正解の変更を検出する', () => {
     const form = { ...BASELINE, correctAnswer: 'B' as const, choices: { ...BASELINE.choices } }
-    expect(hasQuestionChanged(form, BASELINE)).toBe(true)
+    expect(hasLegacyQuestionChanged(form, BASELINE)).toBe(true)
   })
 })

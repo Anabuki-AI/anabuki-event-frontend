@@ -1,0 +1,418 @@
+:root {
+  background: #edeffa;
+  font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+
+.page-shell {
+  display: grid;
+}
+
+.hero-card,
+.form-card {
+  box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
+}
+
+.form-card {
+  gap: 2px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #1769c2;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.form-card h1 {
+  margin: 0;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.hero-copy,
+.muted-copy {
+  max-width: 52ch;
+  margin: 20px 0 30px;
+  color: #516176;
+  line-height: 1.8;
+}
+
+.muted-copy {
+  margin-bottom: 0;
+}
+
+.primary-link,
+.user-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: #1769c2;
+  font-weight: 750;
+  text-decoration: none;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.primary-link:hover,
+.user-form button:hover:not(:disabled) {
+  background: #0f57a4;
+  transform: translateY(-1px);
+}
+
+.back-link {
+  width: fit-content;
+  color: #516176;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: #1769c2;
+}
+
+.user-form label {
+  display: grid;
+  gap: 8px;
+  color: #253750;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.user-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #132238;
+  background: #fff;
+  outline: none;
+}
+
+.user-form input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px rgb(23 105 194 / 12%);
+}
+
+.status-message {
+  margin: 0;
+  padding: 13px 15px;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
+.status-message.error {
+  color: #912018;
+  background: #ffefed;
+}
+
+.status-message.success {
+  color: #14643b;
+  background: #e9f8ef;
+}
+
+/* --- ユーザー登録画面 --- */
+
+/* 画面全体: カードを最外側とし、ヘッダー+コンテンツを縦に積む。
+   上下左右に余白を確保し、画面いっぱいに張らない */
+.quiz-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px clamp(16px, 5vw, 48px) 16px; /* 上paddingを0にし、ヘッダーをカード最上部に張り付かせる */
+  background: #edeffa; /* プロジェクト規定の背景色 */
+}
+
+/* クイズ大会ヘッダー(eyebrow+タイトルを統合した区間)。
+   メインカラーの下線でヘッダー区間を明示し、「クイズ大会」はeyebrowと同色。
+   ネガティブマージンで親(.quiz-page)の左右paddingを打ち消し、下線を画面の端から端まで引く */
+.quiz-header {
+  margin: 0 calc(-1 * clamp(16px, 5vw, 48px)) 6px;
+  position: relative; /* ヘルプボタンを絶対配置するための基準 */
+  padding: 8px clamp(16px, 5vw, 48px) 16px; /* 上paddingを0にし、「クイズ大会」をカード最上部に張り付かせる */
+  background: #edeffa; /* プロジェクト規定の背景色 */
+  border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
+}
+
+.quiz-header-title {
+  margin: 0 0 10px;
+  color: #1769c2; /* eyebrow(Create account)と統一 */
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.quiz-header .eyebrow {
+  margin: 0 0 10px;
+}
+
+/* ヘルプボタン: ヘッダー内の右上に固定配置(別タブでヘルプ画面を開く) */
+.quiz-header .help-button {
+  position: absolute;
+  top: 14px;
+  right: clamp(16px, 5vw, 48px);
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid #3c3c43;
+  border-radius: 9999px;
+  color: #3c3c43;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.quiz-header .help-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+.quiz-header h1 {
+  margin: 0;
+  color: #132238;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+}
+
+.quiz-header .muted-copy {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+}
+
+/* ヘッダー下のコンテンツ(フォーム)。ヘッダーとの距離を詰めるため上部を0に */
+.quiz-page .page-shell {
+  padding: 0; min-height: 0;
+  background: none;
+  place-items: start stretch;
+}
+
+/* 登録フォーム本体。display: gridはここで定義(旧.user-formから移動) */
+.quiz-page .page-shell .registration-form {
+  display: grid;
+  margin-top: 0;
+  gap: 15px;
+}
+
+.required-badge {
+  margin-left: 4px;
+  color: #912018;
+  font-weight: 700;
+}
+
+.field-note {
+  margin: 0;
+  color: #516176;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.field-note.is-error {
+  color: #912018;
+}
+
+.field-note.is-success {
+  color: #14643b;
+}
+
+/* ユーザーネームの状態表示(登録可=緑 / 不可=赤) */
+.user-form input.is-available {
+  border-color: #1b8a5a;
+  box-shadow: 0 0 0 4px rgb(27 138 90 / 12%);
+}
+
+.user-form input.is-invalid {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 4px rgb(179 38 30 / 10%);
+}
+
+/* fieldset/legendのリセット */
+.terms-field,
+.survey-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.terms-field legend,
+.survey-field legend {
+  padding: 0;
+  color: #132238;
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* ユーザーネームの見出しも同サイズに */
+.registration-form > label > span {
+  font-size: 1.15rem;
+  color: #132238;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* 利用規約を開くボタン(details summary の代替) */
+.terms-open-button {
+  width: 100%;
+}
+
+.terms-open-button:hover {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+/* 利用規約ダイアログ */
+.terms-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(19 34 56 / 45%);
+}
+
+.terms-dialog-panel {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 560px);
+  max-height: 85dvh;
+  padding: 20px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgb(34 75 120 / 30%);
+}
+
+.terms-dialog-title {
+  margin: 0;
+  color: #132238;
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+/* 利用規約の折りたたみ+スクロール領域 */
+
+.terms-scroll {
+  max-height: 40vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.terms-text {
+  margin: 0;
+  color: #253750;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  white-space: pre-line; /* 規約原文の改行・空行をそのまま再現 */
+}
+
+/* ダイアログ内の同意チェック行(規約を読みながらその場で同意できる)。
+   labelは.user-form labelのgrid指定を継承して縦積みになるためflex横並びで上書き */
+.terms-dialog .check-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.terms-dialog .check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #1769c2;
+}
+
+/* ダイアログ内の「戻る」(同意状態を変えずに閉じる) */
+.terms-dialog-back {
+  min-height: 48px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #253750;
+  background: #fff;
+  font-weight: 700;
+  transition: background 150ms ease;
+}
+
+.terms-dialog-back:hover {
+  background: #f0f3f8;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #1769c2;
+}
+
+/* プルダウン(inputと同じ見た目に統一)。font:inheritはiOSのfocus時ズーム防止に必須 */
+.select-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #132238;
+  background: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.select-input:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px rgb(23 105 194 / 12%);
+}
+
+/* 登録ボタン(必須入力が揃うまでグレー) */
+.submit-button {
+  width: 100%;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #0f57a4;
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  background: #b8c2d1;
+  opacity: 1; /* グローバルの button:disabled を上書きし、グレーを見える形で保つ */
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-button.is-submitting:disabled {
+  cursor: wait;
+}

@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRoute } from '#imports'
+import { onMounted, ref, watch } from 'vue'
+import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
+import type { Participant } from '~/features/participants/types'
 import type { ReactionOption } from '~/features/waiting/types'
+
+useSeoMeta({
+  title: '待機画面',
+  description: 'Anabuki Eventのイベント待機画面です。',
+})
 
 const reactionOptions: ReactionOption[] = [
   { emoji: '👏', label: '拍手' },
@@ -14,27 +20,29 @@ const reactionOptions: ReactionOption[] = [
   { emoji: '❤️', label: 'ありがとう' },
 ]
 
-const route = useRoute()
+const participant = ref<Participant>()
+const participantError = ref('')
 
-// ユーザー登録画面からクエリで受け取る(状態管理は後の工程で整理)
-const userName = ref((() => {
-  const name = route.query.userName
-  return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
-})())
+onMounted(async () => {
+  try {
+    participant.value = await getCurrentParticipant()
+  }
+  catch {
+    participantError.value = '参加情報を確認できませんでした。もう一度登録してください。'
+    await navigateTo('/participants/new')
+  }
+})
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)
-
-// 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
 const isCountUpdated = ref(false)
 let countTimer: ReturnType<typeof setTimeout> | undefined
 
-watch(participantCount, (next, prev) => {
-  if (next <= prev) {
+watch(participantCount, (next, previous) => {
+  if (next <= previous) {
     return
   }
   isCountUpdated.value = false
-  // クラス付け外しを1フレーム分空けて再トリガーできるようにする
   requestAnimationFrame(() => {
     isCountUpdated.value = true
     clearTimeout(countTimer)
@@ -44,7 +52,6 @@ watch(participantCount, (next, prev) => {
   })
 })
 
-// 押された絵文字だけをバウンドさせる
 const lastReactedEmoji = ref('')
 let reactionTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -58,7 +65,12 @@ function handleReact(emoji: string) {
 </script>
 
 <template>
-  <section class="form-card waiting-card quiz-page">
+  <main class="page-shell">
+    <p v-if="!participant" class="status-message" role="status">
+      {{ participantError || '参加情報を確認しています…' }}
+    </p>
+
+    <section v-else class="form-card waiting-card quiz-page">
       <div class="waiting-header">
         <div class="waiting-user">
           <p class="quiz-header-title">クイズ大会</p>
@@ -67,20 +79,13 @@ function handleReact(emoji: string) {
           </p>
           <div class="waiting-user-row">
             <p class="waiting-user-name">
-              {{ userName }} さん
+              {{ participant.displayName }} さん
             </p>
-            <NuxtLink
-              class="name-edit-button"
-              :to="{ path: '/users/name/edit', query: { userName } }"
-              aria-label="ニックネームを編集する"
-            >
-              <span aria-hidden="true">✏️</span>
-            </NuxtLink>
           </div>
         </div>
         <NuxtLink
           class="help-button"
-          to="/users/help"
+          to="/participants/help"
         >
           ヘルプ
         </NuxtLink>
@@ -120,4 +125,5 @@ function handleReact(emoji: string) {
         </div>
       </div>
     </section>
+  </main>
 </template>
