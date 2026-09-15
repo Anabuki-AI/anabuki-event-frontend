@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useVotingRate } from '~/features/voting-rate/use-voting-rate'
+import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/voting-rate.css'
 
 useSeoMeta({
@@ -17,19 +18,47 @@ const {
   options,
   refresh,
 } = useVotingRate()
+
+const {
+  isSidebarExpanded,
+  toggleSidebar,
+  handleSidebarKeydown,
+} = setupAdminSidebar()
 </script>
 
 <template>
   <main class="page-shell voting-rate-shell">
-    <section class="voting-card">
-      <NuxtLink class="back-link" to="/">
-        ← 管理者画面へ戻る
-      </NuxtLink>
+    <aside
+      class="admin-sidebar"
+      :class="{ 'admin-sidebar--collapsed': !isSidebarExpanded }"
+      aria-label="管理機能メニュー"
+      @keydown="handleSidebarKeydown"
+    >
+      <div class="admin-sidebar-head">
+        <button
+          type="button"
+          class="admin-sidebar-toggle"
+          :aria-label="isSidebarExpanded ? 'メニューを隠す' : 'メニューを表示する'"
+          :aria-expanded="isSidebarExpanded"
+          @click="toggleSidebar"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+        <p v-if="isSidebarExpanded" class="admin-sidebar-title">メニュー</p>
+      </div>
+      <nav v-if="isSidebarExpanded" class="admin-sidebar-nav">
+        <NuxtLink class="admin-sidebar-link" to="/event_operator">運営者メイン</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/quiz-control">出題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/admin/problems">問題管理</NuxtLink>
+      </nav>
+    </aside>
 
+    <section class="voting-card">
       <header class="voting-header">
         <div>
           <p class="eyebrow">
-            Event operator
+            Voting rate
           </p>
           <h1>投票率確認</h1>
           <p class="muted-copy">
