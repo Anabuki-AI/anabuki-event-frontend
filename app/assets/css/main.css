@@ -179,7 +179,7 @@ h1 {
   padding: clamp(28px, 6vw, 56px);
   border: none;
   border-radius: 0;
-  background: #fff;
+  background: #edeffa;
   box-shadow: none;
 }
 
@@ -328,30 +328,6 @@ h1 {
 .admin-sidebar-link:hover {
   background: rgb(23 105 194 / 8%);
   color: #1769c2;
-}
-
-/* ===== タブレット横置き対応(1024px級) =====
-   運営者・管理者ページはタブレット横置きが標準操作端末(CLAUDE_FRONT.md)。
-   縦置き時の縦1列メニューを、横置きの広さを活かした横並びグリッドに広げる */
-@media (width >= 900px) {
-  .admin-menu {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .admin-menu-item {
-    /* 横置きタブレットは指操作のためタッチターゲット44px以上を維持 */
-    grid-template-rows: auto 1fr auto;
-    align-content: start;
-    min-height: 176px;
-    padding: 22px 24px;
-  }
-
-  .admin-menu-arrow {
-    justify-self: end;
-    align-self: end;
-    font-size: 1.4rem;
-  }
 }
 
 .user-form {
