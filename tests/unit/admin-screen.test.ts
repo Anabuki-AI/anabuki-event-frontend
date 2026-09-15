@@ -44,7 +44,7 @@ describe('運営者メイン画面', () => {
   it('投票率ページへのリンクが /event_operator/voting-rate へ遷移する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a').find((a) => a.text().includes('投票率ページ'))
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('投票率ページ'))
     expect(link).toBeDefined()
     expect(link!.attributes('href')).toBe('/event_operator/voting-rate')
   })
@@ -52,14 +52,14 @@ describe('運営者メイン画面', () => {
   it('投票率ページの説明文を表示する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a').find((a) => a.text().includes('投票率ページ'))
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('投票率ページ'))
     expect(link!.text()).toContain('問題ごとの解答状況と選択肢ごとの投票率を確認できます。')
   })
 
   it('出題管理へのリンクが /admin/quiz-control へ遷移する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a').find((a) => a.text().includes('出題管理'))
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('出題管理'))
     expect(link).toBeDefined()
     expect(link!.attributes('href')).toBe('/admin/quiz-control')
   })
@@ -67,14 +67,14 @@ describe('運営者メイン画面', () => {
   it('出題管理の説明文を表示する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a').find((a) => a.text().includes('出題管理'))
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('出題管理'))
     expect(link!.text()).toContain('クイズの出題を開始・進行できます。')
   })
 
   it('問題管理へのリンクが /admin/problems へ遷移する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a').find((a) => a.text().includes('問題管理'))
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('問題管理'))
     expect(link).toBeDefined()
     expect(link!.attributes('href')).toBe('/admin/problems')
   })
@@ -82,7 +82,7 @@ describe('運営者メイン画面', () => {
   it('問題管理の説明文を表示する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a').find((a) => a.text().includes('問題管理'))
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('問題管理'))
     expect(link!.text()).toContain('問題の追加・編集などを行えます。')
   })
 
@@ -97,5 +97,29 @@ describe('運営者メイン画面', () => {
     const wrapper = mountAdminScreen()
 
     expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(3)
+  })
+
+  it('サイドバーは初期状態で展開表示になっている', () => {
+    const wrapper = mountAdminScreen()
+
+    expect(wrapper.find('.admin-sidebar').classes()).not.toContain('admin-sidebar--collapsed')
+    expect(wrapper.find('.admin-sidebar-toggle').attributes('aria-expanded')).toBe('true')
+  })
+
+  it('ボタンを押すとサイドバーが縮小表示になる', async () => {
+    const wrapper = mountAdminScreen()
+
+    await wrapper.find('.admin-sidebar-toggle').trigger('click')
+
+    expect(wrapper.find('.admin-sidebar').classes()).toContain('admin-sidebar--collapsed')
+    expect(wrapper.find('.admin-sidebar-toggle').attributes('aria-expanded')).toBe('false')
+  })
+
+  it('縮小表示にするとサイドバーのリンクは完全に隠れる', async () => {
+    const wrapper = mountAdminScreen()
+
+    await wrapper.find('.admin-sidebar-toggle').trigger('click')
+
+    expect(wrapper.findAll('.admin-sidebar-link')).toHaveLength(0)
   })
 })

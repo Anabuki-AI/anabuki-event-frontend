@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { setupAdminDrawer } from '~/features/admin/components/AdminDrawer'
+import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 
 useSeoMeta({
   title: '運営者メイン画面',
@@ -7,65 +7,40 @@ useSeoMeta({
 })
 
 const {
-  isDrawerOpen,
-  closeDrawer,
-  toggleDrawer,
-  handleDrawerKeydown,
-} = setupAdminDrawer()
+  isSidebarExpanded,
+  toggleSidebar,
+  handleSidebarKeydown,
+} = setupAdminSidebar()
 </script>
 
 <template>
   <main class="page-shell admin-shell">
-    <!-- ハンバーガーメニュー(ドロワー)。各管理画面共通のナビ -->
-    <button
-      type="button"
-      class="admin-drawer-toggle"
-      aria-label="メニューを開く"
-      :aria-expanded="isDrawerOpen"
-      @click="toggleDrawer"
-    >
-      <span aria-hidden="true">☰</span>
-    </button>
-
-    <div
-      v-if="isDrawerOpen"
-      class="admin-drawer-backdrop"
-      @click="closeDrawer"
-    />
-    <nav
-      v-if="isDrawerOpen"
-      class="admin-drawer"
+    <!-- 常設サイドバー。各管理画面共通のナビ。ボタンを押すとメニュー部分を完全に隠す -->
+    <aside
+      class="admin-sidebar"
+      :class="{ 'admin-sidebar--collapsed': !isSidebarExpanded }"
       aria-label="管理機能メニュー"
-      @keydown="handleDrawerKeydown"
+      @keydown="handleSidebarKeydown"
     >
-      <div class="admin-drawer-head">
-        <p class="admin-drawer-title">メニュー</p>
+      <div class="admin-sidebar-head">
         <button
           type="button"
-          class="admin-drawer-close"
-          aria-label="メニューを閉じる"
-          @click="closeDrawer"
+          class="admin-sidebar-toggle"
+          :aria-label="isSidebarExpanded ? 'メニューを隠す' : 'メニューを表示する'"
+          :aria-expanded="isSidebarExpanded"
+          @click="toggleSidebar"
         >
-          <span aria-hidden="true">×</span>
+          <span aria-hidden="true">☰</span>
         </button>
+        <p v-if="isSidebarExpanded" class="admin-sidebar-title">メニュー</p>
       </div>
-      <NuxtLink class="admin-drawer-link" to="/event_operator" @click="closeDrawer">
-        <span class="admin-drawer-icon" aria-hidden="true">🏠</span>
-        運営者メイン
-      </NuxtLink>
-      <NuxtLink class="admin-drawer-link" to="/event_operator/voting-rate" @click="closeDrawer">
-        <span class="admin-drawer-icon" aria-hidden="true">📊</span>
-        投票率ページ
-      </NuxtLink>
-      <NuxtLink class="admin-drawer-link" to="/admin/quiz-control" @click="closeDrawer">
-        <span class="admin-drawer-icon" aria-hidden="true">🎮</span>
-        出題管理
-      </NuxtLink>
-      <NuxtLink class="admin-drawer-link" to="/admin/problems" @click="closeDrawer">
-        <span class="admin-drawer-icon" aria-hidden="true">📝</span>
-        問題管理
-      </NuxtLink>
-    </nav>
+      <nav v-if="isSidebarExpanded" class="admin-sidebar-nav">
+        <NuxtLink class="admin-sidebar-link" to="/event_operator">運営者メイン</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/admin/quiz-control">出題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/admin/problems">問題管理</NuxtLink>
+      </nav>
+    </aside>
 
     <section class="admin-card">
       <div>

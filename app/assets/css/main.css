@@ -162,18 +162,20 @@ h1 {
 }
 
 /* 画面中央のカードに集約せず、画面全体を使い切る(レビュー指摘)。
+   左側に常設のサイドバーを置き、残りをコンテンツ領域として使う。
    上書きはadmin-shell配下に限定し、共用のpage-shellには影響させない */
 .page-shell.admin-shell {
-  place-items: start center;
+  display: flex;
+  align-items: stretch;
   padding: 0;
-  padding-bottom: 0;
 }
 
 .admin-card {
   display: grid;
+  align-content: start;
   gap: 28px;
-  width: 100%;
-  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: clamp(28px, 6vw, 56px);
   border: none;
   border-radius: 0;
@@ -245,97 +247,87 @@ h1 {
   font-weight: 750;
 }
 
-/* ===== ハンバーガーメニュー(ドロワー) =====
-   管理画面共通のナビ。開閉状態はfeatures/admin/components/AdminDrawer.tsが持つ */
-.admin-drawer-toggle {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px; /* タッチターゲット44px以上 */
-  border: 1px solid rgb(19 34 56 / 12%);
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 6px 20px rgb(34 75 120 / 14%);
-  font-size: 1.3rem;
-}
-
-.admin-drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgb(19 34 56 / 40%);
-}
-
-.admin-drawer {
-  position: fixed;
+/* ===== サイドバーメニュー =====
+   管理画面共通のナビ。画面左側に常設し、ボタンでメニュー部分を完全に隠す縮小表示に切り替える
+   (オーバーレイのドロワーではなく、コンテンツ領域を圧迫する常設サイドバー)。
+   開閉(展開/縮小)状態はfeatures/admin/components/AdminSidebar.tsが持つ */
+.admin-sidebar {
+  position: sticky;
   top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 60;
+  z-index: 40;
+  flex: 0 0 auto;
   display: grid;
   align-content: start;
   gap: 6px;
-  width: min(84vw, 320px);
+  width: 240px;
+  height: 100vh;
+  height: 100dvh; /* iOS Safariのツールバー出入れで高さが変わるのに追従 */
   padding: 16px 14px;
+  overflow-x: hidden;
   overflow-y: auto;
+  border-right: 1px solid rgb(19 34 56 / 10%);
   background: #fff;
-  box-shadow: 0 0 60px rgb(19 34 56 / 24%);
+  transition: width 200ms ease;
 }
 
-.admin-drawer-head {
+.admin-sidebar--collapsed {
+  width: 72px;
+}
+
+.admin-sidebar-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
-.admin-drawer-title {
+.admin-sidebar-toggle {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px; /* タッチターゲット44px以上 */
+  border: 1px solid rgb(19 34 56 / 12%);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 1.2rem;
+}
+
+.admin-sidebar-toggle:hover {
+  background: rgb(23 105 194 / 8%);
+}
+
+.admin-sidebar-title {
   margin: 0;
+  overflow: hidden;
   color: #516176;
   font-size: 0.875rem; /* 補助文言は12〜14pxの規約内 */
   font-weight: 750;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
-.admin-drawer-close {
+.admin-sidebar-nav {
   display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 12px;
-  background: transparent;
-  color: #516176;
-  font-size: 1.4rem;
+  gap: 6px;
 }
 
-.admin-drawer-close:hover {
-  background: rgb(23 105 194 / 8%);
-}
-
-.admin-drawer-link {
+.admin-sidebar-link {
   display: flex;
   align-items: center;
-  gap: 12px;
   min-height: 52px; /* タッチターゲット44px以上 */
   padding: 10px 14px;
+  overflow: hidden;
   border-radius: 14px;
   color: #132238;
   font-weight: 650;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.admin-drawer-link:hover {
+.admin-sidebar-link:hover {
   background: rgb(23 105 194 / 8%);
   color: #1769c2;
-}
-
-.admin-drawer-icon {
-  font-size: 1.2rem;
 }
 
 /* ===== タブレット横置き対応(1024px級) =====
