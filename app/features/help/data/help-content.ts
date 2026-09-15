@@ -26,34 +26,6 @@ export const operationGuideItems: OperationGuideItem[] = [
         id: 'rankings',
         title: 'ランキング',
     },
-    {
-        id: 'admin-top',
-        title: '管理者トップ',
-    },
-    {
-        id: 'problem-management',
-        title: '問題管理',
-    },
-    {
-        id: 'problem-create',
-        title: '問題作成',
-    },
-    {
-        id: 'problem-edit',
-        title: '問題編集',
-    },
-    {
-        id: 'problem-multiplier',
-        title: '倍率設定',
-    },
-    {
-        id: 'quiz-control',
-        title: 'クイズ出題管理',
-    },
-    {
-        id: 'voting-rate',
-        title: '投票率確認',
-    },
 ]
 
 export type HelpSection = {

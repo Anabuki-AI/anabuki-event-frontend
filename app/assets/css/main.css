@@ -538,13 +538,37 @@ h1 {
   outline-offset: -3px;
 }
 
+.help-page-shell {
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS Safariのツールバー出入れで高さが変わるのに追従 */
+  background:
+    radial-gradient(circle at top left, rgb(80 155 255 / 18%), transparent 34%),
+    linear-gradient(145deg, #f7fbff 0%, #ffffff 100%);
+}
+
+.help-page-shell .help-card {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .help-card {
   align-content: start;
+  gap: 8px;
+}
+
+.help-heading + .help-section,
+.help-section + .help-section {
+  margin-top: 20px;
 }
 
 .help-heading {
   display: grid;
-  gap: 0.5rem;
+  gap: 4px;
 }
 
 .help-event-title {
@@ -555,6 +579,7 @@ h1 {
 }
 
 .help-heading .eyebrow {
+  margin-bottom: 0;
   color: #1769c2;
 }
 
@@ -564,27 +589,13 @@ h1 {
 }
 
 .help-heading .muted-copy {
+  margin-top: 0;
   color: #132238;
-}
-
-.help-operation-item {
-  padding: 18px;
-  border: 1px solid rgb(19 34 56 / 12%);
-  border-radius: 14px;
-  background: #ffffff;
 }
 
 .help-operation-item.is-active {
   border-color: #1769c2;
-  background: rgb(23 105 194 / 8%);
   box-shadow: 0 0 0 2px rgb(23 105 194 / 18%);
-}
-
-.help-operation-title {
-  margin: 0 0 8px;
-  color: #132238;
-  font-size: 16px;
-  line-height: 1.5;
 }
 
 .help-operation-description {
@@ -592,6 +603,11 @@ h1 {
   color: #516176;
   font-size: 14px;
   line-height: 1.7;
+}
+
+.help-operation-description-pending {
+  color: #8a97a8;
+  font-style: italic;
 }
 
 .help-operation-link {
@@ -630,8 +646,8 @@ h1 {
     border-radius: 22px;
   }
 
-  .help-card {
-    min-height: calc(100dvh - 24px - env(safe-area-inset-bottom));
+  .help-heading .muted-copy {
+    font-size: 14px;
   }
 
   .waiting-header {
