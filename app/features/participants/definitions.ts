@@ -1,11 +1,5 @@
-export const USERNAME_MIN = 3
-export const USERNAME_MAX = 20
-export const DEBOUNCE_MS = 500
-
-// FRONTEND-ONLY by design (user decision). Editable list.
-export const NG_WORDS = ['admin', 'administrator', '運営', '主催', '死ね', '殺す', 'バカ', 'あほ', 'うんこ', 'くそ'] as const
-
-export const TERMS_VERSION = 'v1'
+export const DEPARTMENT_REQUIRED_VALUE = 'anabuki_college'
+export const SCHOOL_OTHER_VALUE = 'other_school'
 
 export const TERMS_TEXT = `第1条（目的）
 本規約は、穴吹ITビジネスカレッジが主催するクイズ大会（以下「本イベント」）の利用条件を定めるものです。参加者は本イベントに参加することで、本規約に同意したものとみなされます。
@@ -55,10 +49,6 @@ export const STUDENT_TYPE_OPTIONS: Option[] = [
   { value: 'not_student', label: '学生でない' },
 ]
 
-export const DEPARTMENT_REQUIRED_VALUE = 'anabuki_college'
-
-export const SCHOOL_OTHER_VALUE = 'other_school'
-
 export const SCHOOL_OPTIONS: Option[] = [
   { value: 'anabuki_it_business', label: '穴吹ITビジネスカレッジ' },
   { value: 'anabuki_medical', label: '穴吹医療カレッジ' },
@@ -67,9 +57,8 @@ export const SCHOOL_OPTIONS: Option[] = [
   { value: 'anabuki_design', label: '穴吹デザイン&ビューティー専門学校' },
   { value: 'anabuki_confectionery', label: '穴吹調理製菓専門学校' },
   { value: 'anabuki_animal', label: '穴吹動物福祉専門学校' },
+  { value: SCHOOL_OTHER_VALUE, label: 'その他の学校(入力)' },
 ]
-// 「その他の学校」はテキスト入力扱いのためプルダウンには含めない
-SCHOOL_OPTIONS.push({ value: SCHOOL_OTHER_VALUE, label: 'その他の学校(入力)' })
 
 export const DEPARTMENT_OPTIONS: Option[] = [
   { value: 'ai_technology', label: 'AIテクノロジー学科' },

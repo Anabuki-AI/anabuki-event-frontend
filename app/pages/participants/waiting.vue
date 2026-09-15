@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, useSeoMeta } from '#imports'
+import { onMounted, ref } from 'vue'
+import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
+import type { Participant } from '~/features/participants/types'
 import { reactionOptions } from '~/features/waiting/components/ReactionButton'
 import {
-  setupUserName,
   setupWaitingRoom,
 } from '~/features/waiting/components/WaitingRoom'
 import { setupHelpDialog } from '~/features/waiting/components/HelpDialog'
@@ -12,12 +13,22 @@ useSeoMeta({
   description: 'Anabuki Eventのイベント待機画面です。',
 })
 
-const userName = setupUserName()
+const participant = ref<Participant>()
+const participantError = ref('')
+
+onMounted(async () => {
+  try {
+    participant.value = await getCurrentParticipant()
+  }
+  catch {
+    participantError.value = '参加情報を確認できませんでした。もう一度登録してください。'
+    await navigateTo('/participants/new')
+  }
+})
 
 // デザイン確認用の仮データ。API連携は後の工程で置き換える。
 const participantCount = ref(12)
 
-// 各TSモジュールのロジックを接続(旧3コンポーネントのscript)
 const {
   isCountUpdated,
   lastReactedEmoji,
@@ -32,7 +43,11 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
 
 <template>
   <main class="page-shell">
-    <section class="form-card waiting-card">
+    <p v-if="!participant" class="status-message" role="status">
+      {{ participantError || '参加情報を確認しています…' }}
+    </p>
+
+    <section v-else class="form-card waiting-card">
       <div class="waiting-header">
         <div class="waiting-user">
           <p class="eyebrow-main">
@@ -40,15 +55,8 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
           </p>
           <div class="waiting-user-row">
             <p class="waiting-user-name">
-              {{ userName }} さん
+              {{ participant.displayName }} さん
             </p>
-            <NuxtLink
-              class="name-edit-button"
-              :to="{ path: '/users/name/edit', query: { userName } }"
-              aria-label="ニックネームを編集する"
-            >
-              <span aria-hidden="true">✏️</span>
-            </NuxtLink>
           </div>
         </div>
         <button
@@ -116,7 +124,6 @@ const { panelRef, titleId } = setupHelpDialog(closeHelp)
             <li>参加人数は自動で更新されます。</li>
             <li>リアクションボタンで気持ちを伝えられます。</li>
             <li>クイズが開始されると、画面は自動的に切り替わります。</li>
-            <li>ニックネームを変更したいときは名前の横の✏️ボタンを押してください。</li>
           </ul>
           <button
             type="button"

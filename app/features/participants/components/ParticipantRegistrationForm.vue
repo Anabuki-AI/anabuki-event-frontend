@@ -7,15 +7,12 @@ import {
   SCHOOL_OPTIONS,
   STUDENT_TYPE_OPTIONS,
   TERMS_TEXT,
-  USERNAME_MAX,
-} from '~/features/registration/definitions'
-import { setupRegistrationForm } from '~/features/registration/components/RegistrationForm'
+} from '../definitions'
+import { setupParticipantRegistrationForm } from './ParticipantRegistrationForm'
 
 const {
   form,
   otherSchoolName,
-  userNameStatus,
-  userNameMessage,
   isDepartmentRequired,
   isSchoolRequired,
   showFieldErrors,
@@ -24,12 +21,7 @@ const {
   isSubmitting,
   submitErrorMessage,
   handleSubmit,
-} = setupRegistrationForm()
-
-const userNameInputClass = () => ({
-  'is-available': userNameStatus.value === 'available',
-  'is-invalid': userNameStatus.value === 'invalid' || userNameStatus.value === 'unavailable',
-})
+} = setupParticipantRegistrationForm()
 
 // 利用規約ダイアログの開閉
 const isTermsDialogOpen = ref(false)
@@ -50,32 +42,26 @@ function closeTermsDialog() {
     novalidate
     @submit.prevent="handleSubmit"
   >
-    <!-- ページタイトル(new.vueのヘッダーから移動) -->
-    <h1>ユーザー登録</h1>
+    <h1>参加登録</h1>
 
-    <!-- ユーザーネーム -->
     <label>
-      <span>ユーザーネーム<span class="required-badge">*</span></span>
+      <span>表示名<span class="required-badge">*</span></span>
       <input
-        v-model.trim="form.userName"
-        :class="userNameInputClass()"
+        v-model.trim="form.displayName"
         type="text"
-        name="userName"
-        autocomplete="username"
-        :maxlength="USERNAME_MAX"
-        :aria-invalid="userNameStatus === 'invalid' || userNameStatus === 'unavailable'"
-        aria-describedby="user-name-note"
+        name="displayName"
+        autocomplete="nickname"
+        maxlength="100"
+        :aria-invalid="Boolean(fieldErrors.displayName)"
+        aria-describedby="display-name-note"
       >
       <p
-        id="user-name-note"
-        class="field-note"
-        :class="{
-          'is-error': userNameStatus === 'invalid' || userNameStatus === 'unavailable',
-          'is-success': userNameStatus === 'available',
-        }"
-        aria-live="polite"
+        v-if="showFieldErrors && fieldErrors.displayName"
+        id="display-name-note"
+        class="field-note is-error"
+        role="alert"
       >
-        {{ userNameMessage }}
+        {{ fieldErrors.displayName }}
       </p>
     </label>
 
@@ -176,7 +162,7 @@ function closeTermsDialog() {
       >
         <span>学校名<span class="required-badge">*</span></span>
 
-        <!-- 額生活「その他の学校」以外はプルダウン-->
+        <!-- 「その他の学校」以外はプルダウン -->
         <select
           v-if="isDepartmentRequired"
           v-model="form.school"
@@ -305,7 +291,7 @@ function closeTermsDialog() {
       :class="{ 'is-submitting': isSubmitting }"
       :disabled="!isSubmitEnabled"
     >
-      {{ isSubmitting ? '登録中…' : '登録する' }}
+      {{ isSubmitting ? '登録中…' : '参加登録する' }}
     </button>
 
     <p

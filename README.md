@@ -42,6 +42,12 @@ pnpm dev
 
 調査内容・設計判断・検証方法は `.agent/admin-login-ui.md` に記録しています。
 
+## 参加者登録
+
+`/participants/new` は `POST /api/participants` に表示名とアンケート回答を送信します。成功時にバックエンドが発行する HttpOnly Cookie セッションを使用し、`/participants/waiting` は `GET /api/participants/me` で現在の UUID 参加者を取得します。表示名は認証識別子ではないため、重複可です。フロントエンドは `/api` の同一 origin プロキシと `credentials: 'include'` を使うため、Cookie を JavaScript や URL クエリへ保存しません。
+
+バックエンドの `PUBLIC_BASE_URL` はフロントエンド origin と一致させてください。参加者 API は別 origin からの状態変更を拒否します。
+
 ## コマンド
 
 ```bash
