@@ -57,6 +57,12 @@ const isAnswerVisible = computed(() => props.state.phase === 'REVEALED' || props
     v-else
     class="quiz-question-card is-empty"
   >
+    <p
+      class="quiz-question-empty-icon"
+      aria-hidden="true"
+    >
+      🕒
+    </p>
     <p class="quiz-question-text">
       公開中の問題はありません。
     </p>

@@ -604,10 +604,14 @@ h1 {
 }
 
 /* page-shellの中央寄せ・余白も含めて画面いっぱいを使う(レビュー指摘)。
+   常設サイドバーを左に置き、残りをコンテンツ領域として使うためflexに切り替える。
    上書きはquiz-control配下のクラスに限定し、共用のpage-shellには影響させない */
 .page-shell:has(.quiz-control-card) {
-  place-items: start center;
+  display: flex;
+  align-items: stretch;
   padding: 0;
+  /* サイドバー展開時にカードが右端へぴったり付いて見えるのを避ける余白 */
+  padding-right: 20px;
   padding-bottom: 0;
   background: #edeffa;
 }
@@ -615,9 +619,95 @@ h1 {
 .quiz-control-card {
   width: 100%;
   max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
   border: none;
-  border-radius: 0;
+  /* 左はサイドバーに接するため角丸なし、右は隙間ができるため角丸をつける */
+  border-radius: 0 20px 20px 0;
   box-shadow: none;
+}
+
+/* ===== サイドバーメニュー =====
+   管理画面共通のナビ。画面左側に常設し、ボタンでメニュー部分を完全に隠す縮小表示に切り替える
+   (オーバーレイのドロワーではなく、コンテンツ領域を圧迫する常設サイドバー)。
+   開閉(展開/縮小)状態はfeatures/admin/components/AdminSidebar.tsが持つ */
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  flex: 0 0 auto;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: 240px;
+  height: 100vh;
+  height: 100dvh; /* iOS Safariのツールバー出入れで高さが変わるのに追従 */
+  padding: 16px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-right: 1px solid rgb(19 34 56 / 10%);
+  background: #fff;
+  transition: width 200ms ease;
+}
+
+.admin-sidebar--collapsed {
+  width: 72px;
+}
+
+.admin-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.admin-sidebar-toggle {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px; /* タッチターゲット44px以上 */
+  border: 1px solid rgb(19 34 56 / 12%);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 1.2rem;
+}
+
+.admin-sidebar-toggle:hover {
+  background: rgb(23 105 194 / 8%);
+}
+
+.admin-sidebar-title {
+  margin: 0;
+  overflow: hidden;
+  color: #516176;
+  font-size: 0.875rem; /* 補助文言は12〜14pxの規約内 */
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.admin-sidebar-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  min-height: 52px; /* タッチターゲット44px以上 */
+  padding: 10px 14px;
+  overflow: hidden;
+  border-radius: 14px;
+  color: #132238;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-sidebar-link:hover {
+  background: rgb(23 105 194 / 8%);
+  color: #1769c2;
 }
 
 .quiz-control-header {
@@ -669,18 +759,42 @@ h1 {
 /* 左側: 時間表示パネル */
 .quiz-clock-panel {
   display: grid;
-  gap: 6px;
+  gap: 14px;
   padding: 20px;
   border: 1px solid rgb(19 34 56 / 10%);
   border-radius: 18px;
   background: #ffffff; /* 問題背景は指定色 */
 }
 
+.quiz-clock-block {
+  display: grid;
+  gap: 6px;
+}
+
+/* 経過時間は進行管理上いちばん見たい数値のため、背景チップで視線を集める */
+.quiz-clock-block--elapsed {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(23 105 194 / 6%);
+}
+
 .quiz-clock-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
   color: #516176;
   font-size: 13px; /* 補足は12-14px規定 */
   font-weight: 700;
+}
+
+.quiz-clock-live-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #14643b;
+  box-shadow: 0 0 0 3px rgb(20 100 59 / 16%);
 }
 
 .quiz-clock-time {
@@ -692,12 +806,6 @@ h1 {
   line-height: 1.2;
 }
 
-.quiz-clock-divider {
-  height: 1px;
-  margin: 10px 0;
-  background: rgb(19 34 56 / 10%);
-}
-
 .quiz-clock-elapsed {
   margin: 0;
   color: #1769c2;
@@ -707,11 +815,20 @@ h1 {
   line-height: 1.2;
 }
 
+/* イベント未開始で経過が計測できない状態は、数値ではなく文言でわかるようにする */
+.quiz-clock-elapsed.is-pending {
+  color: #8592a6;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
 .quiz-clock-log {
   display: grid;
-  gap: 6px;
-  margin: 10px 0 0;
-  padding-top: 10px;
+  gap: 3px;
+  max-height: 220px; /* 問題数が多いイベントでもパネル自体は伸びすぎないようスクロールにする */
+  margin: 8px 0 0;
+  padding-top: 8px;
+  overflow-y: auto;
   border-top: 1px dashed rgb(19 34 56 / 14%);
 }
 
@@ -719,6 +836,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  line-height: 1.3;
 }
 
 .quiz-clock-log-row dt {
@@ -736,7 +854,7 @@ h1 {
 /* 右側: 進行管理 */
 .quiz-control-main {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .quiz-phase-panel {
@@ -750,21 +868,30 @@ h1 {
 
 .quiz-phase-steps {
   display: flex;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 4px;
   margin: 0;
   padding: 0;
+  overflow-x: auto;
   list-style: none;
 }
 
 .quiz-phase-step {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  padding: 4px 6px 4px 2px;
+  border-radius: 999px;
+}
+
+/* 現在地を一目で追えるよう、実行中のステップだけ背景で強調する */
+.quiz-phase-step.is-current {
+  background: rgb(23 105 194 / 8%);
 }
 
 .quiz-phase-step:not(:last-child)::after {
-  margin-right: 8px;
-  padding-right: 8px;
+  margin-right: 2px;
   color: #516176;
   content: '→';
   font-size: 13px;
@@ -852,19 +979,28 @@ h1 {
   font-size: 14px;
 }
 
-/* 公開中の問題カード */
+/* 公開中の問題カード。進行の中心情報のため他パネルより目立たせる */
 .quiz-question-card {
   display: grid;
   gap: 12px;
-  padding: 18px 20px;
+  padding: 20px 22px;
   border: 1px solid rgb(19 34 56 / 10%);
   border-radius: 18px;
   background: #ffffff;
 }
 
 .quiz-question-card.is-empty {
+  justify-items: center;
+  padding: 32px 20px;
+  border: 1px dashed rgb(19 34 56 / 18%);
   color: #516176;
   background: #eef2f8;
+  text-align: center;
+}
+
+.quiz-question-empty-icon {
+  margin: 0;
+  font-size: 1.8rem;
 }
 
 .quiz-question-head {
@@ -875,71 +1011,94 @@ h1 {
 
 .quiz-question-id {
   color: #1769c2;
+  font-size: 1.3rem;
   font-weight: 800;
 }
 
 .quiz-question-status {
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   color: #1769c2;
   background: rgb(23 105 194 / 6%);
-  font-size: 12px; /* 補足は12-14px規定 */
+  font-size: 13px; /* 補足は12-14px規定 */
   font-weight: 750;
 }
 
 .quiz-question-text {
   margin: 0;
   color: #132238;
-  font-size: 16px; /* 本文は16px規定 */
-  font-weight: 700;
-  line-height: 1.6;
+  font-size: clamp(18px, 1.6vw, 22px); /* 進行の中心情報として本文より大きく強調 */
+  font-weight: 750;
+  line-height: 1.4;
 }
 
 .quiz-question-choices {
   display: grid;
   grid-template-columns: 1fr; /* PC画面では1列で読みやすく */
-  gap: 6px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
   color: #253750;
-  font-size: 14px;
+  font-size: 16px; /* 本文は16px規定 */
 }
 
 .quiz-question-choices li {
   display: flex;
-  gap: 8px;
-  line-height: 1.6;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 14px;
+  background: #f7f9fc;
+  line-height: 1.4;
 }
 
 .quiz-question-choices li.is-correct {
+  border-color: rgb(20 100 59 / 32%);
   color: #14643b;
+  background: #e9f8ef;
   font-weight: 750;
 }
 
 .quiz-choice-key {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #c7d3e0;
+  border-radius: 999px;
   color: #516176;
+  background: #fff;
   font-weight: 750;
+}
+
+.quiz-question-choices li.is-correct .quiz-choice-key {
+  border-color: #14643b;
+  color: #fff;
+  background: #14643b;
 }
 
 .quiz-answer-banner {
   margin: 0;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 12px;
   color: #14643b;
   background: #e9f8ef;
-  font-size: 14px;
+  font-size: 16px; /* 本文は16px規定 */
   line-height: 1.6;
 }
 
 .quiz-answer-banner strong {
-  font-size: 1.1em;
+  font-size: 1.2em;
 }
 
 .quiz-answer-masked {
   margin: 0;
   color: #516176;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .quiz-control-note {
@@ -968,7 +1127,7 @@ h1 {
    操作ボタンは指で押しやすく大きめを維持する */
 @media (width >= 900px) {
   .quiz-control-card {
-    padding: 32px 36px;
+    padding: 28px 36px;
   }
 
   .quiz-control-grid {
@@ -981,7 +1140,7 @@ h1 {
   }
 
   .quiz-phase-panel {
-    padding: 24px;
+    padding: 20px 24px;
   }
 
   .quiz-action-button {
@@ -992,7 +1151,7 @@ h1 {
   }
 
   .quiz-question-card {
-    padding: 22px 24px;
+    padding: 24px 28px;
   }
 
   .quiz-question-choices {

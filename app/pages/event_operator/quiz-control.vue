@@ -4,6 +4,7 @@ import QuizPhasePanel from '~/features/quiz-control/components/QuizPhasePanel.vu
 import QuizCurrentQuestionCard from '~/features/quiz-control/components/QuizCurrentQuestionCard.vue'
 import { useQuizControl } from '~/features/quiz-control/useQuizControl'
 import { useQuizClock } from '~/features/quiz-control/useQuizClock'
+import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 
 useSeoMeta({
   title: 'クイズ出題管理画面',
@@ -13,6 +14,7 @@ useSeoMeta({
 const { now } = useQuizClock(1000)
 const {
   state,
+  history,
   isLoading,
   isActing,
   errorMessage,
@@ -24,10 +26,43 @@ const {
   close,
   reveal,
 } = useQuizControl()
+
+const {
+  isSidebarExpanded,
+  toggleSidebar,
+  handleSidebarKeydown,
+} = setupAdminSidebar()
 </script>
 
 <template>
   <main class="page-shell">
+    <!-- 常設サイドバー。各管理画面共通のナビ。ボタンを押すとメニュー部分を完全に隠す -->
+    <aside
+      class="admin-sidebar"
+      :class="{ 'admin-sidebar--collapsed': !isSidebarExpanded }"
+      aria-label="管理機能メニュー"
+      @keydown="handleSidebarKeydown"
+    >
+      <div class="admin-sidebar-head">
+        <button
+          type="button"
+          class="admin-sidebar-toggle"
+          :aria-label="isSidebarExpanded ? 'メニューを隠す' : 'メニューを表示する'"
+          :aria-expanded="isSidebarExpanded"
+          @click="toggleSidebar"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+        <p v-if="isSidebarExpanded" class="admin-sidebar-title">メニュー</p>
+      </div>
+      <nav v-if="isSidebarExpanded" class="admin-sidebar-nav">
+        <NuxtLink class="admin-sidebar-link" to="/event_operator">運営者メイン</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/quiz-control">出題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/admin/problems">問題管理</NuxtLink>
+      </nav>
+    </aside>
+
     <section class="admin-card quiz-control-card">
       <header class="quiz-control-header">
         <div>
@@ -81,6 +116,7 @@ const {
           <QuizClockPanel
             :state="state"
             :now="now"
+            :history="history"
           />
 
           <!-- 右側: 進行管理 -->
