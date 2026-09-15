@@ -49,7 +49,7 @@ function handleCancel() {
         <p class="eyebrow">
           Event operator
         </p>
-        <h1>問題追加画面</h1>
+        <h1>問題追加</h1>
         <p class="muted-copy">
           クイズ大会で出題する問題文・添付画像・4つの選択肢と正解を入力して登録します。
         </p>
@@ -154,18 +154,18 @@ function handleCancel() {
         <div class="question-add-actions">
           <button
             type="button"
+            class="question-add-cancel"
+            @click="handleCancel()"
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
             class="question-add-save"
             :disabled="!canSave"
             @click="save()"
           >
             保存する
-          </button>
-          <button
-            type="button"
-            class="question-add-cancel"
-            @click="handleCancel()"
-          >
-            キャンセル
           </button>
         </div>
       </form>
