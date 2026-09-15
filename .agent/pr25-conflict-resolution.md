@@ -25,3 +25,21 @@
 4. 検証: vitest 61 tests pass / eslint clean / nuxt typecheck clean
 5. マージコミット df69fca でプッシュ → PR #25 は MERGEABLE に。
    (BLOCKED はブランチ保護のレビュー/CI待ちでコンフリクトではない)
+
+# 追加修正: 画面切替時のチラつき (19d3f5d)
+
+- 症状: 管理者コンソールの画面を切り替えるたびにログイン画面レイアウトが一瞬チラつく
+- 原因の二重構造:
+  1. `pages/admin/index.vue` と `pages/admin/[view].vue` が別ページコンポーネントで、
+     /admin ↔ /admin/<view> の遷移で AdminPortal が full remount されていた
+  2. さらに Nuxt はページkeyをデフォルトでパス補間 (`generateRouteKey` → `interpolatePath`)
+     するため、1ルートに統一しても param 変更で remount された
+- remount のたびに `ready=false` から再スタートし、セッション確認中に
+  `.admin-portal` (ログイン画面レイアウト) が一瞬表示 + `appear` アニメーション再生 → チラつき
+- 修正: 両ページを `pages/admin/[[view]].vue` (optional param) に統一し、
+  `definePageMeta({ key: 'admin-portal' })` で静的key化
+- 検証 (Playwright + APIモック): 5回の連続画面切替で
+  - page component の mount/unmount: 0回 (修正前は毎回)
+  - セッションAPI再フェッチ: 0回
+  - 未認証リダイレクト /admin/logs → /admin/login、不正viewの404 は従来どおり
+- vitest 61 tests / eslint / nuxt typecheck all green
