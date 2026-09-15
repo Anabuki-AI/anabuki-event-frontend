@@ -1,4 +1,5 @@
 import type { AccessRequestStatus } from './types'
+export { formatJapanDateTime as formatAdminDate } from '~/lib/format/datetime'
 
 export const adminWorkflowSteps = ['ログイン', '利用申請', '運営開始'] as const
 
@@ -46,12 +47,3 @@ export function getAccessRequestStateCopy(status: AccessRequestStatus | undefine
   return status ? accessRequestCopyByStatus[status] : initialAccessRequestCopy
 }
 
-export function formatAdminDate(value: string) {
-  return new Intl.DateTimeFormat('ja-JP', {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tokyo',
-  }).format(new Date(value))
-}

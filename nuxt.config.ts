@@ -17,6 +17,8 @@ export default defineNuxtConfig({
   routeRules: {
     '/admin': { headers: { 'cache-control': 'no-store' } },
     '/admin/**': { headers: { 'cache-control': 'no-store' } },
+    '/operator': { headers: { 'cache-control': 'no-store' } },
+    '/operator/**': { headers: { 'cache-control': 'no-store' } },
   },
   typescript: {
     typeCheck: true,
