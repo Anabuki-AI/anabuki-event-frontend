@@ -13,6 +13,7 @@ const {
   session,
   accessRequest,
   pendingRequests,
+  pendingOperatorRequests,
   configured,
   busy,
   ready,
@@ -27,6 +28,7 @@ const {
   enter,
   logout,
   decide,
+  decideOperatorRequest,
 } = useAdminPortal()
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -35,6 +37,7 @@ const googleStartUrl = computed(
   () => buildGoogleStartUrl(config.public.apiBase, 'admin'),
 )
 const confirmation = ref<{
+  kind: 'team' | 'operator'
   id: number
   decision: AccessRequestDecision
 } | null>(null)
@@ -45,9 +48,9 @@ const requestCopy = computed(() => getAccessRequestStateCopy(requestStatus.value
 
 async function confirmDecision() {
   if (!confirmation.value) return
-  const { id, decision } = confirmation.value
+  const { kind, id, decision } = confirmation.value
   confirmation.value = null
-  await decide(id, decision)
+  await (kind === 'operator' ? decideOperatorRequest(id, decision) : decide(id, decision))
 }
 
 async function focusAfter(action: () => Promise<void>) {
@@ -175,14 +178,20 @@ async function confirmLogout() {
         <section v-else class="management-section" aria-labelledby="management-title" :aria-busy="busy">
           <span class="state-badge approved"><PortalIcon name="check" />管理者としてログイン中</span>
           <h1 id="management-title" class="state-title">運営を、はじめましょう。</h1>
-          <p class="intro">アカウントとチームの利用申請を確認できます。</p>
+          <p class="intro">アカウント・チーム・オペレーターの利用申請を確認できます。</p>
           <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">{{ session.accessSource === 'ENVIRONMENT_ACCESS' ? '環境設定による管理アクセス' : '承認済みの管理アクセス' }}</span><strong>{{ session.email }}</strong></div></div>
           <p class="session-expiry">セッション有効期限：{{ formatAdminDate(session.expiresAt) }}（日本時間）</p>
           <div v-if="canApprove" class="approval-inbox">
             <div class="inbox-heading"><h2>チームの利用申請 <span>{{ pendingRequests.length }}</span></h2><button class="icon-button" aria-label="利用申請を更新" :disabled="busy" @click="refresh"><PortalIcon name="refresh" /></button></div>
             <p class="inbox-description">申請者本人と確認してから承認してください。</p>
             <div v-if="pendingRequests.length === 0" class="empty-inbox"><span class="empty-icon"><PortalIcon name="check" /></span><strong>承認待ちの申請はありません</strong><p>新しい申請は、更新ボタンで確認できます。</p></div>
-            <ul v-else class="request-list"><li v-for="item in pendingRequests" :key="item.id"><div class="request-identity"><span class="account-avatar" aria-hidden="true">{{ item.email[0]?.toUpperCase() }}</span><div><strong>{{ item.email }}</strong><p>申請 #{{ item.id }} · {{ formatAdminDate(item.expiresAt) }} まで</p></div></div><div class="request-actions"><button class="small-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'reject' }">却下</button><button class="small-button approve-button" :disabled="busy" @click="confirmation = { id: item.id, decision: 'approve' }">承認する</button></div></li></ul>
+            <ul v-else class="request-list"><li v-for="item in pendingRequests" :key="item.id"><div class="request-identity"><span class="account-avatar" aria-hidden="true">{{ item.email[0]?.toUpperCase() }}</span><div><strong>{{ item.email }}</strong><p>申請 #{{ item.id }} · {{ formatAdminDate(item.expiresAt) }} まで</p></div></div><div class="request-actions"><button class="small-button" :disabled="busy" @click="confirmation = { kind: 'team', id: item.id, decision: 'reject' }">却下</button><button class="small-button approve-button" :disabled="busy" @click="confirmation = { kind: 'team', id: item.id, decision: 'approve' }">承認する</button></div></li></ul>
+          </div>
+          <div v-if="canApprove" class="approval-inbox operator-inbox">
+            <div class="inbox-heading"><h2>オペレーター申請 <span>{{ pendingOperatorRequests.length }}</span></h2><button class="icon-button" aria-label="オペレーター申請を更新" :disabled="busy" @click="refresh"><PortalIcon name="refresh" /></button></div>
+            <p class="inbox-description">イベント運営（オペレーター）ページの利用を希望する申請です。申請者本人と確認してから承認してください。</p>
+            <div v-if="pendingOperatorRequests.length === 0" class="empty-inbox"><span class="empty-icon"><PortalIcon name="check" /></span><strong>承認待ちのオペレーター申請はありません</strong><p>新しい申請は、更新ボタンで確認できます。</p></div>
+            <ul v-else class="request-list"><li v-for="item in pendingOperatorRequests" :key="item.id"><div class="request-identity"><span class="account-avatar operator-avatar" aria-hidden="true">{{ item.email[0]?.toUpperCase() }}</span><div><strong>{{ item.email }}</strong><p>申請 #{{ item.id }} · {{ formatAdminDate(item.expiresAt) }} まで</p></div></div><div class="request-actions"><button class="small-button" :disabled="busy" @click="confirmation = { kind: 'operator', id: item.id, decision: 'reject' }">却下</button><button class="small-button approve-button operator-approve" :disabled="busy" @click="confirmation = { kind: 'operator', id: item.id, decision: 'approve' }">承認する</button></div></li></ul>
           </div>
           <button class="logout-button" :disabled="busy" @click="logoutConfirmation = true"><PortalIcon name="logout" />ログアウト</button>
         </section>
@@ -193,8 +202,8 @@ async function confirmLogout() {
 
     <div v-if="confirmation" class="modal-backdrop" role="presentation">
       <section class="confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="decision-title">
-        <p class="eyebrow">CONFIRMATION</p><h2 id="decision-title">{{ confirmation.decision === 'approve' ? 'この申請を承認しますか？' : 'この申請を却下しますか？' }}</h2>
-        <p>{{ confirmation.decision === 'approve' ? '承認すると、申請者はこの端末から管理ポータルへ進めます。' : '却下した申請者は、必要に応じて再申請できます。' }}</p>
+        <p class="eyebrow">CONFIRMATION</p><h2 id="decision-title">{{ confirmation.decision === 'approve' ? (confirmation.kind === 'operator' ? 'このオペレーター申請を承認しますか？' : 'この申請を承認しますか？') : (confirmation.kind === 'operator' ? 'このオペレーター申請を却下しますか？' : 'この申請を却下しますか？') }}</h2>
+        <p>{{ confirmation.decision === 'approve' ? (confirmation.kind === 'operator' ? '承認すると、申請者はこの端末からオペレーター画面へ進めます。' : '承認すると、申請者はこの端末から管理ポータルへ進めます。') : '却下した申請者は、必要に応じて再申請できます。' }}</p>
         <div class="modal-actions"><button class="small-button" @click="confirmation = null">戻る</button><button class="small-button approve-button" :disabled="busy" @click="confirmDecision">{{ confirmation.decision === 'approve' ? '承認する' : '却下する' }}</button></div>
       </section>
     </div>
@@ -220,7 +229,11 @@ async function confirmLogout() {
 .first-visit { display:flex; gap:13px; margin-top:38px; padding:19px 20px; border-top:1px solid #dce5de; border-bottom:1px solid #dce5de; }.small-icon { display:grid; flex:0 0 auto; width:26px; height:26px; place-items:center; border-radius:50%; color:var(--deep-sage); background:#e1ede3; }.small-icon svg { width:15px; }.first-visit h2 { margin:1px 0 6px; font-size:13px; }.first-visit p { margin:0; color:var(--muted); font-size:12px; line-height:1.7; }.help-details { margin-top:18px; color:#62746a; font-size:12px; }.help-details summary { cursor:pointer; font-weight:700; }.help-content { padding-top:9px; line-height:1.75; }.help-content p { margin:8px 0; }
 .notice-message,.error-message { display:flex; align-items:flex-start; gap:10px; margin-bottom:22px; padding:13px 15px; font-size:12px; line-height:1.6; }.notice-message { color:#35604b; border:1px solid #c8ded0; background:#f2f8f3; }.error-message { display:block; color:#8e3728; border:1px solid #ecd0c9; background:#fff6f3; }.notice-message p,.error-message p { margin:0; }.notice-message svg { flex:0 0 auto; width:16px; margin-top:2px; }.oauth-error { margin-top:20px; }
 .state-badge { display:inline-flex; align-items:center; gap:6px; margin-bottom:16px; padding:6px 10px; color:#557062; background:#eef5ef; font-size:11px; font-weight:700; }.state-badge svg { width:14px; }.state-badge.pending { color:#76602c; background:#fbf5e4; }.state-badge.approved { color:#336b4b; background:#e8f4eb; }.state-title { font-size:34px !important; }.account-card { display:flex; align-items:center; gap:12px; margin-top:27px; padding:16px; border:1px solid var(--line); background:#fbfdfb; }.account-avatar { display:grid; flex:0 0 auto; width:37px; height:37px; place-items:center; border-radius:50%; color:#fff; background:#6f9178; font-size:14px; font-weight:700; }.meta-label { display:block; margin-bottom:3px; color:#718078; font-size:10px; }.account-card strong { font-size:13px; overflow-wrap:anywhere; }.request-meta { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin:14px 0 0; background:var(--line); }.request-meta div { padding:12px; background:#fff; }.request-meta dt { color:#748078; font-size:10px; }.request-meta dd { margin:5px 0 0; font-size:12px; font-weight:650; }.primary-button { margin-top:22px; color:#fff; border:1px solid var(--deep-sage); background:var(--deep-sage); }.primary-button:hover:not(:disabled) { background:#284e3f; }.secondary-button { margin-top:22px; color:#416651; border:1px solid #a8c2af; background:#fff; }.live-dot { width:7px; height:7px; border-radius:50%; background:#6b9875; }.device-note { display:flex; gap:9px; margin-top:28px; padding:14px; color:#65766c; background:#f5f8f5; font-size:11px; line-height:1.7; }.device-note svg { flex:0 0 auto; width:15px; margin-top:1px; }.device-note p { margin:0; }
-.session-expiry { margin:11px 0 0; color:var(--muted); font-size:11px; }.approval-inbox { margin-top:34px; }.inbox-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }.inbox-heading h2 { margin:0; font-size:16px; }.inbox-heading h2 span { display:inline-grid; min-width:22px; height:22px; margin-left:5px; place-items:center; border-radius:50%; color:#476d55; background:#e8f1e9; font-size:11px; }.icon-button { display:grid; width:38px; height:38px; place-items:center; border:1px solid var(--line); color:#527061; background:#fff; cursor:pointer; }.icon-button svg { width:16px; }.inbox-description { margin:8px 0 0; color:var(--muted); font-size:12px; }.empty-inbox { display:grid; justify-items:center; gap:7px; margin-top:16px; padding:24px; border:1px solid #dce7de; background:#f7faf7; text-align:center; }.empty-icon { color:#568265; }.empty-inbox strong { font-size:13px; }.empty-inbox p { margin:0; color:var(--muted); font-size:11px; }.request-list { margin:14px 0 0; padding:0; list-style:none; }.request-list > li { padding:15px; border:1px solid var(--line); }.request-list > li + li { margin-top:9px; }.request-identity { display:flex; gap:10px; align-items:center; }.request-identity strong { font-size:13px; overflow-wrap:anywhere; }.request-identity p { margin:4px 0 0; color:var(--muted); font-size:11px; }.request-actions,.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:13px; }.small-button,.logout-button { min-height:40px; padding:8px 13px; border:1px solid #b7c9bb; background:#fff; color:#466553; font-size:12px; font-weight:650; cursor:pointer; }.approve-button { color:#fff; border-color:var(--deep-sage); background:var(--deep-sage); }.logout-button { display:flex; align-items:center; gap:7px; margin:32px 0 0; }.logout-button svg { width:15px; }.workspace-footer { display:flex; justify-content:space-between; gap:12px; color:#829188; font-size:10px; }.workspace-footer p { margin:0; }.workspace-footer span { font-weight:700; letter-spacing:.12em; }
+.session-expiry { margin:11px 0 0; color:var(--muted); font-size:11px; }.approval-inbox { margin-top:34px; }.inbox-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }.inbox-heading h2 { margin:0; font-size:16px; }.inbox-heading h2 span { display:inline-grid; min-width:22px; height:22px; margin-left:5px; place-items:center; border-radius:50%; color:#476d55; background:#e8f1e9; font-size:11px; }.icon-button { display:grid; width:38px; height:38px; place-items:center; border:1px solid var(--line); color:#527061; background:#fff; cursor:pointer; }.icon-button svg { width:16px; }.inbox-description { margin:8px 0 0; color:var(--muted); font-size:12px; }.empty-inbox { display:grid; justify-items:center; gap:7px; margin-top:16px; padding:24px; border:1px solid #dce7de; background:#f7faf7; text-align:center; }.empty-icon { color:#568265; }.empty-inbox strong { font-size:13px; }.empty-inbox p { margin:0; color:var(--muted); font-size:11px; }.request-list { margin:14px 0 0; padding:0; list-style:none; }.request-list > li { padding:15px; border:1px solid var(--line); }.request-list > li + li { margin-top:9px; }.request-identity { display:flex; gap:10px; align-items:center; }.request-identity strong { font-size:13px; overflow-wrap:anywhere; }.request-identity p { margin:4px 0 0; color:var(--muted); font-size:11px; }.request-actions,.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:13px; }.small-button,.logout-button { min-height:40px; padding:8px 13px; border:1px solid #b7c9bb; background:#fff; color:#466553; font-size:12px; font-weight:650; cursor:pointer; }.approve-button { color:#fff; border-color:var(--deep-sage); background:var(--deep-sage); }
+.operator-inbox { border-top:1px dashed var(--line); padding-top:22px; }
+.operator-inbox .inbox-heading h2 span { color:#1c5fae; background:#e2edfa; }
+.operator-avatar { background:#5b87c2; }
+.operator-approve { border-color:var(--blue); background:var(--blue); }.logout-button { display:flex; align-items:center; gap:7px; margin:32px 0 0; }.logout-button svg { width:15px; }.workspace-footer { display:flex; justify-content:space-between; gap:12px; color:#829188; font-size:10px; }.workspace-footer p { margin:0; }.workspace-footer span { font-weight:700; letter-spacing:.12em; }
 .modal-backdrop { position:fixed; z-index:5; inset:0; display:grid; place-items:center; padding:20px; background:#1e302855; }.confirmation-dialog { width:min(100%, 390px); padding:28px; background:#fff; box-shadow:0 20px 60px #15251d55; }.confirmation-dialog h2 { margin:0; font-family:ui-serif, Georgia, serif; font-size:24px; font-weight:500; }.confirmation-dialog > p:last-of-type { color:var(--muted); font-size:13px; line-height:1.7; }.spinner { display:inline-block; width:17px; height:17px; border:2px solid #d7e4d9; border-top-color:var(--deep-sage); border-radius:50%; animation:rotate .8s linear infinite; }.loading-state .spinner { margin-bottom:20px; }.loading-state > p:last-child { color:var(--muted); font-size:13px; }.loading-state h1 { margin-bottom:14px; }
 button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid #1769c2; outline-offset:3px; } @keyframes rotate { to { transform:rotate(360deg); } } @keyframes appear { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 @media (max-width: 850px) { .admin-portal { grid-template-columns:1fr; }.editorial-panel { min-height:auto; padding:28px 32px; }.editorial-copy { margin-top:42px; }.editorial-copy h2 { font-size:35px; }.school-name { display:none; }.workspace-panel { min-height:calc(100vh - 245px); padding:24px 32px; }.auth-content { margin:25px auto; padding:32px 0; } }

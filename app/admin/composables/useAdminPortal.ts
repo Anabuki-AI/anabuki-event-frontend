@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { adminAuthApi } from '../api/admin-auth'
+import { useAccessRequestPolling } from '~/lib/auth/access-request'
 import type {
   AccessRequest,
   AccessRequestDecision,
@@ -11,6 +12,7 @@ export function useAdminPortal() {
   const session = ref<AdminSession | null>(null)
   const accessRequest = ref<AccessRequest | null>(null)
   const pendingRequests = ref<AccessRequest[]>([])
+  const pendingOperatorRequests = ref<AccessRequest[]>([])
   const configured = ref(false)
   const busy = ref(false)
   const ready = ref(false)
@@ -18,7 +20,6 @@ export function useAdminPortal() {
   const notice = ref('')
   const departing = ref(false)
   let disposed = false
-  let interval: ReturnType<typeof setInterval> | undefined
 
   const isManager = computed(() => !!session.value?.permissions.includes('MANAGEMENT_PAGE_VIEW'))
   const canApprove = computed(() => isManager.value && !!session.value?.permissions.includes('ACCESS_REQUEST_APPROVE'))
@@ -34,6 +35,7 @@ export function useAdminPortal() {
       session.value = null
       accessRequest.value = null
       pendingRequests.value = []
+      pendingOperatorRequests.value = []
       configured.value = (await adminAuthApi.configuration()).configured
       ready.value = true
       return
@@ -52,6 +54,7 @@ export function useAdminPortal() {
     else {
       accessRequest.value = null
       pendingRequests.value = canApprove.value ? await adminAuthApi.pendingRequests() : []
+      pendingOperatorRequests.value = canApprove.value ? await adminAuthApi.pendingOperatorRequests() : []
     }
     ready.value = true
   }
@@ -68,6 +71,7 @@ export function useAdminPortal() {
         session.value = null
         accessRequest.value = null
         pendingRequests.value = []
+        pendingOperatorRequests.value = []
         ready.value = false
         notice.value = 'ログインの有効期限が切れました。もう一度 Google でログインしてください。'
         try {
@@ -125,6 +129,7 @@ export function useAdminPortal() {
       session.value = null
       accessRequest.value = null
       pendingRequests.value = []
+      pendingOperatorRequests.value = []
       ready.value = false
       notice.value = 'ログアウトしました。'
       await loadState()
@@ -139,11 +144,12 @@ export function useAdminPortal() {
     })
   }
 
-  function checkForUpdates() {
-    if (document.visibilityState === 'hidden' || busy.value || error.value || !session.value) return
-    if (accessRequest.value?.status === 'PENDING' || Date.parse(session.value.expiresAt) <= Date.now()) {
-      void refresh()
-    }
+  function decideOperatorRequest(id: number, decision: AccessRequestDecision) {
+    return run(async () => {
+      await adminAuthApi.decideOperatorRequest(id, decision)
+      pendingOperatorRequests.value = pendingOperatorRequests.value.filter(item => item.id !== id)
+      notice.value = decision === 'approve' ? 'オペレーターの申請を承認しました。申請者は同じブラウザからオペレーター画面へ進めます。' : 'オペレーターの申請を却下しました。'
+    })
   }
 
   function restoreNavigation() {
@@ -153,16 +159,23 @@ export function useAdminPortal() {
 
   onMounted(() => {
     void refresh()
-    interval = setInterval(checkForUpdates, 10_000)
-    document.addEventListener('visibilitychange', checkForUpdates)
     window.addEventListener('pageshow', restoreNavigation)
   })
   onUnmounted(() => {
     disposed = true
-    clearInterval(interval)
-    document.removeEventListener('visibilitychange', checkForUpdates)
     window.removeEventListener('pageshow', restoreNavigation)
   })
 
-  return { session, accessRequest, pendingRequests, configured, busy, ready, error, notice, departing, isManager, canApprove, step, refresh, apply, enter, logout, decide }
+  // Shared 10-second polling: keep pending applications (and near-expiry
+  // sessions) up to date while the tab is visible.
+  useAccessRequestPolling({
+    isActive: () => !!session.value
+      && !busy.value
+      && !error.value
+      && (accessRequest.value?.status === 'PENDING'
+        || Date.parse(session.value.expiresAt) <= Date.now()),
+    refresh,
+  })
+
+  return { session, accessRequest, pendingRequests, pendingOperatorRequests, configured, busy, ready, error, notice, departing, isManager, canApprove, step, refresh, apply, enter, logout, decide, decideOperatorRequest }
 }
