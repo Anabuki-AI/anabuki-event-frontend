@@ -3,7 +3,7 @@ import type { Question } from '../types'
 
 /**
  * 問題一覧の1行表示ユーティリティ(旧QuestionRow.vueのscript)。
- * 行のテンプレートはpages/admin/problems/index.vueに統合済み
+ * 行のテンプレートはpages/event_operator/problem-management.vueに統合済み
  * (summary=1行の問題文、details折り畳み内に選択肢・倍率・操作)。
  */
 export function formatQuestionId(id: number): string {

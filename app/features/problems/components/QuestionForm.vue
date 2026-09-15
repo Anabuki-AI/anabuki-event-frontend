@@ -56,7 +56,7 @@ function applyUpdate(next: QuestionFormState) {
 
 /** キャンセルは履歴に依存せず一覧へ戻す（miro仕様: 問題一覧 ← 編集/追加） */
 function handleCancel() {
-  void router.push('/admin/problems')
+  void router.push('/event_operator/problem-management')
 }
 
 async function handleSubmit() {

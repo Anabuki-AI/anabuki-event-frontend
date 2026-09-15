@@ -16,7 +16,7 @@ function createTestRouter() {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/admin/problems', component: { template: '<div />' } },
+      { path: '/event_operator/problem-management', component: { template: '<div />' } },
       { path: '/', component: { template: '<div />' } },
     ],
   })
@@ -56,6 +56,6 @@ describe('自信度倍率変更フォーム（multiplier画面の要素）', () 
     await wrapper.find('.button-cancel').trigger('click')
     await router.isReady()
 
-    expect(router.currentRoute.value.path).toBe('/admin/problems')
+    expect(router.currentRoute.value.path).toBe('/event_operator/problem-management')
   })
 })

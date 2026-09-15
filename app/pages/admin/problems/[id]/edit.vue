@@ -36,7 +36,7 @@ onMounted(async () => {
     <section class="admin-card form-card">
       <NuxtLink
         class="back-link"
-        to="/admin/problems"
+        to="/event_operator/problem-management"
       >
         ← 問題一覧へ戻る
       </NuxtLink>

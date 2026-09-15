@@ -60,7 +60,7 @@ async function handleSubmit() {
 
 /** キャンセルは履歴に依存せず一覧へ戻す（miro仕様: 問題一覧 ← 自信度倍率変更） */
 function handleCancel() {
-  void router.push('/admin/problems')
+  void router.push('/event_operator/problem-management')
 }
 </script>
 

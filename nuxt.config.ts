@@ -2,7 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-08-10',
   devtools: { enabled: true },
   modules: ['@nuxt/eslint'],
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/problem-management.css'],
   app: {
     head: {
       viewport: 'width=device-width, initial-scale=1',
