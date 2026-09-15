@@ -2,13 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-08-10',
   devtools: { enabled: true },
   modules: ['@nuxt/eslint'],
-  css: ['~/assets/css/questionedit.css'],
-  css: ['~/assets/css/main.css'],
-  app: {
-    head: {
-      viewport: 'width=device-width, initial-scale=1',
-    },
-  },
+  css: ['~/assets/css/questionedit2.css'],
   runtimeConfig: {
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
