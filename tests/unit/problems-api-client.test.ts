@@ -21,6 +21,12 @@ const payload = {
   choiceC: 'C',
   choiceD: 'D',
   correctAnswer: 'A' as const,
+  explanation: '解説テキスト',
+  targetAudience: '初級者向け',
+}
+
+function formDataEntries(formData: unknown): Record<string, unknown> {
+  return Object.fromEntries((formData as FormData).entries())
 }
 
 describe('問題管理API client', () => {
@@ -40,9 +46,37 @@ describe('問題管理API client', () => {
     await updateQuestion(12, payload)
     await deleteQuestion(12)
 
-    expect(mockedRequest).toHaveBeenNthCalledWith(1, '/admin/questions', { method: 'POST', body: payload, credentials: 'include' })
-    expect(mockedRequest).toHaveBeenNthCalledWith(2, '/admin/questions/12', { method: 'PUT', body: payload, credentials: 'include' })
+    const expectedFields = {
+      questionText: 'テスト問題',
+      choiceA: 'A',
+      choiceB: 'B',
+      choiceC: 'C',
+      choiceD: 'D',
+      correctAnswer: 'A',
+      explanation: '解説テキスト',
+      targetAudience: '初級者向け',
+    }
+
+    expect(mockedRequest.mock.calls[0]?.[0]).toBe('/admin/questions')
+    expect(mockedRequest.mock.calls[0]?.[1]).toMatchObject({ method: 'POST', credentials: 'include' })
+    expect(formDataEntries(mockedRequest.mock.calls[0]?.[1]?.body)).toEqual(expectedFields)
+
+    expect(mockedRequest.mock.calls[1]?.[0]).toBe('/admin/questions/12')
+    expect(mockedRequest.mock.calls[1]?.[1]).toMatchObject({ method: 'PUT', credentials: 'include' })
+    expect(formDataEntries(mockedRequest.mock.calls[1]?.[1]?.body)).toEqual(expectedFields)
+
     expect(mockedRequest).toHaveBeenNthCalledWith(3, '/admin/questions/12', { method: 'DELETE', credentials: 'include' })
+  })
+
+  it('画像ファイルと削除フラグをFormDataに含める', async () => {
+    mockedRequest.mockResolvedValue(undefined)
+    const image = new File(['dummy'], 'question.png', { type: 'image/png' })
+
+    await createQuestion({ ...payload, image })
+    expect(formDataEntries(mockedRequest.mock.calls[0]?.[1]?.body)).toMatchObject({ image })
+
+    await updateQuestion(12, { ...payload, removeImage: true })
+    expect(formDataEntries(mockedRequest.mock.calls[1]?.[1]?.body)).toMatchObject({ removeImage: 'true' })
   })
 
   it('倍率取得・更新にはGET/PATCHを使い、実レスポンスの文字列倍率を返す', async () => {

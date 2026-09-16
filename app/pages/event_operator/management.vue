@@ -10,6 +10,7 @@ import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '~/feature
 import { choiceText, correctChoiceText, formatCorrectBadge, formatQuestionPosition } from '~/features/problems/components/QuestionRow'
 import ConfidenceMultiplierModal from '~/features/problems/components/ConfidenceMultiplierModal.vue'
 import QuestionDeleteDialog from '~/features/problems/components/QuestionDeleteDialog.vue'
+import QuestionPreviewModal from '~/features/problems/components/QuestionPreviewModal.vue'
 import QuestionAddModal from './question-add.vue'
 import QuestionEditModal from './questione.vue'
 import { problemErrorMessage } from '~/features/problems/validation'
@@ -35,6 +36,7 @@ const isDeleting = ref(false)
 const deleteErrorMessage = ref('')
 const isAddModalOpen = ref(false)
 const editingQuestion = ref<Question | null>(null)
+const previewingQuestion = ref<Question | null>(null)
 const {
   isSidebarExpanded,
   toggleSidebar,
@@ -206,9 +208,9 @@ onMounted(() => {
               <span class="correct-badge" :title="`正解: ${correctChoiceText(question)}`">{{ formatCorrectBadge(question) }}</span>
             </summary>
             <div class="question-row-detail">
-              <div v-if="question.imageUrl" class="question-image">
-                <img :src="question.imageUrl" :alt="`${formatQuestionPosition(question.position)}の画像`">
-              </div>
+              <p v-if="question.targetAudience" class="question-target-audience">
+                出題対象: {{ question.targetAudience }}
+              </p>
               <div class="question-choices-row">
                 <ul class="question-choices">
                   <li v-for="key in CHOICE_KEYS" :key="key" :class="{ 'is-correct': key === question.correctAnswer }">
@@ -216,10 +218,14 @@ onMounted(() => {
                   </li>
                 </ul>
                 <div class="question-row-actions">
+                  <button type="button" class="row-action-link" @click="previewingQuestion = question">プレビュー</button>
                   <button type="button" class="row-action-link" @click="editingQuestion = question">編集</button>
                   <button type="button" class="row-action-button" :aria-label="`${formatQuestionPosition(question.position)}を削除`" @click="openDeleteDialog(question)">削除</button>
                 </div>
               </div>
+              <p v-if="question.explanation" class="question-explanation">
+                解説: {{ question.explanation }}
+              </p>
             </div>
           </details>
         </div>
@@ -241,6 +247,11 @@ onMounted(() => {
       :question="editingQuestion"
       @close="closeEditModal"
       @saved="handleQuestionEdited"
+    />
+    <QuestionPreviewModal
+      v-if="previewingQuestion"
+      :question="previewingQuestion"
+      @close="previewingQuestion = null"
     />
   </main>
 </template>

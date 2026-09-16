@@ -89,6 +89,53 @@
   font-size: 0.75rem;
 }
 
+/* --- 問題画像アップロード --- */
+
+.question-add-shell .question-add-file-input {
+  font: inherit;
+  color: #132238;
+}
+
+.question-add-shell .question-add-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.question-add-shell .question-add-image-preview img {
+  max-width: 220px;
+  max-height: 140px;
+  border: 1px solid #cdcfdb;
+  border-radius: 12px;
+  object-fit: contain;
+  background: #edeffa;
+}
+
+.question-add-shell .question-add-image-remove,
+.question-add-shell .question-add-image-restore {
+  padding: 6px 14px;
+  border: 1px solid #cdcfdb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #132238;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.question-add-shell .question-add-image-remove:hover:not(:disabled),
+.question-add-shell .question-add-image-restore:hover:not(:disabled) {
+  border-color: #1769c2;
+  color: #1769c2;
+}
+
+.question-add-shell .question-add-image-remove:disabled,
+.question-add-shell .question-add-image-restore:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 /* --- 選択肢（4択固定）と正解選択 --- */
 
 .question-add-shell .question-add-choices {

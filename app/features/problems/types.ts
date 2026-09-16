@@ -20,6 +20,10 @@ export interface Question {
   choiceD: string
   correctAnswer: ChoiceKey
   imageUrl: string | null
+  /** 解説。正解表示後にのみ画面に表示する。 */
+  explanation: string | null
+  /** 出題対象。出題画面に問題文と併せて表示する。 */
+  targetAudience: string | null
   createdAt: string
   updatedAt: string
 }

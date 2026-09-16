@@ -4,6 +4,11 @@ export const CHOICE_KEYS = ['A', 'B', 'C', 'D'] as const satisfies readonly Choi
 
 export const QUESTION_TEXT_MAX = 200
 export const CHOICE_TEXT_MAX = 100
+export const EXPLANATION_MAX = 500
+export const TARGET_AUDIENCE_MAX = 100
+
+export const IMAGE_MAX_BYTES = 5 * 1024 * 1024
+export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
 export const CONFIDENCE_MULTIPLIER_MIN = 0
 export const CONFIDENCE_MULTIPLIER_MAX = 9.99

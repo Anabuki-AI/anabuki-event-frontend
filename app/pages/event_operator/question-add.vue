@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useId } from 'vue'
 import { createQuestion } from '~/features/problems/api/client'
 import type { QuestionPayload } from '~/features/problems/api/client'
-import { problemErrorMessage } from '~/features/problems/validation'
+import { problemErrorMessage, validateImageFile } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 import '~/assets/css/question-add.css'
 
@@ -19,12 +19,44 @@ const form = reactive({
   choiceB: '',
   choiceC: '',
   choiceD: '',
+  explanation: '',
+  targetAudience: '',
 })
 const correctChoice = ref<ChoiceLabel | null>(null)
 const isSaving = ref(false)
 const submitErrorMessage = ref('')
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
+
+const imageFile = ref<File | null>(null)
+const imagePreviewUrl = ref<string | null>(null)
+const imageErrorMessage = ref('')
+
+function handleImageChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  if (!file) return
+
+  const error = validateImageFile(file)
+  if (error) {
+    imageErrorMessage.value = error
+    input.value = ''
+    return
+  }
+
+  imageErrorMessage.value = ''
+  if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value)
+  imageFile.value = file
+  imagePreviewUrl.value = URL.createObjectURL(file)
+  input.value = ''
+}
+
+function handleImageClear() {
+  if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value)
+  imageFile.value = null
+  imagePreviewUrl.value = null
+  imageErrorMessage.value = ''
+}
 
 const canSave = computed<boolean>(
   () =>
@@ -64,6 +96,9 @@ async function save() {
     choiceC: form.choiceC.trim(),
     choiceD: form.choiceD.trim(),
     correctAnswer: correctChoice.value,
+    explanation: form.explanation.trim(),
+    targetAudience: form.targetAudience.trim(),
+    image: imageFile.value,
   }
 
   try {
@@ -94,6 +129,9 @@ onMounted(async () => {
   panel.value?.focus()
 })
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
+onUnmounted(() => {
+  if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value)
+})
 </script>
 
 <template>
@@ -121,6 +159,39 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             :disabled="isSaving"
             @input="handleQuestionInput(($event.target as HTMLTextAreaElement).value)"
           />
+        </label>
+
+        <label class="question-add-field">
+          <span class="question-add-label">問題画像（任意・出題画面に表示されます）</span>
+          <input
+            class="question-add-file-input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            :disabled="isSaving"
+            @change="handleImageChange"
+          >
+          <p v-if="imageErrorMessage" class="status-message error" role="alert">
+            {{ imageErrorMessage }}
+          </p>
+          <div v-if="imagePreviewUrl" class="question-add-image-preview">
+            <img :src="imagePreviewUrl" alt="選択した画像のプレビュー">
+            <button type="button" class="question-add-image-remove" :disabled="isSaving" @click="handleImageClear">
+              画像を削除
+            </button>
+          </div>
+        </label>
+
+        <label class="question-add-field">
+          <span class="question-add-label">出題対象（任意・出題画面に表示されます）</span>
+          <input
+            class="question-add-choice-input"
+            type="text"
+            maxlength="100"
+            placeholder="例：AIテクノロジー学科1年"
+            :value="form.targetAudience"
+            :disabled="isSaving"
+            @input="form.targetAudience = ($event.target as HTMLInputElement).value"
+          >
         </label>
 
         <fieldset class="question-add-field question-add-choices">
@@ -168,6 +239,19 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
             正解はA〜Dのいずれか1つを選択してください。
           </p>
         </fieldset>
+
+        <label class="question-add-field">
+          <span class="question-add-label">解説（任意・正解表示後に表示されます）</span>
+          <textarea
+            class="question-add-textarea"
+            rows="3"
+            maxlength="500"
+            placeholder="正解とあわせて表示する簡単な解説を入力できます"
+            :value="form.explanation"
+            :disabled="isSaving"
+            @input="form.explanation = ($event.target as HTMLTextAreaElement).value"
+          />
+        </label>
 
         <p v-if="submitErrorMessage" class="status-message error" role="alert">
           {{ submitErrorMessage }}
