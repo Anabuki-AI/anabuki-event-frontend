@@ -20,5 +20,5 @@ export function formatConsoleDate(value: string) {
 }
 
 export function accessSourceLabel(source: 'ENVIRONMENT_ACCESS' | 'MANAGEMENT_ACCESS') {
-  return source === 'ENVIRONMENT_ACCESS' ? '環境設定による付与' : '利用申請の承認による付与'
+  return source === 'ENVIRONMENT_ACCESS' ? '環境設定による付与' : '管理者による直接付与'
 }

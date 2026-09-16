@@ -47,6 +47,20 @@ describe('operator portal authentication lifecycle', () => {
     expect(state.configured.value).toBe(true)
   })
 
+  it('keeps Google login disabled when OAuth is not configured', async () => {
+    api.configuration.mockResolvedValue({ configured: false })
+    const state = await start()
+    expect(state.ready.value).toBe(true)
+    expect(state.configured.value).toBe(false)
+  })
+
+  it('shows a retryable connection error when the initial session probe returns 503', async () => {
+    api.session.mockRejectedValue(new ApiError('unavailable', 503))
+    const state = await start()
+    expect(state.ready.value).toBe(false)
+    expect(state.error.value).toContain('接続できません')
+  })
+
   it('shows a signed-in identity while it waits for a direct administrator grant', async () => {
     api.session.mockResolvedValue(awaitingGrant)
     const state = await start()
@@ -80,6 +94,26 @@ describe('operator portal authentication lifecycle', () => {
     await state.logout()
     expect(state.session.value?.email).toBe(managerSession.email)
     expect(state.error.value).toContain('接続できません')
+  })
+
+  it('ignores a second refresh while a refresh is already in progress', async () => {
+    const state = await start()
+    let resolve!: (session: OperatorSession) => void
+    api.session.mockImplementationOnce(() => new Promise(done => { resolve = done }))
+    const firstRefresh = state.refresh()
+    await state.refresh()
+    expect(api.session).toHaveBeenCalledTimes(2)
+    resolve(managerSession)
+    await firstRefresh
+    expect(state.busy.value).toBe(false)
+  })
+
+  it('refreshes the session when the page is restored from browser history', async () => {
+    const state = await start()
+    window.dispatchEvent(new Event('pageshow'))
+    await flushPromises()
+    expect(api.session).toHaveBeenCalledTimes(2)
+    expect(state.ready.value).toBe(true)
   })
 
   it('cleans up the pageshow listener when the portal is unmounted', async () => {

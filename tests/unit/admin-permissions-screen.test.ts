@@ -16,6 +16,24 @@ describe('/admin/permissions の権限シート', () => {
     expect(source).not.toContain('pendingOperatorRequests')
     expect(source).not.toContain('decideOperatorRequest')
     expect(source).not.toContain('オペレーターの利用申請')
-    expect(source).toContain('setOperatorAccess(account.id, !account.managerEnabled)')
+    expect(source).toContain("setOperatorAccess(account.id, true)")
+  })
+
+  it('両方の権限タブをTabで到達可能にし、ARIA接続とキーボード操作を提供する', () => {
+    expect(source).toContain('id="permission-tab-admin"')
+    expect(source).toContain('id="permission-tab-operator"')
+    expect(source).toContain('aria-controls="permission-panel-admin"')
+    expect(source).toContain('aria-controls="permission-panel-operator"')
+    expect(source).toContain('role="tabpanel"')
+    expect(source).toContain('tabindex="0"')
+    expect(source).toContain('handlePermissionTabKeydown')
+    expect(source).toContain("event.key === 'Home'")
+    expect(source).toContain("event.key === 'End'")
+  })
+
+  it('オペレーター権限の解除前に確認ダイアログを表示する', () => {
+    expect(source).toContain('openOperatorAccessConfirmation(account)')
+    expect(source).toContain('オペレーター権限を解除しますか？')
+    expect(source).toContain('confirmOperatorAccessRemoval')
   })
 })

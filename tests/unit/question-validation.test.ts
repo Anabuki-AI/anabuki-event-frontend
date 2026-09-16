@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateMultiplierInput } from '../../app/features/problems/validation'
+import { problemErrorMessage, validateMultiplierInput } from '../../app/features/problems/validation'
 import { formatMultiplier } from '../../app/features/problems/constants'
 import type { QuestionFormState as LegacyQuestionFormState } from '../../app/features/questions/types'
 import {
@@ -7,6 +7,13 @@ import {
   validateCorrectAnswer,
   validateRequiredText,
 } from '../../app/features/questions/validation'
+
+describe('problemErrorMessage', () => {
+  it('案内を管理者だけでなくオペレーターにも対応させる', () => {
+    expect(problemErrorMessage(401, 'fallback')).toBe('ログインの有効期限が切れました。オペレーターまたは管理者として再度ログインしてください。')
+    expect(problemErrorMessage(403, 'fallback')).toBe('問題管理を行う権限がありません。オペレーター権限または管理者権限について、運営担当者へお問い合わせください。')
+  })
+})
 
 describe('validateMultiplierInput', () => {
   it('空入力はエラー', () => {
