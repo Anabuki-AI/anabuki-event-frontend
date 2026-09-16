@@ -1044,6 +1044,11 @@ h1 {
   line-height: 1.7;
 }
 
+.help-operation-description-pending {
+  color: #8a97a8;
+  font-style: italic;
+}
+
 .help-operation-link {
   display: inline-block;
   margin-top: 12px;

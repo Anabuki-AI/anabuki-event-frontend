@@ -68,31 +68,44 @@ useSeoMeta({
         </h2>
 
         <div class="help-list">
-          <section
+          <details
             v-for="item in operationGuideItems"
             :id="item.id"
             :key="item.id"
-            class="help-operation-item"
+            class="help-item help-operation-item"
             :class="{ 'is-active': activeGuideId === item.id }"
+            :open="activeGuideId === item.id"
           >
-            <h3 class="help-operation-title">
+            <summary class="help-item-summary">
               {{ item.title }}
-            </h3>
+            </summary>
 
-            <p class="help-operation-description">
-              {{ item.description }}
-            </p>
+            <div class="help-item-content">
+              <p
+                v-if="item.description"
+                class="help-operation-description"
+              >
+                {{ item.description }}
+              </p>
 
-            <a
-              v-if="item.manualHref"
-              class="help-operation-link"
-              :href="item.manualHref"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              操作マニュアルを見る
-            </a>
-          </section>
+              <p
+                v-else
+                class="help-operation-description help-operation-description-pending"
+              >
+                後日追加予定
+              </p>
+
+              <a
+                v-if="item.manualHref"
+                class="help-operation-link"
+                :href="item.manualHref"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                操作マニュアルを見る
+              </a>
+            </div>
+          </details>
         </div>
       </section>
 
