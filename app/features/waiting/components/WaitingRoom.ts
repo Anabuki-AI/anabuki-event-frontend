@@ -1,4 +1,3 @@
-import { useRoute } from '#imports'
 import type { Ref } from 'vue'
 import { ref, watch } from 'vue'
 
@@ -56,16 +55,4 @@ export function setupWaitingRoom(participantCount: Ref<number>) {
     openHelp,
     closeHelp,
   }
-}
-
-/**
- * ユーザー登録画面からクエリで受け取ったニックネームを解決する。
- * (旧waiting.vueのscript内ユーティリティ)
- */
-export function setupUserName(): Ref<string> {
-  const route = useRoute()
-  return ref((() => {
-    const name = route.query.userName
-    return typeof name === 'string' && name.length > 0 ? name : 'ゲスト'
-  })())
 }
