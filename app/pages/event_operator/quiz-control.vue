@@ -35,7 +35,7 @@ const {
 </script>
 
 <template>
-  <main class="page-shell">
+  <main class="page-shell admin-shell">
     <!-- 常設サイドバー。各管理画面共通のナビ。ボタンを押すとメニュー部分を完全に隠す -->
     <aside
       class="admin-sidebar"
@@ -59,7 +59,7 @@ const {
         <NuxtLink class="admin-sidebar-link" to="/event_operator">運営者メイン</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/quiz-control">出題管理</NuxtLink>
-        <span class="admin-sidebar-link admin-sidebar-link--disabled" aria-disabled="true">問題管理（管理者専用）</span>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/management">問題管理</NuxtLink>
       </nav>
     </aside>
 

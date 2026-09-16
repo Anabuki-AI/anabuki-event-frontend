@@ -1,11 +1,6 @@
-/* Admin problem management: desktop-first layout. */
-.page-shell:has(.problems-card) {
-  display: block;
-  min-height: 100dvh;
-  padding: 24px;
-  background: #edeffa;
-}
-
+/* Admin problem management: desktop-first layout.
+   .page-shell.admin-shell (main.css) owns the sidebar + content flex layout; this
+   file only styles the card itself, so it must not override that shell's display. */
 .problems-card {
   display: flex;
   width: min(100%, 1180px);
@@ -159,15 +154,16 @@
 .multiplier-modal-row { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid rgb(19 34 56 / 10%); border-radius: 14px; background: #fff; }
 .multiplier-modal-row-controls { gap: 12px; }
 .multiplier-modal-row-label { flex: 0 0 6.5rem; color: #253750; font-size: 14px; font-weight: 750; }
-.multiplier-input-label { flex: 1; }
+.multiplier-input-label { flex: 1; min-width: 0; }
 .multiplier-input-row { display: flex; align-items: center; gap: 6px; }
 .multiplier-input-row input { width: 100%; min-height: 40px; padding: 0 10px; border: 1px solid #c7d3e0; border-radius: 9px; }
-.multiplier-modal-save { flex: 0 0 auto; min-height: 40px; padding: 0 18px; }
+/* .submit-button (registration.css) sets width:100% for full-width form buttons;
+   override it here so this inline row button sizes to its own content instead. */
+.multiplier-modal-save { flex: 0 0 auto; width: auto; min-height: 40px; padding: 0 18px; }
 .multiplier-modal-actions { justify-content: flex-end; gap: 12px; margin-top: 18px; }
 .button-cancel { min-height: 40px; padding: 0 16px; border: 1px solid #c7d3e0; border-radius: 10px; color: #253750; background: #fff; font-weight: 700; }
 
 @media (max-width: 700px) {
-  .page-shell:has(.problems-card) { padding: 14px; }
   .problems-card { min-height: calc(100dvh - 28px); padding: 22px; }
   .problems-header { align-items: flex-start; flex-direction: column; }
   .question-choices { grid-template-columns: 1fr; }
