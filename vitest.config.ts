@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
 
 // pnpm の厳密な node_modules レイアウトでも解決できるよう実パスで読み込む
 import { createRequire } from 'node:module'
