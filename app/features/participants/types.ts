@@ -12,3 +12,9 @@ export interface Participant extends ParticipantRegistration {
   id: string
   sessionExpiresAt: string
 }
+
+export interface ParticipantPresence {
+  activeParticipantCount: number
+  observedAt: string
+  activeWindowSeconds: number
+}
