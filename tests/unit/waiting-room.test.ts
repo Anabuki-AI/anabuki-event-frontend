@@ -79,9 +79,29 @@ describe('setupWaitingRoom', () => {
     expect(room.lastReactedEmoji.value).toBe('')
   })
 
-  it('keeps the local animation when sending a reaction fails', async () => {
+  it('sends every rapid click of the same reaction', () => {
+    const participantCount = ref<number | null>(null)
+    let room!: ReturnType<typeof setupWaitingRoom>
+    wrapper = mount(defineComponent({
+      setup() {
+        room = setupWaitingRoom(participantCount)
+        return () => h('div')
+      },
+    }))
+
+    room.handleReact('👏')
+    room.handleReact('👏')
+    room.handleReact('👏')
+
+    expect(reportReaction).toHaveBeenCalledTimes(3)
+    expect(reportReaction).toHaveBeenNthCalledWith(1, { reaction: '👏' })
+    expect(reportReaction).toHaveBeenNthCalledWith(2, { reaction: '👏' })
+    expect(reportReaction).toHaveBeenNthCalledWith(3, { reaction: '👏' })
+  })
+
+  it('keeps the local animation when a rate-limited reaction send fails', async () => {
     vi.useFakeTimers()
-    reportReaction.mockRejectedValueOnce(new Error('network'))
+    reportReaction.mockRejectedValueOnce(new Error('429 Too Many Requests'))
     const participantCount = ref<number | null>(null)
     let room!: ReturnType<typeof setupWaitingRoom>
     wrapper = mount(defineComponent({

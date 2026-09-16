@@ -10,4 +10,4 @@
 
 リアクション押下ごとに `reportParticipantReaction` が参加者Cookie付きで `POST /api/participants/reactions`（API clientには `/participants/reactions` として指定）へ `{ reaction: '<emoji>' }` を送る。成功時のHTTP 201は共通API clientの通常の2xx成功として扱い、レスポンス本文は要求しない。
 
-`setupWaitingRoom` は先に既存のローカルバウンドアニメーションを開始し、送信はfire-and-forgetで行う。送信失敗は意図的にUIへ表示せず握りつぶすため、アニメーションは失敗時も維持される。retriesやエラー表示は、送信箇所のcatch節を拡張して後から追加する。
+`setupWaitingRoom` は先に既存のローカルバウンドアニメーションを開始し、送信はfire-and-forgetで行う。クリックごとに送信し、クライアント側では連続クリックをブロックまたは間引かない。送信失敗は意図的にUIへ表示せず握りつぶすため、アニメーションは失敗時も維持される。バックエンドが同一参加者から500ms以内の送信をHTTP 429で拒否した場合も同じ扱いとし、ユーザーUI（エラー表示・操作可否・ローカルアニメーション）へ影響させない。retriesやエラー表示は、送信箇所のcatch節を拡張して後から追加する。

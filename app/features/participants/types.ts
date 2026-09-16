@@ -13,8 +13,10 @@ export interface Participant extends ParticipantRegistration {
   sessionExpiresAt: string
 }
 
+export type ParticipantReactionEmoji = '👏' | '🎉' | '🙌' | '😂' | '😢' | '😲' | '👍' | '❤️'
+
 export interface ParticipantReactionRequest {
-  reaction: string
+  reaction: ParticipantReactionEmoji
 }
 
 export interface ParticipantPresence {
