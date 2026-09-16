@@ -67,7 +67,7 @@ const {
       <header class="quiz-control-header">
         <div>
           <p class="eyebrow">
-            Admin
+            クイズ大会
           </p>
           <h1>クイズ出題管理画面</h1>
           <p class="muted-copy">
