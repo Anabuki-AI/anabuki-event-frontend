@@ -13,7 +13,7 @@ import QuestionDeleteDialog from '~/features/problems/components/QuestionDeleteD
 import { problemErrorMessage } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 
-definePageMeta({ middleware: 'admin' })
+definePageMeta({ middleware: 'admin-client' })
 useSeoMeta({
   title: '問題管理',
   description: '登録済みの問題を確認、追加、編集、削除できます。',

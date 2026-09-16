@@ -7,7 +7,7 @@ import QuestionForm from '~/features/problems/components/QuestionForm.vue'
 import { parseQuestionId, problemErrorMessage } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 
-definePageMeta({ middleware: 'admin' })
+definePageMeta({ middleware: 'admin-client' })
 useSeoMeta({
   title: '問題編集',
   description: '登録済みの問題の内容を編集する画面です。',
