@@ -18,7 +18,6 @@ import { toApiError } from '~/lib/api/error'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/management.css'
 
-definePageMeta({ middleware: 'admin-client' })
 useSeoMeta({
   title: '問題管理',
   description: '登録済みの問題を確認、追加、編集、削除できます。',

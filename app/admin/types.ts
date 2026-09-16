@@ -1,3 +1,5 @@
+import type { AccessRequest as SharedAccessRequest } from '~/lib/auth/access-request'
+
 export type AdminAccessSource =
   | 'APPLICANT'
   | 'MANAGEMENT_ACCESS'
@@ -11,6 +13,6 @@ export interface AdminSession {
   expiresAt: string
 }
 
-// Access-request shapes follow the same contract in the admin and operator
-// portals, so they live in the shared auth module.
-export type { AccessRequest, AccessRequestDecision, AccessRequestStatus } from '~/lib/auth/access-request'
+// Admin access requests use the primary database's numeric IDs.
+export type AccessRequest = SharedAccessRequest<number>
+export type { AccessRequestDecision, AccessRequestStatus } from '~/lib/auth/access-request'

@@ -19,6 +19,4 @@ export const adminAuthApi = {
   logout: () => request<undefined>('/admin/auth/logout', { method: 'POST', credentials, retry: 0 }),
   pendingRequests: () => request<AccessRequest[]>('/admin/access-requests', { credentials }),
   decide: (id: number, decision: AccessRequestDecision) => request<AccessRequest>(`/admin/access-requests/${id}/${decision}`, { method: 'POST', credentials, retry: 0 }),
-  pendingOperatorRequests: () => request<AccessRequest[]>('/admin/operator-access-requests', { credentials }),
-  decideOperatorRequest: (id: number, decision: AccessRequestDecision) => request<AccessRequest>(`/admin/operator-access-requests/${id}/${decision}`, { method: 'POST', credentials, retry: 0 }),
 }

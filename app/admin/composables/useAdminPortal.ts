@@ -12,7 +12,6 @@ export function useAdminPortal() {
   const session = ref<AdminSession | null>(null)
   const accessRequest = ref<AccessRequest | null>(null)
   const pendingRequests = ref<AccessRequest[]>([])
-  const pendingOperatorRequests = ref<AccessRequest[]>([])
   const configured = ref(false)
   const busy = ref(false)
   const ready = ref(false)
@@ -35,7 +34,6 @@ export function useAdminPortal() {
       session.value = null
       accessRequest.value = null
       pendingRequests.value = []
-      pendingOperatorRequests.value = []
       configured.value = (await adminAuthApi.configuration()).configured
       ready.value = true
       return
@@ -54,7 +52,6 @@ export function useAdminPortal() {
     else {
       accessRequest.value = null
       pendingRequests.value = canApprove.value ? await adminAuthApi.pendingRequests() : []
-      pendingOperatorRequests.value = canApprove.value ? await adminAuthApi.pendingOperatorRequests() : []
     }
     ready.value = true
   }
@@ -71,7 +68,6 @@ export function useAdminPortal() {
         session.value = null
         accessRequest.value = null
         pendingRequests.value = []
-        pendingOperatorRequests.value = []
         ready.value = false
         notice.value = 'ログインの有効期限が切れました。もう一度 Google でログインしてください。'
         try {
@@ -129,7 +125,6 @@ export function useAdminPortal() {
       session.value = null
       accessRequest.value = null
       pendingRequests.value = []
-      pendingOperatorRequests.value = []
       ready.value = false
       notice.value = 'ログアウトしました。'
       await loadState()
@@ -141,14 +136,6 @@ export function useAdminPortal() {
       await adminAuthApi.decide(id, decision)
       pendingRequests.value = pendingRequests.value.filter(item => item.id !== id)
       notice.value = decision === 'approve' ? '申請を承認しました。申請者は同じブラウザから管理画面へ進めます。' : '申請を却下しました。'
-    })
-  }
-
-  function decideOperatorRequest(id: number, decision: AccessRequestDecision) {
-    return run(async () => {
-      await adminAuthApi.decideOperatorRequest(id, decision)
-      pendingOperatorRequests.value = pendingOperatorRequests.value.filter(item => item.id !== id)
-      notice.value = decision === 'approve' ? 'オペレーターの申請を承認しました。申請者は同じブラウザからオペレーター画面へ進めます。' : 'オペレーターの申請を却下しました。'
     })
   }
 
@@ -177,5 +164,5 @@ export function useAdminPortal() {
     refresh,
   })
 
-  return { session, accessRequest, pendingRequests, pendingOperatorRequests, configured, busy, ready, error, notice, departing, isManager, canApprove, step, refresh, apply, enter, logout, decide, decideOperatorRequest }
+  return { session, accessRequest, pendingRequests, configured, busy, ready, error, notice, departing, isManager, canApprove, step, refresh, apply, enter, logout, decide }
 }

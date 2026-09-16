@@ -10,8 +10,8 @@ export type AccessRequestStatus =
 
 export type AccessRequestDecision = 'approve' | 'reject'
 
-export interface AccessRequest {
-  id: number
+export interface AccessRequest<Id extends string | number = string | number> {
+  id: Id
   email: string
   status: AccessRequestStatus
   createdAt: string

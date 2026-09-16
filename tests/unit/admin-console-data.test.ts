@@ -6,7 +6,7 @@ import { useAdminConsoleData } from '~/admin/composables/useAdminConsoleData'
 import { unconfiguredMonitoring } from '~/admin/monitoring-contract'
 import { ApiError } from '~/lib/api/error'
 
-vi.mock('~/admin/api/admin-console', () => ({ adminConsoleApi: { accounts: vi.fn(), health: vi.fn(), monitoring: vi.fn() } }))
+vi.mock('~/admin/api/admin-console', () => ({ adminConsoleApi: { accounts: vi.fn(), operatorAccounts: vi.fn(), setOperatorAccess: vi.fn(), health: vi.fn(), monitoring: vi.fn() } }))
 const api = vi.mocked(adminConsoleApi)
 let wrapper: VueWrapper
 let data: ReturnType<typeof useAdminConsoleData>
@@ -35,6 +35,17 @@ describe('admin console resource boundaries', () => {
     await state.loadAccounts()
     expect(state.accountsLoaded.value).toBe(true)
     expect(state.accounts.value[0]).not.toHaveProperty('role')
+  })
+
+  it('loads Google-authenticated operator identities separately and updates direct access', async () => {
+    const operator = { id: 'f6e2e2a2-438e-4bbb-b3d3-c6184fcdb1af', email: 'operator@example.test', source: 'MANAGEMENT_ACCESS' as const, active: false, managerEnabled: false }
+    api.operatorAccounts.mockResolvedValue([operator])
+    api.setOperatorAccess.mockResolvedValue({ ...operator, active: true, managerEnabled: true })
+    const state = start()
+    await state.loadOperatorAccounts()
+    await state.setOperatorAccess(operator.id, true)
+    expect(state.operatorAccounts.value).toEqual([{ ...operator, active: true, managerEnabled: true }])
+    expect(api.setOperatorAccess).toHaveBeenCalledWith(operator.id, true)
   })
 
   it('distinguishes an empty successful account list from an unavailable list', async () => {

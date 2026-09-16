@@ -13,7 +13,6 @@ const {
   session,
   accessRequest,
   pendingRequests,
-  pendingOperatorRequests,
   configured,
   busy,
   ready,
@@ -28,7 +27,6 @@ const {
   enter,
   logout,
   decide,
-  decideOperatorRequest,
 } = useAdminPortal()
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -69,7 +67,6 @@ async function confirmLogout() {
     v-if="ready && isManager && session"
     :session="session"
     :pending-requests="pendingRequests"
-    :pending-operator-requests="pendingOperatorRequests"
     :busy="busy"
     :can-approve="canApprove"
     :error="error"
@@ -77,7 +74,6 @@ async function confirmLogout() {
     :refresh="refresh"
     :logout="logout"
     :decide="decide"
-    :decide-operator-request="decideOperatorRequest"
   />
   <div v-else class="admin-portal">
     <a class="skip-link" href="#admin-content">ログイン操作へ移動</a>
