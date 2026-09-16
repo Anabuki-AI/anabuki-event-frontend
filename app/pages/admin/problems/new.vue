@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import QuestionForm from '~/features/problems/components/QuestionForm.vue'
 
-definePageMeta({ middleware: 'admin' })
+definePageMeta({ middleware: 'admin-client' })
 useSeoMeta({
   title: '問題追加',
   description: '新しい問題を登録する画面です。',
