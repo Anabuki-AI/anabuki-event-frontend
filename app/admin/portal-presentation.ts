@@ -46,4 +46,3 @@ const accessRequestCopyByStatus = {
 export function getAccessRequestStateCopy(status: AccessRequestStatus | undefined) {
   return status ? accessRequestCopyByStatus[status] : initialAccessRequestCopy
 }
-

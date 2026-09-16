@@ -1,6 +1,6 @@
 :root {
   color: #132238;
-  background: #f3f7fb;
+  background: #edeffa;
   font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -38,13 +38,16 @@ button:disabled {
   display: grid;
   place-items: center;
   padding: 32px 20px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom)); /* ホームインジケータ領域を避ける */
+  background: #edeffa; /* カラーリング指定の背景色 */
   background:
     radial-gradient(circle at top left, rgb(80 155 255 / 18%), transparent 34%),
     linear-gradient(145deg, #f7fbff 0%, #edf4fb 100%);
 }
 
 .hero-card,
-.form-card {
+.form-card,
+.admin-card {
   width: min(100%, 680px);
   padding: clamp(28px, 6vw, 56px);
   border: 1px solid rgb(19 34 56 / 8%);
@@ -76,6 +79,12 @@ h1 {
 
 .form-card h1 {
   font-size: clamp(2rem, 6vw, 3.25rem);
+}
+
+.admin-card h1 {
+  font-size: 2rem; /* AdminはPC前提。ユーザー向けページほど大きくしない */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .hero-copy,
