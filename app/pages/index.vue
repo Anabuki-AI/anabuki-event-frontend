@@ -15,9 +15,14 @@ useSeoMeta({
       <p class="hero-copy">
         Nuxt 4を土台に、機能単位で無理なく育てられるフロントエンド構成です。
       </p>
-      <NuxtLink class="primary-link" to="/users/new">
-        ユーザー登録を試す
-      </NuxtLink>
+      <div class="home-actions">
+        <NuxtLink class="primary-link" to="/participants/new">
+          参加登録を試す
+        </NuxtLink>
+        <NuxtLink class="home-secondary-link" to="/event_operator">
+          運営者メイン画面へ
+        </NuxtLink>
+      </div>
     </section>
   </main>
 </template>
