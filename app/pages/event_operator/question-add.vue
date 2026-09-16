@@ -1,35 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuestionAdd } from '~/features/question-edit/use-question-edit.ts'
-import '~/assets/css/questionedit2.css'
+import { useQuestionAdd } from '~/features/question-add/use-question-add'
+import '~/assets/css/question-add.css'
 
-// --- 追加・修正ポイント 1: Props と Emits の定義 ---
-withDefaults(defineProps<{
-  questionIndex?: number
-}>(), {
-  questionIndex: 1, // デフォルトで1問目を表示
+useSeoMeta({
+  title: '問題追加',
+  description: 'クイズ大会の問題を新しく登録します。',
 })
 
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
-
-
-useSeoMeta({
-  title: '問題編集',
-  description: 'クイズ大会の問題を編集します。',
-})
-
-// 編集前の項目。テキストボックスの初期値として表示される。
-// TODO: バックエンドの問題取得API実装後は取得した値に差し替える
-const EXISTING_QUESTION = {
-  questionText: 'あああ',
-  choiceA: 'あああ',
-  choiceB: 'いいい',
-  choiceC: 'ううう',
-  choiceD: 'えええ',
-  correctChoice: 'A' as const,
-}
 
 const {
   questionText,
@@ -51,12 +32,11 @@ const {
   clearImage,
   save,
   cancel,
-} = useQuestionAdd(EXISTING_QUESTION)
+} = useQuestionAdd()
 
 // ネイティブfile inputのDOM値をクリアするための参照
 // （クリアしないと、キャンセル後に同じファイルを再選択してもchangeが発火しない）
 const fileInput = ref<HTMLInputElement | null>(null)
-
 
 function handleCancel() {
   cancel()
@@ -71,9 +51,13 @@ function handleCancel() {
   <main class="page-shell question-add-shell">
     <section class="question-add-card" aria-label="問題の新規登録">
       <header class="question-add-header">
-        <h1>問題編集</h1>
-        <!-- --- 追加・修正ポイント 3: 受け取った問番号を表示 --- -->
-        <h2>Q{{ questionIndex }}</h2>
+        <p class="eyebrow">
+          Event operator
+        </p>
+        <h1>問題追加</h1>
+        <p class="muted-copy">
+          クイズ大会で出題する問題文・添付画像・4つの選択肢と正解を入力して登録します。
+        </p>
       </header>
 
       <form class="question-add-form" @submit.prevent="save()">
@@ -180,7 +164,7 @@ function handleCancel() {
           >
             キャンセル
           </button>
-           <button
+          <button
             type="button"
             class="question-add-save"
             :disabled="!canSave"

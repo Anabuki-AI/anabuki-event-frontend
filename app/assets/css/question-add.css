@@ -11,12 +11,13 @@
 }
 
 .question-add-shell .question-add-card {
-  min-height: 100vh; /* 画面全体に表示 */
-  padding: clamp(20px, 4vw, 48px);
+  width: min(100%, 860px);
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid #cdcfdb;
+  border-radius: 28px;
   background: #ffffff;
   display: grid;
   gap: 28px;
-  align-content: start;
 }
 
 .question-add-shell .question-add-card h1 {
@@ -27,13 +28,6 @@
   display: grid;
   gap: 8px;
 }
-
-.question-add-shell .question-add-header h1,
-.question-add-shell .question-add-header h2 {
-margin: 0;
-}
-
-
 
 .question-add-shell .question-add-form {
   display: grid;
@@ -219,7 +213,6 @@ margin: 0;
 .question-add-shell .question-add-actions {
   display: flex;
   align-items: center;
-  align-items: center;
   justify-content: flex-end; /* 右寄せに配置 */
   gap: 16px;
   flex-wrap: wrap;
@@ -227,6 +220,7 @@ margin: 0;
 
 .question-add-shell .question-add-save {
   min-height: 44px;
+  min-width: 140px;
   padding: 0 24px;
   border: 0;
   border-radius: 14px;
@@ -247,6 +241,7 @@ margin: 0;
 
 .question-add-shell .question-add-cancel {
   min-height: 44px;
+  min-width: 140px;
   padding: 0 24px;
   border: 1px solid #cdcfdb;
   border-radius: 14px;
