@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { QuizPhase, QuizState } from '../types'
 
 const props = defineProps<{
@@ -66,6 +66,15 @@ const action = computed(() => {
   }
 })
 
+const stepsListEl = ref<HTMLOListElement | null>(null)
+
+// 横幅が足りず一部が隠れても、操作中に見失わないよう現在地は常にスクロールして見せる
+watch(() => props.state.phase, () => {
+  nextTick(() => {
+    stepsListEl.value?.querySelector('.is-current')?.scrollIntoView({ inline: 'end', block: 'nearest' })
+  })
+}, { immediate: true })
+
 function handleAction() {
   if (action.value === null || props.isActing) {
     return
@@ -90,6 +99,7 @@ function handleAction() {
 <template>
   <section class="quiz-phase-panel">
     <ol
+      ref="stepsListEl"
       class="quiz-phase-steps"
       aria-label="進行状況"
     >

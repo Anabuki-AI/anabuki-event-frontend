@@ -10,6 +10,11 @@ import {
 } from './api/client'
 import { toApiError } from '~/lib/api/error'
 
+export interface QuizHistoryEntry {
+  time: string
+  label: string
+}
+
 export function useQuizControl() {
   const state = ref<QuizState | null>(null)
   const isLoading = ref(true)
@@ -17,9 +22,40 @@ export function useQuizControl() {
   const errorMessage = ref('')
   const noticeMessage = ref('')
 
+  // 各フェーズの時刻はQuizStateが現在の問題分しか持たない（次の問題で上書き/リセットされる）ため、
+  // 「問題ごとに何時何が起きたか」を追えるよう、変化を検知したら履歴として蓄積する
+  const history = ref<QuizHistoryEntry[]>([])
+  let lastStartedAt: string | null = null
+  let lastPublishedAt: string | null = null
+  let lastClosedAt: string | null = null
+  let lastRevealedAt: string | null = null
+
+  function recordHistory(next: QuizState) {
+    const questionLabel = next.currentQuestion ? `Q${next.currentQuestion.id}` : null
+
+    if (next.startedAt && next.startedAt !== lastStartedAt) {
+      lastStartedAt = next.startedAt
+      history.value.push({ time: next.startedAt, label: 'イベント開始' })
+    }
+    if (next.publishedAt && next.publishedAt !== lastPublishedAt) {
+      lastPublishedAt = next.publishedAt
+      history.value.push({ time: next.publishedAt, label: questionLabel ? `${questionLabel} 問題公開` : '問題公開' })
+    }
+    if (next.closedAt && next.closedAt !== lastClosedAt) {
+      lastClosedAt = next.closedAt
+      history.value.push({ time: next.closedAt, label: questionLabel ? `${questionLabel} 解答締め切り` : '解答締め切り' })
+    }
+    if (next.revealedAt && next.revealedAt !== lastRevealedAt) {
+      lastRevealedAt = next.revealedAt
+      history.value.push({ time: next.revealedAt, label: questionLabel ? `${questionLabel} 答え表示` : '答え表示' })
+    }
+  }
+
   async function refresh() {
     try {
-      state.value = await fetchQuizState()
+      const next = await fetchQuizState()
+      state.value = next
+      recordHistory(next)
     }
     catch (error) {
       errorMessage.value = toApiError(error).message
@@ -34,7 +70,9 @@ export function useQuizControl() {
     noticeMessage.value = ''
     isActing.value = true
     try {
-      state.value = await action()
+      const next = await action()
+      state.value = next
+      recordHistory(next)
       noticeMessage.value = successNotice
     }
     catch (error) {
@@ -69,6 +107,7 @@ export function useQuizControl() {
 
   return {
     state,
+    history,
     isLoading,
     isActing,
     errorMessage,
