@@ -4,9 +4,13 @@ import { useQuestionAdd } from '~/features/question-add/use-question-add'
 import '~/assets/css/question-add.css'
 
 useSeoMeta({
-  title: '問題追加画面',
+  title: '問題追加',
   description: 'クイズ大会の問題を新しく登録します。',
 })
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 
 const {
   questionText,
@@ -39,6 +43,7 @@ function handleCancel() {
   if (fileInput.value) {
     fileInput.value.value = ''
   }
+  emit('close')
 }
 </script>
 

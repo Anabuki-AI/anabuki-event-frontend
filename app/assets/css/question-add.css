@@ -213,12 +213,14 @@
 .question-add-shell .question-add-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end; /* 右寄せに配置 */
   gap: 16px;
   flex-wrap: wrap;
 }
 
 .question-add-shell .question-add-save {
   min-height: 44px;
+  min-width: 140px;
   padding: 0 24px;
   border: 0;
   border-radius: 14px;
@@ -239,6 +241,7 @@
 
 .question-add-shell .question-add-cancel {
   min-height: 44px;
+  min-width: 140px;
   padding: 0 24px;
   border: 1px solid #cdcfdb;
   border-radius: 14px;

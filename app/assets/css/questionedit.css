@@ -1,8 +1,14 @@
-/* --- 「編集する」ボタン --- */
-.question-header .question-add-button {
+/* --- 「編集する」「追加する」ボタンの並び --- */
+.question-header {
   position: absolute;
   top: 14px;   /* 上に少し余白 */
   right: clamp(16px, 5vw, 48px); /* 右に少し余白(画面の余白と揃える) */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.question-header .question-add-button {
   min-height: 36px;
   display: inline-flex;
   align-items: center;
