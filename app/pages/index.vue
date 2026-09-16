@@ -19,6 +19,9 @@ useSeoMeta({
         <NuxtLink class="primary-link" to="/participants/new">
           参加登録を試す
         </NuxtLink>
+        <NuxtLink class="home-secondary-link" to="/rankings">
+          ランキングを見る
+        </NuxtLink>
         <NuxtLink class="home-secondary-link" to="/event_operator">
           運営者メイン画面へ
         </NuxtLink>
