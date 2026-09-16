@@ -30,7 +30,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <main class="help-page-shell">
+  <main class="page-shell">
     <section class="form-card help-card">
       <button
         type="button"

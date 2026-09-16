@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 
 useSeoMeta({
-  title: '問題編集画面',
+  title: '問題編集',
   description: 'クイズ大会の問題を編集します。',
 })
 
@@ -73,10 +73,7 @@ function handleCancel() {
       <header class="question-add-header">
         <h1>問題編集</h1>
         <!-- --- 追加・修正ポイント 3: 受け取った問番号を表示 --- -->
-        <h2>問{{ questionIndex }}</h2>
-        <p class="muted-copy">
-          クイズ大会で出題する問題文・添付画像・4つの選択肢と正解を入力して登録します。
-        </p>
+        <h2>Q{{ questionIndex }}</h2>
       </header>
 
       <form class="question-add-form" @submit.prevent="save()">

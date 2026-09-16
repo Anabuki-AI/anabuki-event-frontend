@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useSeoMeta } from '#imports'
 import QuestionPopup from './event_operator/questione.vue'
+import QuestionAddPopup from './event_operator/question-add.vue'
 
 useSeoMeta({
   title: '問題編集',
@@ -10,6 +11,7 @@ useSeoMeta({
 
 // モーダル表示フラグと表示中の問題番号の状態管理
 const isEditOpen = ref(false)
+const isAddOpen = ref(false)
 const currentQuestionIndex = ref(1)
 
 function openEdit() {
@@ -18,6 +20,14 @@ function openEdit() {
 
 function closeEdit() {
   isEditOpen.value = false
+}
+
+function openAdd() {
+  isAddOpen.value = true
+}
+
+function closeAdd() {
+  isAddOpen.value = false
 }
 </script>
 
@@ -32,6 +42,14 @@ function closeEdit() {
       >
         編集する
       </button>
+      <!-- 追加モーダルを開くボタン -->
+      <button
+        type="button"
+        class="question-add-button"
+        @click="openAdd"
+      >
+        追加する
+      </button>
     </header>
 
     <!-- モーダル表示部（isEditOpen が true の時だけ表示） -->
@@ -41,6 +59,13 @@ function closeEdit() {
           :question-index="currentQuestionIndex"
           @close="closeEdit"
         />
+      </div>
+    </div>
+
+    <!-- モーダル表示部（isAddOpen が true の時だけ表示） -->
+    <div v-if="isAddOpen" class="modal-overlay" @click.self="closeAdd">
+      <div class="modal-container">
+        <QuestionAddPopup @close="closeAdd" />
       </div>
     </div>
   </section>

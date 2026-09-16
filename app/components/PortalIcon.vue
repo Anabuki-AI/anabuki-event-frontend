@@ -1,9 +1,13 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'arrow' | 'lock' | 'check' | 'refresh' | 'logout' | 'clock' | 'info'
+  name: 'arrow' | 'lock' | 'check' | 'refresh' | 'logout' | 'clock' | 'info' | 'home' | 'logs' | 'activity' | 'users'
 }>()
 
 const paths = {
+  home: 'm3 10 9-7 9 7v11H3Zm6 11v-8h6v8',
+  logs: 'M6 3h12v18H6ZM9 7h6M9 11h6M9 15h4',
+  activity: 'M2 12h5l3-8 4 16 3-8h5',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M13 3.13a4 4 0 0 1 0 7.75M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
   arrow: 'M5 12h14m-6-6 6 6-6 6',
   lock: 'M7 10V7a5 5 0 0 1 10 0v3M6 10h12a1 1 0 0 1 1 1v9H5v-9a1 1 0 0 1 1-1Zm6 4v2',
   check: 'm5 12 4 4L19 6',
