@@ -34,10 +34,16 @@ const {
           Quiz
         </p>
         <h1>解答画面</h1>
+        <p class="answer-user-name">
+          {{ userName }} さん
+        </p>
       </div>
-      <p class="answer-user">
-        {{ userName }}
-      </p>
+      <NuxtLink
+        class="help-button"
+        to="/participants/help"
+      >
+        ヘルプ
+      </NuxtLink>
     </header>
 
     <main class="answer-main">
