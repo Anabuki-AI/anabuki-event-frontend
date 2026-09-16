@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
-await navigateTo({ path: '/admin/problems', query: route.query, hash: route.hash }, { redirectCode: 302, replace: true })
+await navigateTo({ path: '/event_operator', query: route.query, hash: route.hash }, { redirectCode: 302, replace: true })
 </script>
 
 <template>

@@ -7,7 +7,7 @@ export type { AccessRequest, OperatorSession } from '../types'
 const credentials = 'include' as const
 
 export const operatorAuthApi = {
-  configuration: () => request<{ configured: boolean }>('/auth/google/status', { credentials }),
+  configuration: () => request<{ configured: boolean }>('/auth/operator/google/status', { credentials }),
   session: () => request<OperatorSession>('/operator/auth/session', { credentials }),
   ownRequest: () => request<AccessRequest | undefined>('/operator/access-request', { credentials }),
   apply: () => request<AccessRequest>('/operator/access-request', { method: 'POST', credentials, retry: 0 }),
