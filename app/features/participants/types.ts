@@ -13,6 +13,10 @@ export interface Participant extends ParticipantRegistration {
   sessionExpiresAt: string
 }
 
+export interface ParticipantReactionRequest {
+  reaction: string
+}
+
 export interface ParticipantPresence {
   activeParticipantCount: number
   observedAt: string
