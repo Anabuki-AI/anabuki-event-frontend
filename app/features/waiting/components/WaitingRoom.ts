@@ -1,22 +1,24 @@
 import type { Ref } from 'vue'
-import { ref, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 
 /**
- * 待機画面全体の状態とイベント(旧WaitingRoom.vueのscript)。
- * テンプレートはpages/users/waiting.vueに統合済み。
+ * 待機画面の参加人数・リアクション表示の状態を管理する。
+ * テンプレートはpages/participants/waiting.vueに統合済み。
  */
-export function setupWaitingRoom(participantCount: Ref<number>) {
+export function setupWaitingRoom(participantCount: Ref<number | null>) {
   // 参加人数が増えた瞬間だけポップアニメーションを1回鳴らす
   const isCountUpdated = ref(false)
   let countTimer: ReturnType<typeof setTimeout> | undefined
+  let countAnimationFrame: number | undefined
 
-  watch(() => participantCount.value, (next, prev) => {
-    if (next <= prev) {
+  watch(() => participantCount.value, (next, previous) => {
+    // 初回取得と減少時にはアニメーションさせない。
+    if (next === null || previous === null || next <= previous) {
       return
     }
     isCountUpdated.value = false
     // クラス付け外しを1フレーム分空けて再トリガーできるようにする
-    requestAnimationFrame(() => {
+    countAnimationFrame = requestAnimationFrame(() => {
       isCountUpdated.value = true
       clearTimeout(countTimer)
       countTimer = setTimeout(() => {
@@ -36,6 +38,14 @@ export function setupWaitingRoom(participantCount: Ref<number>) {
       lastReactedEmoji.value = ''
     }, 500)
   }
+
+  onUnmounted(() => {
+    if (countAnimationFrame !== undefined) {
+      cancelAnimationFrame(countAnimationFrame)
+    }
+    clearTimeout(countTimer)
+    clearTimeout(reactionTimer)
+  })
 
   return {
     isCountUpdated,
