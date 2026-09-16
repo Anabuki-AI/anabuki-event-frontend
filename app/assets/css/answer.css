@@ -113,6 +113,14 @@
   background: #edeffa;
 }
 
+/* 問題番号「Q1」と出題対象を同じ行に並べる */
+.answer-shell .question-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .answer-shell .question-number {
   margin: 0;
   color: #1769c2;
@@ -121,12 +129,34 @@
   letter-spacing: 0.08em;
 }
 
+.answer-shell .question-target-audience {
+  margin: 0;
+  color: #516176;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
 .answer-shell .question-text {
   margin: 0;
   color: #132238;
   font-size: 1.0625rem;
   font-weight: 700;
   line-height: 1.5;
+}
+
+/* 問題文の下に表示する画像（任意）。スマホ画面で見やすいよう、
+   横幅いっぱいに収めつつビューポート高さに応じて上限を設け、
+   クロップせず全体が見えるようにする。画像が無い問題ではimg自体を描画しないため
+   選択肢がそのまま問題文の下に続く。 */
+.answer-shell .question-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 40vh;
+  margin-top: 4px;
+  border-radius: 12px;
+  background: #ffffff;
+  object-fit: contain;
 }
 
 /* 選択肢（白地 + border、選択中はメインカラーで強調） */

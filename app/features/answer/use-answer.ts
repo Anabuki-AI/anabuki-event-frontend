@@ -10,7 +10,9 @@ export interface ConfidenceOption {
 // 見た目確認用のダミーデータ（API連携なし）
 export const question = {
   number: 'Q1',
+  targetAudience: '全員' as string | null,
   text: '日本の首都はどこでしょう？',
+  imageUrl: 'https://placehold.co/600x400/1769c2/ffffff?text=Question+Image' as string | null,
 }
 
 export const choices = [
