@@ -1,0 +1,200 @@
+{
+  "results": [
+    {
+      "label": "main-desktop",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "main-mobile",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "logs-desktop",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "logs-mobile",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "status-desktop",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "status-mobile",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "permissions-desktop",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "permissions-mobile",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "logout-desktop",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "logout-mobile",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin-320px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/logs-320px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/status-320px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/permissions-320px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/logout-320px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin-768px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/logs-768px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/status-768px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/permissions-768px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/logout-768px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin-1024px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/logs-1024px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/status-1024px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/permissions-1024px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "/admin/logout-1024px",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "approval-dialog",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "account-fetch-error",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "real-local-health-success",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "local-probe-failure",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-unconfigured",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-unauthenticated",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-forbidden",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-error",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-ready",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-stale-success",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-http-403",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "monitoring-http-503",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "viewer-without-approval-permission",
+      "axeViolations": 0,
+      "horizontalOverflow": false
+    },
+    {
+      "label": "navigation-dialog-approval-logout-auth-application-exchange",
+      "passed": true
+    }
+  ],
+  "runtimeErrors": [],
+  "screenshotAccounts": "Explicit synthetic fixtures; no credentials or production identities."
+}

@@ -1,6 +1,6 @@
 :root {
   color: #132238;
-  background: #f3f7fb;
+  background: #edeffa;
   font-family: Inter, "Noto Sans JP", system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,7 +13,6 @@
 body {
   min-width: 320px;
   margin: 0;
-  -webkit-text-size-adjust: 100%; /* iOS Safariで横画面時に自動拡大されないようにする */
 }
 
 a {
@@ -26,7 +25,7 @@ input {
 }
 
 button {
-  cursor: pointer;  
+  cursor: pointer;
 }
 
 button:disabled {
@@ -36,23 +35,24 @@ button:disabled {
 
 .page-shell {
   min-height: 100vh;
-  min-height: 100dvh; /* iOS Safariのツールバー出入れで高さが変わるのに追従 */
   display: grid;
   place-items: center;
   padding: 32px 20px;
   padding-bottom: calc(32px + env(safe-area-inset-bottom)); /* ホームインジケータ領域を避ける */
+  background: #edeffa; /* カラーリング指定の背景色 */
   background:
     radial-gradient(circle at top left, rgb(80 155 255 / 18%), transparent 34%),
-    linear-gradient(145deg, #f7fbff 0%, #ffffff 100%);
+    linear-gradient(145deg, #f7fbff 0%, #edf4fb 100%);
 }
 
 .hero-card,
-.form-card {
+.form-card,
+.admin-card {
   width: min(100%, 680px);
   padding: clamp(28px, 6vw, 56px);
   border: 1px solid rgb(19 34 56 / 8%);
   border-radius: 28px;
-  background: #edeffa;
+  background: rgb(255 255 255 / 92%);
   box-shadow: 0 24px 80px rgb(34 75 120 / 14%);
 }
 
@@ -63,7 +63,7 @@ button:disabled {
 
 .eyebrow {
   margin: 0 0 10px;
-  color: #3c3c43;
+  color: #1769c2;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -79,6 +79,12 @@ h1 {
 
 .form-card h1 {
   font-size: clamp(2rem, 6vw, 3.25rem);
+}
+
+.admin-card h1 {
+  font-size: 2rem; /* AdminはPC前提。ユーザー向けページほど大きくしない */
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .hero-copy,
@@ -123,6 +129,210 @@ h1 {
 }
 
 .back-link:hover {
+  color: #1769c2;
+}
+
+/* ===== ホーム画面のアクション ===== */
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.home-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid rgb(23 105 194 / 32%);
+  border-radius: 14px;
+  color: #1769c2;
+  font-weight: 750;
+  text-decoration: none;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.home-secondary-link:hover {
+  background: rgb(23 105 194 / 8%);
+  transform: translateY(-1px);
+}
+
+/* ===== 運営者メイン画面 ===== */
+
+/* デザイン規約の背景色(#edeffa)は運営者ページにのみ上書きする
+   (page-shell自体は他ページと共用のため触らない) */
+.page-shell.admin-shell {
+  background: #edeffa;
+}
+
+/* 画面中央のカードに集約せず、画面全体を使い切る(レビュー指摘)。
+   左側に常設のサイドバーを置き、残りをコンテンツ領域として使う。
+   上書きはadmin-shell配下に限定し、共用のpage-shellには影響させない */
+.page-shell.admin-shell {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+}
+
+.admin-card {
+  display: grid;
+  align-content: start;
+  gap: 28px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: clamp(28px, 6vw, 56px);
+  border: none;
+  border-radius: 0;
+  background: #edeffa;
+  box-shadow: none;
+}
+
+.admin-card h1 {
+  font-size: clamp(2rem, 6vw, 3.25rem);
+}
+
+.admin-menu {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-menu-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  color: inherit;
+  background: #fff;
+  text-decoration: none;
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.admin-menu-item:hover {
+  border-color: rgb(23 105 194 / 40%);
+  box-shadow: 0 10px 30px rgb(23 105 194 / 12%);
+  transform: translateY(-1px);
+}
+
+.admin-menu-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgb(23 105 194 / 8%);
+  font-size: 1.4rem;
+}
+
+.admin-menu-body {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-menu-label {
+  color: #132238;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.admin-menu-description {
+  color: #516176;
+  font-size: 0.875rem; /* 補助文言は12〜14pxの規約内(=14px) */
+  line-height: 1.6;
+}
+
+.admin-menu-arrow {
+  color: #1769c2;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+/* ===== サイドバーメニュー =====
+   管理画面共通のナビ。画面左側に常設し、ボタンでメニュー部分を完全に隠す縮小表示に切り替える
+   (オーバーレイのドロワーではなく、コンテンツ領域を圧迫する常設サイドバー)。
+   開閉(展開/縮小)状態はfeatures/admin/components/AdminSidebar.tsが持つ */
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  flex: 0 0 auto;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: 240px;
+  height: 100vh;
+  height: 100dvh; /* iOS Safariのツールバー出入れで高さが変わるのに追従 */
+  padding: 16px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-right: 1px solid rgb(19 34 56 / 10%);
+  background: #fff;
+  transition: width 200ms ease;
+}
+
+.admin-sidebar--collapsed {
+  width: 72px;
+}
+
+.admin-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.admin-sidebar-toggle {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px; /* タッチターゲット44px以上 */
+  border: 1px solid rgb(19 34 56 / 12%);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 1.2rem;
+}
+
+.admin-sidebar-toggle:hover {
+  background: rgb(23 105 194 / 8%);
+}
+
+.admin-sidebar-title {
+  margin: 0;
+  overflow: hidden;
+  color: #516176;
+  font-size: 0.875rem; /* 補助文言は12〜14pxの規約内 */
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.admin-sidebar-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-sidebar-link {
+  display: flex;
+  align-items: center;
+  min-height: 52px; /* タッチターゲット44px以上 */
+  padding: 10px 14px;
+  overflow: hidden;
+  border-radius: 14px;
+  color: #132238;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-sidebar-link:hover {
+  background: rgb(23 105 194 / 8%);
   color: #1769c2;
 }
 
@@ -823,5 +1033,19 @@ h1 {
 
   .reaction-emoji {
     font-size: 1.6rem; /* 4列に並べた際の拡大サイズ */
+  }
+
+  .admin-card {
+    width: 100%;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .admin-menu-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .admin-menu-arrow {
+    display: none;
   }
 }
