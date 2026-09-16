@@ -2,14 +2,14 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
-
 import { request } from '~/lib/api/client'
 import { toApiError } from '~/lib/api/error'
 import { mapQuestionFieldErrors } from '~/features/problems/validation'
 import QuestionForm from '../../app/features/problems/components/QuestionForm.vue'
 import QuestionFormFields from '../../app/features/problems/components/QuestionFormFields.vue'
 import type { Question } from '../../app/features/problems/types'
+
+vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
 
 const mockedRequest = vi.mocked(request)
 const editQuestion: Question = {
