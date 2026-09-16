@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
-
 import { request } from '~/lib/api/client'
 import {
   createQuestion,
@@ -12,6 +10,8 @@ import {
   updateConfidenceMultiplier,
   updateQuestion,
 } from '../../app/features/problems/api/client'
+
+vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
 
 const mockedRequest = vi.mocked(request)
 const payload = {

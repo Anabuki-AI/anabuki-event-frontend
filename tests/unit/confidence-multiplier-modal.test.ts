@@ -1,10 +1,10 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
-
 import { request } from '~/lib/api/client'
 import ConfidenceMultiplierModal from '../../app/features/problems/components/ConfidenceMultiplierModal.vue'
+
+vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
 
 const mockedRequest = vi.mocked(request)
 const response = { high: '2.00', normal: '1.00', low: '0.50' }
