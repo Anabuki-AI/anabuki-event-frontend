@@ -37,8 +37,8 @@ export function updateQuestion(id: number, payload: QuestionPayload): Promise<Qu
   })
 }
 
-export function deleteQuestion(id: number): Promise<void> {
-  return request<void>(`/admin/questions/${id}`, {
+export function deleteQuestion(id: number): Promise<undefined> {
+  return request<undefined>(`/admin/questions/${id}`, {
     method: 'DELETE',
     credentials,
   })
