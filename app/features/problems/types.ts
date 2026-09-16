@@ -23,15 +23,3 @@ export interface Question {
   createdAt: string
   updatedAt: string
 }
-
-export interface QuestionFormState {
-  questionText: string
-  choices: Record<ChoiceKey, string>
-  correctAnswer: ChoiceKey
-}
-
-export interface QuestionFieldErrors {
-  questionText: string
-  choices: Record<ChoiceKey, string>
-  correctAnswer: string
-}

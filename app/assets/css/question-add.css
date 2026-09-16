@@ -1,23 +1,35 @@
 /**
- * 問題追加画面（/event_operator/question-add）専用。
- * ページ単位で question-add.vue から読み込む。
+ * 問題追加・編集のポップアップ（question-add.vue / questione.vue）専用。
+ * event_operator/management.vue からモーダルとして開く。
  * 他ページへの漏洩を防ぐため、すべてテンプレートルート（.question-add-shell）配下でネームスペースする。
  * 使用色は #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb の5色のみ。
  */
 
 .question-add-shell {
-  min-height: 100vh;
-  background: #edeffa;
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(19 34 56 / 45%);
 }
 
 .question-add-shell .question-add-card {
   width: min(100%, 860px);
+  max-height: 86dvh;
+  overflow-y: auto;
   padding: clamp(28px, 4vw, 48px);
   border: 1px solid #cdcfdb;
   border-radius: 28px;
   background: #ffffff;
   display: grid;
   gap: 28px;
+}
+
+.question-add-shell .question-add-card:focus-visible {
+  outline: 3px solid #1769c2;
+  outline-offset: 2px;
 }
 
 .question-add-shell .question-add-card h1 {
@@ -71,49 +83,10 @@
   opacity: 0.65;
 }
 
-.question-add-shell .question-add-file-input {
-  padding: 10px 12px;
-  border: 1px solid #cdcfdb;
-  border-radius: 12px;
-  background: #ffffff;
-  color: #132238;
-  font: inherit;
-  font-size: 0.875rem;
-}
-
-.question-add-shell .question-add-file-input:focus {
-  border-color: #1769c2;
-  box-shadow: 0 0 0 4px #cdcfdb;
-}
-
 .question-add-shell .question-add-hint {
   margin: 0;
   color: #132238;
   font-size: 0.75rem;
-}
-
-.question-add-shell .question-add-preview {
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  border: 1px solid #cdcfdb;
-  border-radius: 16px;
-  background: #ffffff;
-}
-
-.question-add-shell .question-add-preview-image {
-  max-width: 100%;
-  border: 1px solid #cdcfdb;
-  border-radius: 12px;
-  background: #ffffff;
-}
-
-.question-add-shell .question-add-file-name {
-  margin: 0;
-  color: #132238;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
 }
 
 /* --- 選択肢（4択固定）と正解選択 --- */
@@ -253,24 +226,4 @@
 
 .question-add-shell .question-add-cancel:hover:not(:disabled) {
   transform: translateY(-1px);
-}
-
-.question-add-shell .question-add-clear {
-  width: fit-content;
-  padding: 0;
-  border: 0;
-  background: #ffffff;
-  color: #1769c2;
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-decoration: underline;
-  transition: transform 150ms ease;
-}
-
-.question-add-shell .question-add-status {
-  margin: 0;
-  color: #1769c2;
-  font-size: 1rem;
-  font-weight: 700;
 }

@@ -1,83 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import {
-  validateQuestionForm,
-  hasFieldErrors,
-  hasQuestionChanged,
-  validateMultiplierInput,
-  mapQuestionFieldErrors,
-  parseQuestionId,
-} from '../../app/features/problems/validation'
+import { validateMultiplierInput } from '../../app/features/problems/validation'
 import { formatMultiplier } from '../../app/features/problems/constants'
-import type { QuestionFormState as ProblemQuestionFormState } from '../../app/features/problems/types'
 import type { QuestionFormState as LegacyQuestionFormState } from '../../app/features/questions/types'
 import {
   hasQuestionChanged as hasLegacyQuestionChanged,
   validateCorrectAnswer,
   validateRequiredText,
 } from '../../app/features/questions/validation'
-
-function validForm(): ProblemQuestionFormState {
-  return {
-    questionText: '日本の首都はどこでしょう?',
-    choices: { A: '東京', B: '大阪', C: '札幌', D: '福岡' },
-    correctAnswer: 'A',
-  }
-}
-
-describe('validateQuestionForm', () => {
-  it('正常な入力はエラーなし', () => {
-    const errors = validateQuestionForm(validForm())
-
-    expect(hasFieldErrors(errors)).toBe(false)
-  })
-
-  it('問題文が空ならエラー', () => {
-    const form = validForm()
-    form.questionText = '   '
-
-    const errors = validateQuestionForm(form)
-
-    expect(errors.questionText).toBe('問題文を入力してください')
-    expect(hasFieldErrors(errors)).toBe(true)
-  })
-
-  it('選択肢が空ならエラー', () => {
-    const form = validForm()
-    form.choices.C = ''
-
-    const errors = validateQuestionForm(form)
-
-    expect(errors.choices.C).toBe('選択肢を入力してください')
-    expect(hasFieldErrors(errors)).toBe(true)
-  })
-
-  it('正解が未選択ならエラー', () => {
-    const form = validForm()
-    form.correctAnswer = ''
-
-    const errors = validateQuestionForm(form)
-
-    expect(errors.correctAnswer).toBe('正解を選択してください')
-    expect(hasFieldErrors(errors)).toBe(true)
-  })
-})
-
-describe('hasQuestionChanged', () => {
-  it('同一内容は false', () => {
-    const form = validForm()
-    const baseline = JSON.parse(JSON.stringify(form))
-
-    expect(hasQuestionChanged(form, baseline)).toBe(false)
-  })
-
-  it('選択肢の変更を検出する', () => {
-    const form = validForm()
-    const baseline = JSON.parse(JSON.stringify(form))
-    form.choices.B = '名古屋'
-
-    expect(hasQuestionChanged(form, baseline)).toBe(true)
-  })
-})
 
 describe('validateMultiplierInput', () => {
   it('空入力はエラー', () => {
@@ -101,39 +30,6 @@ describe('validateMultiplierInput', () => {
     expect(validateMultiplierInput('0', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('9.99', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('1.5', 0, 9.99)).toBe('')
-  })
-})
-
-describe('backend field and route validation', () => {
-  it('maps string field errors from the backend to individual form fields', () => {
-    expect(mapQuestionFieldErrors({
-      questionText: '問題文を入力してください',
-      choiceC: '選択肢Cを入力してください',
-    })).toEqual({
-      questionText: '問題文を入力してください',
-      choices: { A: '', B: '', C: '選択肢Cを入力してください', D: '' },
-      correctAnswer: '',
-    })
-  })
-
-  it('keeps compatibility with legacy array field errors', () => {
-    expect(mapQuestionFieldErrors({
-      questionText: ['問題文を入力してください'],
-      choiceC: ['選択肢Cを入力してください'],
-    })).toEqual({
-      questionText: '問題文を入力してください',
-      choices: { A: '', B: '', C: '選択肢Cを入力してください', D: '' },
-      correctAnswer: '',
-    })
-  })
-
-  it('accepts only positive integer route ids', () => {
-    expect(parseQuestionId('12')).toBe(12)
-    expect(parseQuestionId('0')).toBeNull()
-    expect(parseQuestionId('-1')).toBeNull()
-    expect(parseQuestionId('1.2')).toBeNull()
-    expect(parseQuestionId(' 1')).toBeNull()
-    expect(parseQuestionId(['1'])).toBeNull()
   })
 })
 

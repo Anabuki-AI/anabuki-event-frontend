@@ -6,7 +6,6 @@ export default defineNuxtConfig({
     '~/assets/css/registration.css',
     '~/assets/css/main.css',
     '~/assets/css/management.css',
-    '~/assets/css/questionedit.css',
   ],
   app: {
     head: {

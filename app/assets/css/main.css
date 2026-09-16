@@ -33,6 +33,20 @@ button:disabled {
   opacity: 0.65;
 }
 
+/* スクリーンリーダー向けにのみ読み上げさせ、画面上は非表示にする(視覚的には隠すが、
+   支援技術からは読み取れるようにする標準的な手法) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .page-shell {
   min-height: 100vh;
   display: grid;

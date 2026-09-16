@@ -1,62 +1,111 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useQuestionAdd } from '~/features/question-add/use-question-add'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useId } from 'vue'
+import { createQuestion } from '~/features/problems/api/client'
+import type { QuestionPayload } from '~/features/problems/api/client'
+import { problemErrorMessage } from '~/features/problems/validation'
+import { toApiError } from '~/lib/api/error'
 import '~/assets/css/question-add.css'
 
-useSeoMeta({
-  title: '問題追加',
-  description: 'クイズ大会の問題を新しく登録します。',
-})
-
 const emit = defineEmits<{
-  (e: 'close'): void
+  close: []
+  saved: []
 }>()
 
-const {
-  questionText,
-  previewUrl,
-  fileName,
-  choiceA,
-  choiceB,
-  choiceC,
-  choiceD,
-  correctChoice,
-  isSaving,
-  savedMessage,
-  canSave,
-  hasImage,
-  handleQuestionInput,
-  handleChoiceInput,
-  handleCorrectChoiceSelect,
-  handleImageSelect,
-  clearImage,
-  save,
-  cancel,
-} = useQuestionAdd()
+type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
 
-// ネイティブfile inputのDOM値をクリアするための参照
-// （クリアしないと、キャンセル後に同じファイルを再選択してもchangeが発火しない）
-const fileInput = ref<HTMLInputElement | null>(null)
+const form = reactive({
+  questionText: '',
+  choiceA: '',
+  choiceB: '',
+  choiceC: '',
+  choiceD: '',
+})
+const correctChoice = ref<ChoiceLabel | null>(null)
+const isSaving = ref(false)
+const submitErrorMessage = ref('')
+const panel = ref<HTMLElement | null>(null)
+const titleId = useId()
+
+const canSave = computed<boolean>(
+  () =>
+    !isSaving.value
+    && form.questionText.trim().length > 0
+    && form.choiceA.trim().length > 0
+    && form.choiceB.trim().length > 0
+    && form.choiceC.trim().length > 0
+    && form.choiceD.trim().length > 0
+    && correctChoice.value !== null,
+)
+
+function handleQuestionInput(value: string) {
+  form.questionText = value
+}
+
+function handleChoiceInput(choice: ChoiceLabel, value: string) {
+  if (choice === 'A') form.choiceA = value
+  else if (choice === 'B') form.choiceB = value
+  else if (choice === 'C') form.choiceC = value
+  else form.choiceD = value
+}
+
+function handleCorrectChoiceSelect(choice: ChoiceLabel) {
+  correctChoice.value = choice
+}
+
+async function save() {
+  if (!canSave.value || correctChoice.value === null) return
+
+  isSaving.value = true
+  submitErrorMessage.value = ''
+  const payload: QuestionPayload = {
+    questionText: form.questionText.trim(),
+    choiceA: form.choiceA.trim(),
+    choiceB: form.choiceB.trim(),
+    choiceC: form.choiceC.trim(),
+    choiceD: form.choiceD.trim(),
+    correctAnswer: correctChoice.value,
+  }
+
+  try {
+    await createQuestion(payload)
+    emit('saved')
+  }
+  catch (error) {
+    const apiError = toApiError(error)
+    submitErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
+  }
+  finally {
+    isSaving.value = false
+  }
+}
 
 function handleCancel() {
-  cancel()
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
+  if (isSaving.value) return
   emit('close')
 }
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && !isSaving.value) emit('close')
+}
+
+onMounted(async () => {
+  document.addEventListener('keydown', onKeydown)
+  await nextTick()
+  panel.value?.focus()
+})
+onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <main class="page-shell question-add-shell">
-    <section class="question-add-card" aria-label="問題の新規登録">
+  <div class="question-add-shell" @click.self="handleCancel">
+    <section ref="panel" class="question-add-card" role="dialog" aria-modal="true" :aria-labelledby="titleId" tabindex="-1">
       <header class="question-add-header">
         <p class="eyebrow">
           Event operator
         </p>
-        <h1>問題追加</h1>
+        <h1 :id="titleId">問題追加</h1>
         <p class="muted-copy">
-          クイズ大会で出題する問題文・添付画像・4つの選択肢と正解を入力して登録します。
+          クイズ大会で出題する問題文・4つの選択肢と正解を入力して登録します。
         </p>
       </header>
 
@@ -68,57 +117,21 @@ function handleCancel() {
             rows="4"
             maxlength="200"
             placeholder="例：日本の首都はどこでしょう？"
-            :value="questionText"
+            :value="form.questionText"
             :disabled="isSaving"
             @input="handleQuestionInput(($event.target as HTMLTextAreaElement).value)"
           />
         </label>
-
-        <div class="question-add-field">
-          <label class="question-add-label" for="question-add-image">添付画像（任意）</label>
-          <input
-            id="question-add-image"
-            ref="fileInput"
-            class="question-add-file-input"
-            type="file"
-            accept="image/*"
-            :disabled="isSaving"
-            @change="handleImageSelect((($event.target as HTMLInputElement).files?.[0]) ?? null)"
-          >
-          <p class="question-add-hint">
-            画像ファイル（JPEG・PNGなど）のみ選択できます。
-          </p>
-
-          <div v-if="hasImage" class="question-add-preview">
-            <img
-              v-if="previewUrl"
-              class="question-add-preview-image"
-              :src="previewUrl"
-              :alt="`選択した画像のプレビュー：${fileName ?? ''}`"
-            >
-            <p v-if="fileName" class="question-add-file-name">
-              {{ fileName }}
-            </p>
-            <button
-              type="button"
-              class="question-add-clear"
-              :disabled="isSaving"
-              @click="clearImage()"
-            >
-              画像の選択を解除
-            </button>
-          </div>
-        </div>
 
         <fieldset class="question-add-field question-add-choices">
           <legend class="question-add-label">選択肢（正解にチェックを付けてください）</legend>
 
           <div
             v-for="choice in [
-              { label: 'A', text: choiceA },
-              { label: 'B', text: choiceB },
-              { label: 'C', text: choiceC },
-              { label: 'D', text: choiceD },
+              { label: 'A', text: form.choiceA },
+              { label: 'B', text: form.choiceB },
+              { label: 'C', text: form.choiceC },
+              { label: 'D', text: form.choiceD },
             ] as const"
             :key="choice.label"
             class="question-add-choice-row"
@@ -156,10 +169,15 @@ function handleCancel() {
           </p>
         </fieldset>
 
+        <p v-if="submitErrorMessage" class="status-message error" role="alert">
+          {{ submitErrorMessage }}
+        </p>
+
         <div class="question-add-actions">
           <button
             type="button"
             class="question-add-cancel"
+            :disabled="isSaving"
             @click="handleCancel()"
           >
             キャンセル
@@ -170,14 +188,10 @@ function handleCancel() {
             :disabled="!canSave"
             @click="save()"
           >
-            保存する
+            {{ isSaving ? '保存中…' : '保存する' }}
           </button>
         </div>
       </form>
     </section>
-
-    <p class="question-add-status" role="status" aria-live="polite">
-      {{ savedMessage }}
-    </p>
-  </main>
+  </div>
 </template>
