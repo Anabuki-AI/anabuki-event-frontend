@@ -1,463 +1,174 @@
-/* ===== 問題管理画面（pages/event_operator/problem-management.vue専用） ===== */
-
-/* page-shellの中央寄せ・余白も含めて画面いっぱいを使う。
-   常設サイドバーを左に置き、残りをコンテンツ領域として使うためflexに切り替える。
-   上書きはproblems-card配下のクラスに限定し、共用のpage-shellには影響させない */
+/* Admin problem management: desktop-first layout. */
 .page-shell:has(.problems-card) {
-  display: flex;
-  align-items: stretch;
-  padding: 0;
-  /* サイドバー展開時にカードが右端へぴったり付いて見えるのを避ける余白 */
-  padding-right: 20px;
-  padding-bottom: 0;
+  display: block;
+  min-height: 100dvh;
+  padding: 24px;
   background: #edeffa;
 }
 
 .problems-card {
-  width: 100%;
+  display: flex;
+  width: min(100%, 1180px);
   max-width: none;
-  flex: 1 1 auto;
-  min-width: 0;
-  /* サイドバー(.admin-sidebar)と高さを揃える。card自体はここで伸びを止め、
-     内側のquestion-rowsだけがスクロールする形にする(見た目はこれまで通り
-     align-items: stretchで生まれていた高さと同じ) */
-  height: 100dvh;
-  display: flex;
+  min-height: calc(100dvh - 48px);
+  margin: 0 auto;
   flex-direction: column;
-  /* .admin-card(main.css)はgap未指定のため、末尾がalign-items: endの.problems-headerでは
-     ヘッダーの操作ボタンと本文側の要素(倍率を変更ボタン等)が隙間なく接してしまう。
-     ヘッダーと本文の間に明示的な余白を設ける */
-  gap: 12px;
-  overflow: hidden;
-  border: none;
-  /* 左はサイドバーに接するため角丸なし、右は隙間ができるため角丸をつける */
-  border-radius: 0 20px 20px 0;
-  box-shadow: none;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 20px;
 }
 
-/* ヘッダー・注記はcardの中で高さを固定する。指定がないとflexアイテムとして
-   shrinkの対象になり、一覧側に渡る高さの計算がずれるため */
-.problems-card > .problems-header,
-.problems-card > .mock-notice {
-  flex-shrink: 0;
-}
-
-.add-question-link {
-  justify-self: start;
-}
-
-/* 仮画面である旨の注記（カラーリングは注記:12-14px 規定に合わせる） */
-.mock-notice {
-  margin: -14px 0 0;
-  color: #516176;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.question-count-row {
+.problems-header,
+.question-count-row,
+.question-choices-row,
+.question-count-group,
+.question-row-actions,
+.multiplier-modal-head,
+.multiplier-modal-row-controls,
+.multiplier-modal-actions {
   display: flex;
-  flex-shrink: 0;
   align-items: center;
+}
+
+.problems-header,
+.question-count-row,
+.question-choices-row,
+.multiplier-modal-head {
   justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.question-count-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+.problems-header .muted-copy { margin-top: 12px; }
+.add-question-link { flex: 0 0 auto; }
 
-.question-count {
-  margin: 0;
-  color: #516176;
-  font-size: 14px;
-}
-
+.question-count-group { flex-wrap: wrap; gap: 10px; }
+.question-count { margin: 0; color: #516176; font-size: 14px; }
+.multiplier-status { color: #516176; font-size: 13px; }
 .multiplier-chip {
   padding: 5px 12px;
   border: 1px solid rgb(23 105 194 / 32%);
   border-radius: 999px;
   color: #1769c2;
   background: rgb(23 105 194 / 6%);
-  font-size: 13px; /* 補足は12-14px規定 */
+  font-size: 13px;
   font-weight: 750;
 }
 
-.multiplier-manage-button {
-  display: inline-flex;
-  align-items: center;
+.multiplier-manage-button,
+.row-action-link,
+.row-action-button,
+.retry-button,
+.delete-button {
   min-height: 38px;
-  padding: 0 16px;
   border: 1px solid #c7d3e0;
-  border-radius: 12px;
-  color: #1769c2;
-  background: #fff;
-  font-size: 14px;
-  font-weight: 750;
-  transition: border-color 150ms ease, background 150ms ease;
-}
-
-.multiplier-manage-button:hover {
-  border-color: #1769c2;
-  background: rgb(23 105 194 / 6%);
-}
-
-.question-list {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0; /* flexの縮小を許可し、内側のquestion-rowsにスクロールを効かせる */
-  gap: 14px;
-}
-
-/* 一覧本体だけを内側スクロールさせる領域(本番は26問あり縦に長くなるため)。
-   flex: 1 1 autoで残り高さを確実に占有し、その範囲を超えた分だけこの要素自身が
-   スクロールする(親に任せるとoverflow: hiddenのproblems-cardごと切り取られる)。
-   align-content: startで、問題数が少なく余白ができる現状でも各行の高さが
-   間延びせず、これまで通り下側に余白が残るだけの見た目を保つ */
-.question-rows {
-  /* display: gridだと、開閉するdetails(可変高さ)を子に持つ場合に
-     Chromiumがauto行トラックの高さを開く前のサイズで固定してしまい、
-     開いた中身がoverflow: hiddenで切れる不具合があったためflexに変更 */
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  gap: 14px;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.question-row {
-  flex-shrink: 0; /* question-rowsがflexなので、内容量に関わらず各行の高さを保つ(縮めずスクロールさせる) */
-  padding: 0;
-  border: 1px solid rgb(19 34 56 / 10%);
-  border-radius: 18px;
-  background: #ffffff; /* 問題背景は指定色 */
-  overflow: hidden;
-}
-
-/* 1行表示(レビュー指摘): summary=問題番号+問題文+正解バッジ */
-.question-row-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  cursor: pointer;
-  list-style: none; /* 既定の▶マーカーを消し、独自の開閉アイコンを使う */
-}
-
-.question-row-summary::-webkit-details-marker {
-  display: none;
-}
-
-.question-row-summary::after {
-  content: '▸';
-  flex-shrink: 0;
-  margin-left: auto;
-  color: #516176;
-  font-size: 1rem;
-  transition: transform 150ms ease;
-}
-
-.question-row[open] .question-row-summary::after {
-  transform: rotate(90deg);
-}
-
-.question-row-summary:hover {
-  background: rgb(23 105 194 / 4%);
-}
-
-.question-row-detail {
-  display: grid;
-  gap: 12px;
-  padding: 4px 20px 18px;
-  border-top: 1px solid rgb(19 34 56 / 8%);
-}
-
-.question-id {
-  flex-shrink: 0;
-  color: #1769c2;
-  font-weight: 800;
-}
-
-.question-text {
-  flex: 1;
-  margin: 0;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1; /* 一覧は1行に收める(レビュー指摘)。全文は折り畳み内・編集画面で確認できる */
-  color: #132238;
-  font-size: 16px; /* 本文は16px規定 */
-  font-weight: 700;
-  line-height: 1.6;
-  text-overflow: ellipsis;
-}
-
-.correct-badge {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  color: #14643b;
-  background: #e9f8ef;
-  font-size: 12px; /* 補足は12-14px規定 */
-  font-weight: 750;
-}
-
-/* 問題に画像が設定されている場合だけ表示する枠。imageUrl未設定時はDOM自体が
-   描画されないため、余白も含めてスペースは残らない */
-.question-image {
-  overflow: hidden;
-  border-radius: 14px;
-  background: #eef2f8;
-}
-
-.question-image img {
-  display: block;
-  width: 100%;
-  max-height: 260px;
-  object-fit: cover;
-}
-
-.question-choices {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* A,B / C,D の2行2列 */
-  gap: 8px 20px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: #253750;
-  font-size: 16px; /* 本文は16px規定 */
-}
-
-.question-choices li {
-  display: flex;
-  gap: 8px;
-  line-height: 1.6;
-}
-
-.question-choices li.is-correct {
-  color: #14643b;
-  font-weight: 750;
-}
-
-.question-choices .choice-key {
-  color: #516176;
-  font-weight: 750;
-}
-
-/* 編集ボタンをC,D行(選択肢ブロックの下端)に揃えて右側に配置する。
-   .question-choicesの列構成には触れず、隣に置いた.question-row-actionsを
-   align-items: flex-endで下端合わせにするだけで実現する */
-.question-choices-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px 20px;
-}
-
-.question-choices-row .question-choices {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.question-row-actions {
-  display: flex;
-  flex-shrink: 0;
-  gap: 10px;
-}
-
-.row-action-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0 16px;
-  border: 1px solid #c7d3e0;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #1769c2;
   background: #fff;
   font-size: 14px;
   font-weight: 750;
   text-decoration: none;
-  transition: border-color 150ms ease, background 150ms ease;
 }
 
-.row-action-link:hover {
-  border-color: #1769c2;
-  background: rgb(23 105 194 / 6%);
-}
+.multiplier-manage-button,
+.row-action-link,
+.row-action-button,
+.delete-button { padding: 0 16px; }
+.retry-button { margin-top: 8px; padding: 4px 12px; color: #253750; font-size: 13px; }
+.multiplier-manage-button:hover,
+.row-action-link:hover,
+.row-action-button:hover { border-color: #1769c2; background: rgb(23 105 194 / 6%); }
+.row-action-button { color: #a32b24; border-color: #e2bbb7; }
+.row-action-button:hover { border-color: #a32b24; background: #fff4f2; }
+.delete-button { border-color: #a32b24; color: #fff; background: #a32b24; }
+.delete-button:hover:not(:disabled) { background: #811f1a; }
 
-.retry-button {
-  margin-left: 10px;
-  padding: 4px 12px;
-  border: 1px solid #c7d3e0;
-  border-radius: 10px;
-  color: #253750;
+.multiplier-error .status-message,
+.questions-error .status-message { display: inline-block; }
+.question-list { min-height: 0; }
+.question-rows { display: flex; flex-direction: column; gap: 12px; }
+.question-row {
+  overflow: hidden;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 16px;
   background: #fff;
-  font-size: 13px;
 }
-
-.status-message.empty {
-  color: #516176;
-  background: #eef2f8;
+.question-row-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 14px 18px;
+  cursor: pointer;
+  list-style: none;
 }
-
-/* ===== タブレット横置き対応(1024px級) =====
-   運営者・管理者ページはタブレット横置きが標準操作端末(CLAUDE_FRONT.md)。
-   幅を活かして一覧の操作リンクを指で押しやすい大きさに広げる。
-   .problems-headerの横並びレイアウト自体はnew/edit/multiplierページとも共用のためmain.css側に残す */
-@media (width >= 900px) {
-  .add-question-link {
-    justify-self: end;
-  }
-
-  .question-rows {
-    gap: 16px;
-  }
-
-  .question-row-summary {
-    /* 横置きタブレットは指操作のため44px以上のタッチターゲットを確保 */
-    min-height: 56px;
-    padding: 16px 24px;
-  }
-
-  .question-row-detail {
-    padding: 8px 24px 22px;
-  }
-
-  .row-action-link {
-    justify-content: center;
-    min-height: 44px;
-  }
+.question-row-summary::-webkit-details-marker { display: none; }
+.question-row-summary::after { margin-left: auto; color: #516176; content: '▸'; transition: transform 150ms ease; }
+.question-row[open] .question-row-summary::after { transform: rotate(90deg); }
+.question-row-summary:hover { background: rgb(23 105 194 / 4%); }
+.question-id { flex: 0 0 auto; color: #1769c2; font-weight: 800; }
+.question-text {
+  display: -webkit-box;
+  overflow: hidden;
+  flex: 1;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  color: #132238;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.6;
+  text-overflow: ellipsis;
 }
+.correct-badge { flex: 0 0 auto; padding: 4px 10px; border-radius: 999px; color: #14643b; background: #e9f8ef; font-size: 12px; font-weight: 750; }
+.question-row-detail { display: grid; gap: 12px; padding: 12px 18px 18px; border-top: 1px solid rgb(19 34 56 / 8%); }
+.question-image { overflow: hidden; border-radius: 12px; background: #eef2f8; }
+.question-image img { display: block; width: 100%; max-height: 260px; object-fit: cover; }
+.question-choices-row { flex-wrap: wrap; align-items: flex-end; }
+.question-choices { display: grid; flex: 1 1 500px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; margin: 0; padding: 0; list-style: none; color: #253750; font-size: 16px; }
+.question-choices li { display: flex; gap: 8px; line-height: 1.6; }
+.question-choices li.is-correct { color: #14643b; font-weight: 750; }
+.choice-key { color: #516176; font-weight: 750; }
+.question-row-actions { flex: 0 0 auto; gap: 8px; }
+.status-message.empty { color: #516176; background: #eef2f8; }
 
-/* ===== 自信度倍率の設定モーダル(ConfidenceMultiplierModal.vue) =====
-   自信度あり/普通/なしの3段階(常に3行固定)を編集するモーダル。
-   overlay/panelの基本形はmain.cssの.help-dialogを踏襲する */
 .multiplier-modal {
   position: fixed;
-  inset: 0;
   z-index: 60;
+  inset: 0;
   display: grid;
-  place-items: start center;
+  place-items: center;
   padding: 20px;
   background: rgb(19 34 56 / 45%);
 }
-
 .multiplier-modal-panel {
   width: min(100%, 520px);
   max-height: 86dvh;
-  max-height: 86vh;
   overflow-y: auto;
   padding: 26px;
-  border: none;
-  border-radius: 22px;
+  border-radius: 18px;
   background: #edeffa;
   box-shadow: 0 24px 80px rgb(34 75 120 / 30%);
 }
+.multiplier-modal-panel:focus-visible { outline: 3px solid #1769c2; outline-offset: 2px; }
+.multiplier-modal-head h2,
+.delete-dialog h2 { margin: 0; font-size: 1.3rem; }
+.delete-dialog > p:not(.status-message) { color: #516176; line-height: 1.7; }
+.multiplier-modal-close { width: 34px; height: 34px; border: 0; border-radius: 8px; color: #516176; background: transparent; font-size: 1.4rem; }
+.multiplier-modal-close:hover { color: #132238; background: rgb(19 34 56 / 6%); }
+.multiplier-modal-note { margin: 8px 0 0; }
+.multiplier-modal-rows { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+.multiplier-modal-row { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid rgb(19 34 56 / 10%); border-radius: 14px; background: #fff; }
+.multiplier-modal-row-controls { gap: 12px; }
+.multiplier-modal-row-label { flex: 0 0 6.5rem; color: #253750; font-size: 14px; font-weight: 750; }
+.multiplier-input-label { flex: 1; }
+.multiplier-input-row { display: flex; align-items: center; gap: 6px; }
+.multiplier-input-row input { width: 100%; min-height: 40px; padding: 0 10px; border: 1px solid #c7d3e0; border-radius: 9px; }
+.multiplier-modal-save { flex: 0 0 auto; min-height: 40px; padding: 0 18px; }
+.multiplier-modal-actions { justify-content: flex-end; gap: 12px; margin-top: 18px; }
+.button-cancel { min-height: 40px; padding: 0 16px; border: 1px solid #c7d3e0; border-radius: 10px; color: #253750; background: #fff; font-weight: 700; }
 
-.multiplier-modal-panel:focus-visible {
-  outline: 3px solid #1769c2;
-  outline-offset: 2px;
-}
-
-.multiplier-modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.multiplier-modal-head h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: -0.01em;
-}
-
-.multiplier-modal-close {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: 10px;
-  color: #516176;
-  background: transparent;
-  font-size: 1.3rem;
-  line-height: 1;
-}
-
-.multiplier-modal-close:hover {
-  color: #132238;
-  background: rgb(19 34 56 / 6%);
-}
-
-.multiplier-modal-note {
-  margin: 8px 0 0;
-}
-
-.multiplier-modal-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.multiplier-modal-row {
-  display: grid;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid rgb(19 34 56 / 10%);
-  border-radius: 16px;
-  background: #ffffff;
-}
-
-.multiplier-modal-row-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.multiplier-modal-row-controls .multiplier-input-label {
-  flex: 1;
-  gap: 0;
-}
-
-.multiplier-modal-row-label {
-  flex-shrink: 0;
-  width: 6.5rem;
-  color: #253750;
-  font-size: 14px;
-  font-weight: 750;
-}
-
-.multiplier-modal-save {
-  flex-shrink: 0;
-  min-height: 40px;
-  padding: 0 18px;
-}
-
-.multiplier-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 18px;
-}
-
-@media (width <= 480px) {
-  .multiplier-modal-row-controls {
-    flex-wrap: wrap;
-  }
-
-  .multiplier-modal-row-label {
-    width: auto;
-  }
+@media (max-width: 700px) {
+  .page-shell:has(.problems-card) { padding: 14px; }
+  .problems-card { min-height: calc(100dvh - 28px); padding: 22px; }
+  .problems-header { align-items: flex-start; flex-direction: column; }
+  .question-choices { grid-template-columns: 1fr; }
 }

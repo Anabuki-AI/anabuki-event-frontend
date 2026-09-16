@@ -1,98 +1,124 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+
+vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
+
+import { request } from '~/lib/api/client'
+import { toApiError } from '~/lib/api/error'
+import { mapQuestionFieldErrors } from '~/features/problems/validation'
 import QuestionForm from '../../app/features/problems/components/QuestionForm.vue'
 import QuestionFormFields from '../../app/features/problems/components/QuestionFormFields.vue'
 import type { Question } from '../../app/features/problems/types'
 
-// ハードコードされたテストデータ（レビュー方針に合わせフィクスチャ分割はしない）
+const mockedRequest = vi.mocked(request)
 const editQuestion: Question = {
   id: 7,
+  position: 2,
   questionText: '日本の首都はどこでしょう？',
-  choices: { A: '東京', B: '大阪', C: '札幌', D: '福岡' },
+  choiceA: '東京',
+  choiceB: '大阪',
+  choiceC: '札幌',
+  choiceD: '福岡',
   correctAnswer: 'A',
+  imageUrl: null,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
 }
 
 function createTestRouter() {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: '/event_operator/problem-management', component: { template: '<div />' } },
-      { path: '/', component: { template: '<div />' } },
+      { path: '/admin/problems', component: { template: '<div />' } },
+      { path: '/admin/problems/new', component: { template: '<div />' } },
+      { path: '/admin/problems/7/edit', component: { template: '<div />' } },
     ],
   })
 }
 
 function mountForm(question?: Question) {
   const router = createTestRouter()
-  router.push('/admin/problems/7/edit')
+  router.push(question ? '/admin/problems/7/edit' : '/admin/problems/new')
   const wrapper = mount(QuestionForm, {
     props: question == null ? {} : { question },
-    global: {
-      components: { QuestionFormFields },
-      plugins: [router],
-    },
+    global: { plugins: [router] },
   })
   return { wrapper, router }
 }
 
-describe('問題追加フォーム（new画面の要素）', () => {
-  it('追加時は画像アップロードの仮UIを表示する', () => {
+beforeEach(() => mockedRequest.mockReset())
+
+describe('問題追加フォーム', () => {
+  it('画像アップロードの未実装UIを表示しない', () => {
     const { wrapper } = mountForm()
-
-    const upload = wrapper.find('.image-upload-field')
-    expect(upload.exists()).toBe(true)
-    expect(upload.find('input[type="file"]').attributes('disabled')).toBeDefined()
-    expect(upload.text()).toContain('画像アップロードは準備中です')
-  })
-
-  it('追加フォームは保存ボタンとキャンセルボタンを持つ', () => {
-    const { wrapper } = mountForm()
-
-    expect(wrapper.find('button[type="submit"]').exists()).toBe(true)
-    expect(wrapper.find('.button-cancel').text()).toBe('キャンセル')
+    expect(wrapper.find('.image-upload-field').exists()).toBe(false)
   })
 
   it('必須項目が空のまま保存すると検証エラーが出て登録されない', async () => {
-    const wrapper = mountForm().wrapper
+    const { wrapper } = mountForm()
+    await wrapper.find('form').trigger('submit')
+    expect(wrapper.findAll('.field-note.is-error').length).toBeGreaterThan(0)
+    expect(mockedRequest).not.toHaveBeenCalled()
+  })
+
+  it('登録成功後に問題一覧へ遷移する', async () => {
+    mockedRequest.mockResolvedValue(editQuestion)
+    const { wrapper, router } = mountForm()
+    const textarea = wrapper.find('textarea')
+    await textarea.setValue('登録する問題')
+    const inputs = wrapper.findAll('input[type="text"]')
+    for (const [index, value] of ['A', 'B', 'C', 'D'].entries()) await inputs[index]?.setValue(value)
 
     await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
-    expect(wrapper.findAll('.field-note.is-error').length).toBeGreaterThan(0)
-    expect(wrapper.find('.status-message.success').exists()).toBe(false)
+    expect(mockedRequest).toHaveBeenCalledWith('/admin/questions', expect.objectContaining({ method: 'POST', credentials: 'include' }))
+    expect(router.currentRoute.value.path).toBe('/admin/problems')
+  })
+
+  it('実API形式の文字列fieldErrorsを完全なメッセージとして表示する', () => {
+    const apiError = toApiError({
+      data: {
+        error: 'Validation failed',
+        fieldErrors: { questionText: '問題文を入力してください' },
+      },
+      statusCode: 422,
+    })
+    const wrapper = mount(QuestionFormFields, {
+      props: {
+        form: {
+          questionText: '登録する問題',
+          choices: { A: 'A', B: 'B', C: 'C', D: 'D' },
+          correctAnswer: 'A',
+        },
+        fieldErrors: mapQuestionFieldErrors(apiError.fieldErrors),
+        showFieldErrors: true,
+      },
+    })
+
+    expect(wrapper.find('.field-note.is-error').text()).toBe('問題文を入力してください')
   })
 
   it('キャンセルボタンで問題一覧へ遷移する', async () => {
     const { wrapper, router } = mountForm()
-
     await wrapper.find('.button-cancel').trigger('click')
     await router.isReady()
-
-    expect(router.currentRoute.value.path).toBe('/event_operator/problem-management')
+    expect(router.currentRoute.value.path).toBe('/admin/problems')
   })
 })
 
-describe('問題編集フォーム（edit画面の要素）', () => {
-  it('編集時は画像アップロードの仮UIを表示しない', () => {
-    const { wrapper } = mountForm(editQuestion)
-
-    expect(wrapper.find('.image-upload-field').exists()).toBe(false)
-  })
-
-  it('編集フォームは既存の問題文を表示し、保存・キャンセルボタンを持つ', () => {
-    const { wrapper } = mountForm(editQuestion)
-
-    expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('日本の首都はどこでしょう？')
-    expect(wrapper.find('button[type="submit"]').text()).toBe('保存する')
-    expect(wrapper.find('.button-cancel').text()).toBe('キャンセル')
-  })
-
-  it('キャンセルボタンで問題一覧へ遷移する', async () => {
+describe('問題編集フォーム', () => {
+  it('既存値を表示し、更新成功後に一覧へ遷移する', async () => {
+    mockedRequest.mockResolvedValue(editQuestion)
     const { wrapper, router } = mountForm(editQuestion)
+    expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('日本の首都はどこでしょう？')
 
-    await wrapper.find('.button-cancel').trigger('click')
-    await router.isReady()
+    await wrapper.find('textarea').setValue('更新後の問題文')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
-    expect(router.currentRoute.value.path).toBe('/event_operator/problem-management')
+    expect(mockedRequest).toHaveBeenCalledWith('/admin/questions/7', expect.objectContaining({ method: 'PUT', credentials: 'include' }))
+    expect(router.currentRoute.value.path).toBe('/admin/problems')
   })
 })

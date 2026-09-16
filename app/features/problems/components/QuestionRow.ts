@@ -1,13 +1,8 @@
 import type { Question } from '../types'
 
-/**
- * 問題一覧の1行表示ユーティリティ(旧QuestionRow.vueのscript)。
- * 行のテンプレートはpages/event_operator/management.vueに統合済み
- * (summary=1行の問題文、details折り畳み内に選択肢・操作)。
- * 自信度倍率は問題ごとではなく全問題共通の設定のため、ここでは扱わない。
- */
-export function formatQuestionId(id: number): string {
-  return `Q${id}`
+/** Question numbers are event positions; database ids are deliberately not shown to operators. */
+export function formatQuestionPosition(position: number): string {
+  return `Q${position}`
 }
 
 export function formatCorrectBadge(question: Question): string {
@@ -15,5 +10,9 @@ export function formatCorrectBadge(question: Question): string {
 }
 
 export function correctChoiceText(question: Question): string {
-  return question.choices[question.correctAnswer]
+  return question[`choice${question.correctAnswer}`]
+}
+
+export function choiceText(question: Question, key: Question['correctAnswer']): string {
+  return question[`choice${key}`]
 }

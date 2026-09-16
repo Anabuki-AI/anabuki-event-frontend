@@ -1,115 +1,57 @@
-import type { ChoiceKey, ConfidenceLevel, ConfidenceMultipliers, Question } from '../types'
+import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '../types'
 import { request } from '~/lib/api/client'
-import {
-  createMockQuestion,
-  fetchMockConfidenceMultipliers,
-  fetchMockQuestion,
-  fetchMockQuestions,
-  updateMockConfidenceMultiplier,
-  updateMockQuestion,
-} from '../mock'
 
-/**
- * バックエンドAPI(/api/admin/questions)未結合でも画面を確認できるよう
- * 仮データを返すフラグ。実API結合時に false にする。
- */
-const USE_MOCK = true
+const credentials = 'include' as const
 
-interface QuestionApiModel {
-  id: number
+/** POST / PUT に送る問題の入力値。画像登録は未対応のため含めない。 */
+export interface QuestionPayload {
   questionText: string
   choiceA: string
   choiceB: string
   choiceC: string
   choiceD: string
-  correctAnswer: ChoiceKey
-  imageUrl?: string
+  correctAnswer: Question['correctAnswer']
 }
 
-function toQuestion(model: QuestionApiModel): Question {
-  return {
-    id: model.id,
-    questionText: model.questionText,
-    choices: {
-      A: model.choiceA,
-      B: model.choiceB,
-      C: model.choiceC,
-      D: model.choiceD,
-    },
-    correctAnswer: model.correctAnswer,
-    imageUrl: model.imageUrl,
-  }
+export function fetchQuestions(): Promise<Question[]> {
+  return request<Question[]>('/admin/questions', { credentials })
 }
 
-export interface QuestionPayload {
-  questionText: string
-  choices: Record<ChoiceKey, string>
-  correctAnswer: ChoiceKey
+export function fetchQuestion(id: number): Promise<Question> {
+  return request<Question>(`/admin/questions/${id}`, { credentials })
 }
 
-function toApiModel(payload: QuestionPayload) {
-  return {
-    questionText: payload.questionText,
-    choiceA: payload.choices.A,
-    choiceB: payload.choices.B,
-    choiceC: payload.choices.C,
-    choiceD: payload.choices.D,
-    correctAnswer: payload.correctAnswer,
-  }
-}
-
-export async function fetchQuestions(): Promise<Question[]> {
-  if (USE_MOCK) {
-    return fetchMockQuestions()
-  }
-  const models = await request<QuestionApiModel[]>('/admin/questions')
-  return models.map(toQuestion)
-}
-
-export async function fetchQuestion(id: number): Promise<Question> {
-  if (USE_MOCK) {
-    return fetchMockQuestion(id)
-  }
-  const model = await request<QuestionApiModel>(`/admin/questions/${id}`)
-  return toQuestion(model)
-}
-
-export async function createQuestion(payload: QuestionPayload): Promise<Question> {
-  if (USE_MOCK) {
-    return createMockQuestion(payload)
-  }
-  const model = await request<QuestionApiModel>('/admin/questions', {
+export function createQuestion(payload: QuestionPayload): Promise<Question> {
+  return request<Question>('/admin/questions', {
     method: 'POST',
-    body: toApiModel(payload),
+    body: payload,
+    credentials,
   })
-  return toQuestion(model)
 }
 
-export async function updateQuestion(id: number, payload: QuestionPayload): Promise<Question> {
-  if (USE_MOCK) {
-    return updateMockQuestion(id, payload)
-  }
-  const model = await request<QuestionApiModel>(`/admin/questions/${id}`, {
+export function updateQuestion(id: number, payload: QuestionPayload): Promise<Question> {
+  return request<Question>(`/admin/questions/${id}`, {
     method: 'PUT',
-    body: toApiModel(payload),
+    body: payload,
+    credentials,
   })
-  return toQuestion(model)
 }
 
-/** 自信度倍率は問題ごとではなく、「自信度あり/普通/なし」3段階に共通で適用される設定値 */
-export async function fetchConfidenceMultipliers(): Promise<ConfidenceMultipliers> {
-  if (USE_MOCK) {
-    return fetchMockConfidenceMultipliers()
-  }
-  return request<ConfidenceMultipliers>('/admin/confidence-multipliers')
+export function deleteQuestion(id: number): Promise<void> {
+  return request<void>(`/admin/questions/${id}`, {
+    method: 'DELETE',
+    credentials,
+  })
 }
 
-export async function updateConfidenceMultiplier(level: ConfidenceLevel, value: string): Promise<ConfidenceMultipliers> {
-  if (USE_MOCK) {
-    return updateMockConfidenceMultiplier(level, value)
-  }
+export function fetchConfidenceMultipliers(): Promise<ConfidenceMultipliers> {
+  return request<ConfidenceMultipliers>('/admin/confidence-multipliers', { credentials })
+}
+
+export function updateConfidenceMultiplier(level: ConfidenceLevel, confidenceMultiplier: number): Promise<ConfidenceMultipliers> {
   return request<ConfidenceMultipliers>(`/admin/confidence-multipliers/${level}`, {
     method: 'PATCH',
-    body: { confidenceMultiplier: Number(value) },
+    body: { confidenceMultiplier },
+    credentials,
   })
 }

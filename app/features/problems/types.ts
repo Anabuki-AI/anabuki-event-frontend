@@ -1,18 +1,27 @@
 export type ChoiceKey = 'A' | 'B' | 'C' | 'D'
 
-/** 自信度の3段階。回答時にどれを選んだかで正解時の配点倍率が変わる */
+/** 回答時に選択する自信度の3段階 */
 export type ConfidenceLevel = 'high' | 'normal' | 'low'
 
-/** 3段階それぞれの自信度倍率(文字列。表示時に整形する) */
+/** バックエンドが返す、自信度段階ごとの配点倍率 */
 export type ConfidenceMultipliers = Record<ConfidenceLevel, string>
 
+/**
+ * GET /api/admin/questions と POST/PUT のレスポンス。
+ * API のプロパティ名をそのまま保持し、画面専用の変換モデルを持たない。
+ */
 export interface Question {
   id: number
+  position: number
   questionText: string
-  choices: Record<ChoiceKey, string>
+  choiceA: string
+  choiceB: string
+  choiceC: string
+  choiceD: string
   correctAnswer: ChoiceKey
-  /** 問題画像のURL。未設定の場合は画像なし(一覧では画像枠自体を表示しない) */
-  imageUrl?: string
+  imageUrl: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface QuestionFormState {
