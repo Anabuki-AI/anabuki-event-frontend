@@ -22,8 +22,8 @@ useSeoMeta({
         <NuxtLink class="home-secondary-link" to="/rankings">
           ランキングを見る
         </NuxtLink>
-        <NuxtLink class="home-secondary-link" to="/event_operator">
-          運営者メイン画面へ
+        <NuxtLink class="home-secondary-link" to="/operator">
+          イベントオペレーターログイン
         </NuxtLink>
       </div>
     </section>

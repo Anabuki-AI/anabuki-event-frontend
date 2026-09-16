@@ -227,6 +227,16 @@ h1 {
   transform: translateY(-1px);
 }
 
+.admin-menu-item--disabled,
+.admin-menu-item--disabled:hover {
+  cursor: not-allowed;
+  border-color: rgb(19 34 56 / 8%);
+  background: rgb(19 34 56 / 4%);
+  box-shadow: none;
+  opacity: 0.72;
+  transform: none;
+}
+
 .admin-menu-icon {
   display: grid;
   place-items: center;
@@ -341,6 +351,13 @@ h1 {
 .admin-sidebar-link:hover {
   background: rgb(23 105 194 / 8%);
   color: #1769c2;
+}
+
+.admin-sidebar-link--disabled,
+.admin-sidebar-link--disabled:hover {
+  cursor: not-allowed;
+  background: transparent;
+  color: #8290a3;
 }
 
 .user-form {

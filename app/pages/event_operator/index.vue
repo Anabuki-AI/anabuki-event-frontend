@@ -37,8 +37,8 @@ const {
       <nav v-if="isSidebarExpanded" class="admin-sidebar-nav">
         <NuxtLink class="admin-sidebar-link" to="/event_operator">運営者メイン</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
-        <NuxtLink class="admin-sidebar-link" to="/admin/quiz-control">出題管理</NuxtLink>
-        <NuxtLink class="admin-sidebar-link" to="/admin/problems">問題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/quiz-control">出題管理</NuxtLink>
+        <span class="admin-sidebar-link admin-sidebar-link--disabled" aria-disabled="true">問題管理（管理者専用）</span>
       </nav>
     </aside>
 
@@ -62,7 +62,7 @@ const {
           </span>
           <span class="admin-menu-arrow" aria-hidden="true">→</span>
         </NuxtLink>
-        <NuxtLink class="admin-menu-item" to="/admin/quiz-control">
+        <NuxtLink class="admin-menu-item" to="/event_operator/quiz-control">
           <span class="admin-menu-icon" aria-hidden="true">🎮</span>
           <span class="admin-menu-body">
             <span class="admin-menu-label">出題管理</span>
@@ -70,14 +70,14 @@ const {
           </span>
           <span class="admin-menu-arrow" aria-hidden="true">→</span>
         </NuxtLink>
-        <NuxtLink class="admin-menu-item" to="/admin/problems">
+        <div class="admin-menu-item admin-menu-item--disabled" aria-disabled="true">
           <span class="admin-menu-icon" aria-hidden="true">📝</span>
           <span class="admin-menu-body">
             <span class="admin-menu-label">問題管理</span>
-            <span class="admin-menu-description">問題の追加・編集などを行えます。</span>
+            <span class="admin-menu-description">管理者専用機能です。オペレーター向けの提供範囲を確認中です。</span>
           </span>
-          <span class="admin-menu-arrow" aria-hidden="true">→</span>
-        </NuxtLink>
+          <span class="admin-menu-arrow" aria-hidden="true">—</span>
+        </div>
       </nav>
     </section>
   </main>

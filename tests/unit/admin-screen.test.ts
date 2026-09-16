@@ -56,12 +56,12 @@ describe('運営者メイン画面', () => {
     expect(link!.text()).toContain('問題ごとの解答状況と選択肢ごとの投票率を確認できます。')
   })
 
-  it('出題管理へのリンクが /admin/quiz-control へ遷移する', () => {
+  it('出題管理へのリンクが /event_operator/quiz-control へ遷移する', () => {
     const wrapper = mountAdminScreen()
 
     const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('出題管理'))
     expect(link).toBeDefined()
-    expect(link!.attributes('href')).toBe('/admin/quiz-control')
+    expect(link!.attributes('href')).toBe('/event_operator/quiz-control')
   })
 
   it('出題管理の説明文を表示する', () => {
@@ -71,19 +71,15 @@ describe('運営者メイン画面', () => {
     expect(link!.text()).toContain('クイズの出題を開始・進行できます。')
   })
 
-  it('問題管理へのリンクが /admin/problems へ遷移する', () => {
+  it('問題管理はadminへリンクせず利用不可として表示する', () => {
     const wrapper = mountAdminScreen()
 
-    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('問題管理'))
-    expect(link).toBeDefined()
-    expect(link!.attributes('href')).toBe('/admin/problems')
-  })
-
-  it('問題管理の説明文を表示する', () => {
-    const wrapper = mountAdminScreen()
-
-    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('問題管理'))
-    expect(link!.text()).toContain('問題の追加・編集などを行えます。')
+    const item = wrapper.find('.admin-menu-item--disabled')
+    expect(item.exists()).toBe(true)
+    expect(item.attributes('aria-disabled')).toBe('true')
+    expect(item.text()).toContain('問題管理')
+    expect(item.text()).toContain('管理者専用')
+    expect(wrapper.findAll('a').some(link => link.attributes('href')?.startsWith('/admin'))).toBe(false)
   })
 
   it('ホームへ戻るリンクは表示しない', () => {
@@ -93,10 +89,11 @@ describe('運営者メイン画面', () => {
     expect(backLinks).toHaveLength(0)
   })
 
-  it('管理機能へのリンクは3件表示する', () => {
+  it('管理機能へのリンク2件と利用不可項目1件を表示する', () => {
     const wrapper = mountAdminScreen()
 
-    expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(3)
+    expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(2)
+    expect(wrapper.findAll('.admin-menu-item--disabled')).toHaveLength(1)
   })
 
   it('サイドバーは初期状態で展開表示になっている', () => {
