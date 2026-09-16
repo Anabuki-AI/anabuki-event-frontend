@@ -389,6 +389,246 @@ h1 {
   background: #e9f8ef;
 }
 
+/* ===== ランキング画面 ===== */
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.home-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1px solid rgb(23 105 194 / 32%);
+  border-radius: 14px;
+  color: #1769c2;
+  font-weight: 750;
+  text-decoration: none;
+  transition: transform 150ms ease, background 150ms ease;
+}
+
+.home-secondary-link:hover {
+  background: rgb(23 105 194 / 8%);
+  transform: translateY(-1px);
+}
+
+/* スマホ専用: 基準幅は375px級、対応端末はスマホのみ(CLAUDE_FRONT.md)。
+   PC等の広い画面でもスマホ幅のまま収まるよう、コンテンツに上限幅を置く */
+/* ランキング専用ラッパ: ページ背景 #edeffa の上に全幅で表示する(.page-shell は他ページと共有のため使わない) */
+.ranking-page {
+  min-height: 100vh;
+  padding: 0; /* フルスクリーン化: 外枠なしで画面全体を使う。上はクイズ大会ヘッダーが張り付く */
+  background: #edeffa;
+}
+
+/* クイズ大会ヘッダー。feature/user-registration の quiz-header パターンに合わせ
+   メインカラーの下線でヘッダー区間を明示し、下線を画面の端から端まで引く */
+.ranking-page .quiz-header {
+  margin: 0 0 6px;
+  padding: 8px 16px 12px;
+  background: #edeffa;
+  border-bottom: 3px solid #1769c2;
+}
+
+.quiz-header-title {
+  margin: 0;
+  color: #1769c2; /* eyebrowと統一(user-registration実装に倣う) */
+  font-size: clamp(1.05rem, 3vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+/* スマホ専用のコンテンツ幅。背景は画面いっぱい、中身は最大480pxで中央に寄せる */
+.ranking-page .quiz-header,
+.ranking-shell {
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ranking-shell {
+  width: 100%;
+  padding: 12px 16px 20px; /* ヘッダー下のコンテンツ。画面全体を1枚の背景で使う */
+}
+
+.ranking-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ranking-header h1 {
+  font-size: 1.5rem;
+}
+
+.ranking-update {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranking-updated-at {
+  margin: 0;
+  color: #516176;
+  font-size: 0.875rem;
+}
+
+.ranking-refresh {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgb(23 105 194 / 32%);
+  border-radius: 12px;
+  color: #1769c2;
+  font-size: 1rem;
+  font-weight: 700;
+  background: #fff;
+}
+
+.ranking-refresh:hover:not(:disabled) {
+  background: rgb(23 105 194 / 8%);
+}
+
+/* 上位3名のカード: スマホでは縦1列 */
+.ranking-top-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranking-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  /* フルスクリーン化: カード外枠を廃止し、背景#edeffaの上に白パネルを直接置く */
+  border: 0;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: left;
+}
+
+.ranking-card-medal {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.ranking-card-medal [aria-hidden] {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.ranking-card-rank {
+  color: #1769c2;
+}
+
+.ranking-card-name {
+  margin: 0;
+  color: #132238;
+  font-size: 1rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.ranking-card-points {
+  margin: 0;
+  color: #1769c2;
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ranking-card-unit {
+  margin-left: 1px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+/* 4位〜10位の一覧 */
+.ranking-list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranking-list-item {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgb(19 34 56 / 8%);
+}
+
+.ranking-list-item:last-child {
+  border-bottom: 0;
+}
+
+.ranking-list-rank {
+  color: #516176;
+  font-weight: 750;
+}
+
+.ranking-list-name {
+  color: #132238;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ranking-list-points {
+  color: #1769c2;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 区切り線 */
+.ranking-divider {
+  margin: 16px 0; /* スマホ専用幅で画面を有効に使う。従来20px */
+  border: 0;
+  border-top: 1px dashed rgb(19 34 56 / 22%);
+}
+
+/* 自分の順位エリア */
+.my-ranking {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgb(23 105 194 / 6%);
+}
+
+.my-ranking-label {
+  margin: 0;
+  color: #1769c2;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.my-ranking-line {
+  margin: 0;
+  color: #132238;
+  font-size: 1.125rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- 待機画面 --- */
 
 .waiting-card {

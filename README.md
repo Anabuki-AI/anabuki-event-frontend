@@ -62,6 +62,10 @@ pnpm dev
 
 画面マップ・API調査・ブランチの依存関係は `.agent/admin-console.md`、ブラウザ検証は `.agent/check-admin-console.mjs` に記録しています。
 
+## 利用するbackend API
+
+- ランキング画面: `GET /api/rankings`（上位10件）と `GET /api/rankings/users/{userId}`（自分の順位。参加登録時にlocalStorageへ保存したuserIdを利用）
+
 ## コマンド
 
 ```bash
