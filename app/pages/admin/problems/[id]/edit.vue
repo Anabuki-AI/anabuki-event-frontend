@@ -1,75 +1,74 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchQuestion } from '~/features/problems/api/client'
 import type { Question } from '~/features/problems/types'
 import QuestionForm from '~/features/problems/components/QuestionForm.vue'
+import { parseQuestionId, problemErrorMessage } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 
+definePageMeta({ middleware: 'admin' })
 useSeoMeta({
   title: '問題編集',
   description: '登録済みの問題の内容を編集する画面です。',
 })
 
 const route = useRoute()
-const questionId = Number(route.params.id)
-
+const questionId = computed(() => parseQuestionId(route.params.id))
 const question = ref<Question | null>(null)
-const isLoading = ref(true)
+const isLoading = ref(false)
 const errorMessage = ref('')
+let requestSequence = 0
 
-onMounted(async () => {
+async function loadQuestion() {
+  const id = questionId.value
+  const sequence = ++requestSequence
+  question.value = null
+
+  if (id == null) {
+    isLoading.value = false
+    errorMessage.value = '問題番号が正しくありません。問題一覧から選び直してください。'
+    return
+  }
+
+  isLoading.value = true
+  errorMessage.value = ''
   try {
-    question.value = await fetchQuestion(questionId)
+    const loadedQuestion = await fetchQuestion(id)
+    if (sequence === requestSequence) question.value = loadedQuestion
   }
   catch (error) {
-    errorMessage.value = toApiError(error).message
+    if (sequence === requestSequence) {
+      const apiError = toApiError(error)
+      errorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
+    }
   }
   finally {
-    isLoading.value = false
+    if (sequence === requestSequence) isLoading.value = false
   }
-})
+}
+
+watch(questionId, () => void loadQuestion(), { immediate: true })
 </script>
 
 <template>
   <main class="page-shell">
     <section class="admin-card form-card">
-      <NuxtLink
-        class="back-link"
-        to="/event_operator/problem-management"
-      >
-        ← 問題一覧へ戻る
-      </NuxtLink>
+      <NuxtLink class="back-link" to="/admin/problems">← 問題一覧へ戻る</NuxtLink>
       <header class="problems-header">
         <div>
-          <p class="eyebrow">
-            Edit question
-          </p>
+          <p class="eyebrow">Edit question</p>
           <h1>問題編集</h1>
-          <p class="muted-copy">
-            問題の内容を修正して保存してください。
-          </p>
+          <p class="muted-copy">問題の内容を修正して保存してください。</p>
         </div>
       </header>
 
-      <p
-        v-if="isLoading"
-        class="status-message"
-        role="status"
-      >
-        読み込み中…
-      </p>
-      <p
-        v-else-if="errorMessage"
-        class="status-message error"
-        role="alert"
-      >
-        {{ errorMessage }}
-      </p>
-      <QuestionForm
-        v-else-if="question"
-        :question="question"
-      />
+      <p v-if="isLoading" class="status-message" role="status">問題を読み込み中…</p>
+      <div v-else-if="errorMessage">
+        <p class="status-message error" role="alert">{{ errorMessage }}</p>
+        <button v-if="questionId != null" type="button" class="retry-button" @click="loadQuestion">再読み込み</button>
+      </div>
+      <QuestionForm v-else-if="question" :question="question" />
     </section>
   </main>
 </template>

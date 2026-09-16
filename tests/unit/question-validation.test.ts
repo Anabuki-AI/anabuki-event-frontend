@@ -4,6 +4,8 @@ import {
   hasFieldErrors,
   hasQuestionChanged,
   validateMultiplierInput,
+  mapQuestionFieldErrors,
+  parseQuestionId,
 } from '../../app/features/problems/validation'
 import { formatMultiplier } from '../../app/features/problems/constants'
 import type { QuestionFormState as ProblemQuestionFormState } from '../../app/features/problems/types'
@@ -99,6 +101,39 @@ describe('validateMultiplierInput', () => {
     expect(validateMultiplierInput('0', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('9.99', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('1.5', 0, 9.99)).toBe('')
+  })
+})
+
+describe('backend field and route validation', () => {
+  it('maps string field errors from the backend to individual form fields', () => {
+    expect(mapQuestionFieldErrors({
+      questionText: '問題文を入力してください',
+      choiceC: '選択肢Cを入力してください',
+    })).toEqual({
+      questionText: '問題文を入力してください',
+      choices: { A: '', B: '', C: '選択肢Cを入力してください', D: '' },
+      correctAnswer: '',
+    })
+  })
+
+  it('keeps compatibility with legacy array field errors', () => {
+    expect(mapQuestionFieldErrors({
+      questionText: ['問題文を入力してください'],
+      choiceC: ['選択肢Cを入力してください'],
+    })).toEqual({
+      questionText: '問題文を入力してください',
+      choices: { A: '', B: '', C: '選択肢Cを入力してください', D: '' },
+      correctAnswer: '',
+    })
+  })
+
+  it('accepts only positive integer route ids', () => {
+    expect(parseQuestionId('12')).toBe(12)
+    expect(parseQuestionId('0')).toBeNull()
+    expect(parseQuestionId('-1')).toBeNull()
+    expect(parseQuestionId('1.2')).toBeNull()
+    expect(parseQuestionId(' 1')).toBeNull()
+    expect(parseQuestionId(['1'])).toBeNull()
   })
 })
 
