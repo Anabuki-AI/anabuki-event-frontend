@@ -49,12 +49,18 @@ const {
     <main class="answer-main">
       <section v-if="!submitted" class="answer-card">
         <div class="question-panel">
-          <p class="question-number">
-            {{ question.number }}
-          </p>
+          <div class="question-meta">
+            <p class="question-number">
+              {{ question.number }}
+            </p>
+            <p v-if="question.targetAudience" class="question-target-audience">
+              {{ question.targetAudience }}
+            </p>
+          </div>
           <p class="question-text">
             {{ question.text }}
           </p>
+          <img v-if="question.imageUrl" class="question-image" :src="question.imageUrl" alt="">
         </div>
 
         <div class="choice-list">
