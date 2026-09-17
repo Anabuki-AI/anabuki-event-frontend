@@ -51,7 +51,7 @@ export function useVotingRate() {
   const answeredCount = computed(() => currentQuestion.value?.answeredCount ?? 0)
   const unansweredCount = computed(() => Math.max(participantCount.value - answeredCount.value, 0))
   const answeredRatePercent = computed(() =>
-    currentQuestion.value ? Math.round(currentQuestion.value.answeredRate * 100) : 0,
+    Math.round((currentQuestion.value?.answeredRate ?? 0) * 100),
   )
 
   async function refresh() {
