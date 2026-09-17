@@ -45,7 +45,7 @@ describe('参加者クイズの画面遷移状態', () => {
 
   it('answering中は未解答なら解答フォーム、解答済みなら送信済み画面', () => {
     expect(getParticipantQuizScreen(inProgress, false)).toBe('answer')
-    expect(getParticipantQuizScreen({ ...inProgress, answered: true, my_answer: { choice: 'A', confidence_level: 2 } }, false)).toBe('submitted')
+    expect(getParticipantQuizScreen({ ...inProgress, answered: true, my_answer: { choice: 'A', confidence_level: 'normal' } }, false)).toBe('submitted')
     expect(getParticipantQuizScreen(inProgress, false, 12)).toBe('submitted')
   })
 

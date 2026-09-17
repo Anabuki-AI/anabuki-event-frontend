@@ -46,10 +46,12 @@ export function getParticipantQuizScreen(
   return 'answer'
 }
 
+const CONFIDENCE_LEVELS: ConfidenceLevel[] = ['high', 'normal', 'low']
+
 /** 解答送信・問題状態に応じた表示分岐を、参加者クイズAPIの状態から構成する。 */
 export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOptions) {
   const selectedChoice = ref<AnswerChoice>()
-  const confidenceLevel = ref<ConfidenceLevel>(2)
+  const confidenceLevel = ref<ConfidenceLevel>('normal')
   const isSubmitting = ref(false)
   const isOperationBlocked = ref(false)
   const submissionMessage = ref('')
@@ -72,7 +74,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (!questionId || questionId === previousQuestionId) return
 
     selectedChoice.value = undefined
-    confidenceLevel.value = 2
+    confidenceLevel.value = 'normal'
     isOperationBlocked.value = false
     submissionMessage.value = ''
     submittedForQuestionId.value = undefined
@@ -94,12 +96,11 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     }))
   })
 
-  const confidenceOptions = computed<ConfidenceOption[]>(() => [3, 2, 1].map(level => {
-    const key = ({ 3: 'high', 2: 'normal', 1: 'low' } as const)[level as ConfidenceLevel]
-    const multiplier = state.value?.confidence_multipliers?.[key]
+  const confidenceOptions = computed<ConfidenceOption[]>(() => CONFIDENCE_LEVELS.map(level => {
+    const multiplier = state.value?.confidence_multipliers?.[level]
     return {
-      value: level as ConfidenceLevel,
-      label: CONFIDENCE_LEVEL_LABELS[level as ConfidenceLevel],
+      value: level,
+      label: CONFIDENCE_LEVEL_LABELS[level],
       multiplier: multiplier != null ? `×${multiplier.toFixed(2)}` : '—',
     }
   }))
