@@ -5,6 +5,8 @@ import type { ManagementAccount, OperatorAccount } from '../api/admin-console'
 import { accessSourceLabel, consolePages, formatConsoleDate, getConsolePage } from '../console-presentation'
 import { useAdminConsoleData } from '../composables/useAdminConsoleData'
 import ApiStatusPanel from './ApiStatusPanel.vue'
+import { useAuditLogs } from '../composables/useAuditLogs'
+import AuditLogPanel from './AuditLogPanel.vue'
 import MonitoringPanel from './MonitoringPanel.vue'
 
 const props = defineProps<{
@@ -21,6 +23,7 @@ const props = defineProps<{
 const route = useRoute()
 const config = useRuntimeConfig()
 const monitoringEnabled = String(config.public.adminMonitoringEnabled) === 'true'
+const auditLogEnabled = String(config.public.adminAuditLogEnabled) === 'true'
 const apiStatusEnabled = String(config.public.adminApiStatusEnabled) === 'true'
 const page = computed(() => getConsolePage(route.path))
 const heading = ref<HTMLElement | null>(null)
@@ -38,6 +41,7 @@ const {
   health, healthLoading, healthError, apiStatus, apiStatusLoading, apiStatusError, monitoring, monitoringLoading, monitoringError,
   loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadApiStatus, loadMonitoring,
 } = useAdminConsoleData(props.refresh, monitoringEnabled, apiStatusEnabled)
+const auditLogs = useAuditLogs(props.refresh, auditLogEnabled)
 
 useHead({ title: computed(() => page.value.label) })
 
@@ -50,6 +54,7 @@ watch(() => page.value.key, async (key, previous) => {
     void loadApiStatus()
     void loadMonitoring()
   }
+  if (key === 'logs') void auditLogs.load()
   if (previous) {
     await nextTick()
     heading.value?.focus()
@@ -170,8 +175,11 @@ async function refreshTeam() {
         </template>
 
         <template v-else-if="page.key === 'logs'">
-          <section class="surface" aria-labelledby="log-title"><div class="section-heading"><div><p class="kicker">AUDIT TRAIL</p><h2 id="log-title">操作・エラーログ</h2></div><span class="badge neutral">データ未連携</span></div><div class="table-scroll" role="region" aria-labelledby="log-title" tabindex="0"><table><caption class="sr-only">監査ログの表示項目。現在はデータ未連携です。</caption><thead><tr><th scope="col">操作内容</th><th scope="col">実行ユーザー</th><th scope="col">日時（日本時間）</th></tr></thead><tbody><tr><td colspan="3"><div class="empty-state"><span class="empty-illustration"><PortalIcon name="logs" /></span><h3>記録をつなぐ準備をしています</h3><p>監査ログAPIはまだ連携されていません。<br >「操作履歴なし」や「エラー0件」を意味するものではありません。</p></div></td></tr></tbody></table></div></section>
-          <section class="integration-note"><PortalIcon name="info" /><div><h2>連携後に確認できること</h2><p>操作の内容、実行アカウント、発生日時を一覧で確認します。ログの保存・検索・閲覧権限はバックエンド連携で対応予定です。現在、ブラウザ内に監査履歴を保存することはありません。</p></div></section>
+          <AuditLogPanel v-if="auditLogEnabled" :state="auditLogs" @apply="auditLogs.applyFilters" />
+          <template v-else>
+            <section class="surface" aria-labelledby="log-title"><div class="section-heading"><div><p class="kicker">AUDIT TRAIL</p><h2 id="log-title">操作・エラーログ</h2></div><span class="badge neutral">データ未連携</span></div><div class="table-scroll" role="region" aria-labelledby="log-title" tabindex="0"><table><caption class="sr-only">監査ログの表示項目。現在はデータ未連携です。</caption><thead><tr><th scope="col">操作内容</th><th scope="col">実行ユーザー</th><th scope="col">日時（日本時間）</th></tr></thead><tbody><tr><td colspan="3"><div class="empty-state"><span class="empty-illustration"><PortalIcon name="logs" /></span><h3>記録をつなぐ準備をしています</h3><p>監査ログAPIはまだ連携されていません。<br >「操作履歴なし」や「エラー0件」を意味するものではありません。</p></div></td></tr></tbody></table></div></section>
+            <section class="integration-note"><PortalIcon name="info" /><div><h2>連携後に確認できること</h2><p>操作の内容、実行アカウント、発生日時を一覧で確認します。ログの保存・検索・閲覧権限はバックエンド連携で対応予定です。現在、ブラウザ内に監査履歴を保存することはありません。</p></div></section>
+          </template>
         </template>
 
         <template v-else-if="page.key === 'status'">
