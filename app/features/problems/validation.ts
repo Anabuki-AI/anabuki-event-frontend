@@ -7,8 +7,8 @@ export function validateImageFile(file: File): string {
 }
 
 export function problemErrorMessage(statusCode: number | undefined, fallback: string): string {
-  if (statusCode === 401) return 'ログインの有効期限が切れました。管理者として再度ログインしてください。'
-  if (statusCode === 403) return '問題管理を行う権限がありません。管理者へお問い合わせください。'
+  if (statusCode === 401) return 'ログインの有効期限が切れました。オペレーターまたは管理者として再度ログインしてください。'
+  if (statusCode === 403) return '問題管理を行う権限がありません。オペレーター権限または管理者権限について、運営担当者へお問い合わせください。'
   if (statusCode === 404) return '指定された問題は見つかりませんでした。'
   if (statusCode === 422) return '入力内容を確認してください。'
   return fallback

@@ -1,7 +1,6 @@
 import { onMounted, onUnmounted } from 'vue'
 
-// Shared between the admin and operator portals: both follow the same
-// 「利用申請 → 承認待ち → 承認後昇格」 flow against their own API paths.
+// Administrator access requests use this shared contract and polling helper.
 export type AccessRequestStatus =
   | 'PENDING'
   | 'APPROVED'
@@ -10,8 +9,8 @@ export type AccessRequestStatus =
 
 export type AccessRequestDecision = 'approve' | 'reject'
 
-export interface AccessRequest {
-  id: number
+export interface AccessRequest<Id extends string | number = string | number> {
+  id: Id
   email: string
   status: AccessRequestStatus
   createdAt: string

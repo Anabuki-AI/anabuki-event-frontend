@@ -23,7 +23,7 @@ describe('admin console navigation and presentation', () => {
     expect(formatConsoleDate('2026-09-28T01:00:00Z')).toContain('10:00:00')
     expect(formatConsoleDate('invalid')).toBe('日時を取得できません')
     expect(accessSourceLabel('ENVIRONMENT_ACCESS')).toBe('環境設定による付与')
-    expect(accessSourceLabel('MANAGEMENT_ACCESS')).toBe('利用申請の承認による付与')
+    expect(accessSourceLabel('MANAGEMENT_ACCESS')).toBe('管理者による直接付与')
   })
 })
 
