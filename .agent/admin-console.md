@@ -36,7 +36,7 @@
 | 申請一覧・承認・却下 | 既存 `/api/admin/access-requests` と `/:id/approve`, `/:id/reject` |
 | 管理アクセス一覧 | 実 `GET /api/admin/allowed-emails` |
 | 単発のliveness確認 | frontend Nitro `GET /api/admin/service-health` → 既存公開 `GET /health` |
-| 外部監視 | 将来の `GET /api/admin/monitoring`。契約実装後にruntime flagで有効化。初期OFF |
+| 外部監視 | Rails `GET /api/admin/api-status`。対象環境のprovider設定と認証済みproxy経路を確認後にruntime flagで有効化。初期OFF |
 | 監査ログ | 既存APIなし。データ未連携を明示 |
 | 管理者 / 運営ロール変更 | 既存API・role属性なし。操作を有効にしない |
 
@@ -47,12 +47,12 @@
 詳細は `docs/admin-monitoring-contract.md`、型とruntime validationは `monitoring-contract.ts`。
 
 - Statuspage / Datadogを独立したprovider cardで表示。取得先の一方が失敗しても他方を隠さない。
-- transport 401（管理者ログイン切れ）とprovider `unauthenticated`（外部サービスの認証失敗）を分離。
-- 未設定、権限不足、取得失敗、性能低下、部分障害、広範囲障害、状態不明、古い観測を区別。
-- `null`の数値は「未取得」。0%や0 msへ変換しない。取得/情報源更新時刻を日本時間で表示。
-- backend `stale` に加えて5分より古い取得結果を過去の観測と表示（30秒ごとに鮮度だけ更新）。
+- transport 401（管理者ログイン切れ）と 403（有効な管理者の権限不足）を分離。provider/metricの `issue` はtransport認可と混同しない。
+- provider取得状態（`available`/`partial`/`unconfigured`/`error`）とavailability状態を分離し、partialでも成功した指標を表示する。
+- 指標の未設定・データなし・提供なし・取得失敗を区別する。`null`は0%や0 msへ変換しない。
+- `updatedAt`、`windowLabel`、server `stale` はこのAPIにないため表示しない。provider `fetchedAt` とmetric `observedAt`（なければmetric `fetchedAt`）のみで5分の鮮度を判定し、日本時間で表示する。
 - ローカル疎通の単発往復時間は、外部監視値や全APIの稼働率と混ぜない。
-- `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=false` が標準。OFF時は未実装endpointへリクエストしない。
+- `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=false` が標準。OFF時はapi-status endpointへリクエストしない。
 - 認証情報・外部サービス設定はbackend側の担当範囲。フロントへAPIキーを渡さない。
 
 ## デザイン / 責務

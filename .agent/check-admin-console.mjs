@@ -25,9 +25,9 @@ let mutations = 0
 let accountCalls = 0
 let accountFailure = false
 let monitoringFailure = 0
-let monitoringState = 'unconfigured'
-let condition = 'unknown'
-let stale = false
+let monitoringProviderState = 'unconfigured'
+let monitoringCondition = 'unknown'
+let monitoringObservedAt = null
 let probeFailure = false
 let exchangeCalls = 0
 let applyCalls = 0
@@ -47,9 +47,22 @@ await context.route('**/api/**', async (route) => {
   if (path.endsWith('/approve') || path.endsWith('/reject')) { mutations++; requests = []; return json({ ...request, status: path.endsWith('/approve') ? 'APPROVED' : 'REJECTED' }) }
   if (path === '/api/admin/auth/logout') { mutations++; session = null; return route.fulfill({ status: 204 }) }
   if (path === '/api/admin/service-health' && probeFailure) return json({ error: 'failed' }, 503)
-  if (path === '/api/admin/monitoring') {
+  if (path === '/api/admin/api-status') {
     if (monitoringFailure) return json({ error: 'failed' }, monitoringFailure)
-    return json({ sources: ['statuspage', 'datadog'].map(provider => ({ provider, state: monitoringState, condition, stale, fetchedAt: monitoringState === 'ready' ? new Date().toISOString() : null, updatedAt: monitoringState === 'ready' ? new Date().toISOString() : null, metrics: { errorRatePercent: null, responseTimeMs: null, windowLabel: null } })) })
+    const fetchedAt = new Date().toISOString()
+    const observedAt = monitoringObservedAt ?? fetchedAt
+    const datadogMetrics = monitoringProviderState === 'available'
+      ? { errorRate: { state: 'available', value: 0, unit: 'percent', observedAt, fetchedAt }, responseTime: { state: 'available', value: 120, unit: 'milliseconds', observedAt, fetchedAt } }
+      : monitoringProviderState === 'partial'
+        ? { errorRate: { state: 'available', value: 0, unit: 'percent', observedAt, fetchedAt }, responseTime: { state: 'error', value: null, unit: 'milliseconds', issue: { code: 'upstream_error', message: 'Fixture metric failed.' } } }
+        : { errorRate: { state: monitoringProviderState === 'error' ? 'error' : 'unconfigured', value: null, unit: 'percent' }, responseTime: { state: monitoringProviderState === 'error' ? 'error' : 'unconfigured', value: null, unit: 'milliseconds' } }
+    return json({
+      generatedAt: fetchedAt, cached: false,
+      providers: [
+        { provider: 'statuspage', source: 'Statuspage', state: monitoringProviderState, fetchedAt: monitoringProviderState === 'available' ? fetchedAt : null, availability: monitoringProviderState === 'available' ? { state: 'available', value: monitoringCondition } : { state: 'unavailable', value: null }, metrics: { errorRate: { state: 'not_provided', value: null, unit: 'percent' }, responseTime: { state: 'not_provided', value: null, unit: 'milliseconds' } } },
+        { provider: 'datadog', source: 'Datadog', state: monitoringProviderState, fetchedAt: monitoringProviderState === 'available' || monitoringProviderState === 'partial' ? fetchedAt : null, availability: { state: 'not_provided', value: null }, metrics: datadogMetrics },
+      ],
+    })
   }
   return route.continue()
 })
@@ -134,18 +147,20 @@ try {
   await check('local-probe-failure')
   probeFailure = false
 
-  for (const state of ['unconfigured', 'unauthenticated', 'forbidden', 'error', 'ready']) {
-    monitoringState = state
-    condition = state === 'ready' ? 'partial_outage' : 'unknown'
+  for (const state of ['unconfigured', 'error', 'partial', 'available']) {
+    monitoringProviderState = state
+    monitoringCondition = state === 'available' ? 'partial_outage' : 'unknown'
+    monitoringObservedAt = null
     await visit('/admin/status', 'http://127.0.0.1:3003')
     await check(`monitoring-${state}`)
-    if (state === 'ready') await page.screenshot({ path: `${screenshots}/status-partial-outage-fixture.png`, fullPage: true })
+    if (state === 'available') await page.screenshot({ path: `${screenshots}/status-partial-outage-fixture.png`, fullPage: true })
   }
-  condition = 'operational'
-  stale = true
+  monitoringProviderState = 'available'
+  monitoringCondition = 'operational'
+  monitoringObservedAt = '2020-01-01T00:00:00Z'
   await visit('/admin/status', 'http://127.0.0.1:3003')
-  assert.equal(await page.locator('.badge.positive').count(), 0)
-  await check('monitoring-stale-success')
+  assert.equal(await page.getByText('過去の観測：0%', { exact: true }).count(), 1)
+  await check('monitoring-stale-observation')
   for (const failure of [403, 503]) {
     monitoringFailure = failure
     await visit('/admin/status', 'http://127.0.0.1:3003')
