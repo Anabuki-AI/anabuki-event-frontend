@@ -24,6 +24,7 @@ export interface Question {
   explanation: string | null
   /** 出題対象。出題画面に問題文と併せて表示する。 */
   targetAudience: string | null
+  isRelayQuestion?: boolean
   /** 配点。この問題に正解した場合の基礎得点（自信度倍率を掛ける前の値）。 */
   points: number
   /**

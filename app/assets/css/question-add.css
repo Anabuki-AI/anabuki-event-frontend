@@ -1,8 +1,8 @@
-/**
- * 問題追加・編集のポップアップ（question-add.vue / questione.vue）専用。
- * event_operator/management.vue からモーダルとして開く。
- * 他ページへの漏洩を防ぐため、すべてテンプレートルート（.question-add-shell）配下でネームスペースする。
- * 使用色は #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb の5色のみ。
+﻿/**
+ * 蝠城｡瑚ｿｽ蜉繝ｻ邱ｨ髮・・繝昴ャ繝励い繝・・・・uestion-add.vue / questione.vue・牙ｰら畑縲・
+ * event_operator/management.vue 縺九ｉ繝｢繝ｼ繝繝ｫ縺ｨ縺励※髢九￥縲・
+ * 莉悶・繝ｼ繧ｸ縺ｸ縺ｮ貍乗ｴｩ繧帝亟縺舌◆繧√√☆縺ｹ縺ｦ繝・Φ繝励Ξ繝ｼ繝医Ν繝ｼ繝茨ｼ・question-add-shell・蛾・荳九〒繝阪・繝繧ｹ繝壹・繧ｹ縺吶ｋ縲・
+ * 菴ｿ逕ｨ濶ｲ縺ｯ #1769c2 / #edeffa / #ffffff / #132238 / #cdcfdb 縺ｮ5濶ｲ縺ｮ縺ｿ縲・
  */
 
 .question-add-shell {
@@ -40,6 +40,8 @@
   display: grid;
   gap: 8px;
 }
+.question-add-shell .question-add-description { white-space: nowrap; }
+.question-add-shell .question-add-checkbox-field { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-right: auto; white-space: nowrap; }
 
 .question-add-shell .question-add-form {
   display: grid;
@@ -89,7 +91,7 @@
   font-size: 0.75rem;
 }
 
-/* --- 問題画像アップロード --- */
+/* --- 蝠城｡檎判蜒上い繝・・繝ｭ繝ｼ繝・--- */
 
 .question-add-shell .question-add-dropzone {
   position: relative;
@@ -186,7 +188,7 @@
   opacity: 0.65;
 }
 
-/* --- 選択肢（4択固定）と正解選択 --- */
+/* --- 驕ｸ謚櫁い・・謚槫崋螳夲ｼ峨→豁｣隗｣驕ｸ謚・--- */
 
 .question-add-shell .question-add-choices {
   margin: 0;
@@ -196,7 +198,7 @@
   gap: 8px;
 }
 
-/* fieldsetのlegendはグリッドアイテムになれないため、親をgridにして位置を揃える */
+/* fieldset縺ｮlegend縺ｯ繧ｰ繝ｪ繝・ラ繧｢繧､繝・Β縺ｫ縺ｪ繧後↑縺・◆繧√∬ｦｪ繧暖rid縺ｫ縺励※菴咲ｽｮ繧呈純縺医ｋ */
 .question-add-shell .question-add-choices legend {
   display: block;
   padding: 0;
@@ -245,12 +247,12 @@
   opacity: 0.65;
 }
 
-/* 制限時間は秒数のみのため、選択肢入力欄より幅を狭くする */
+/* 蛻ｶ髯先凾髢薙・遘呈焚縺ｮ縺ｿ縺ｮ縺溘ａ縲・∈謚櫁い蜈･蜉帶ｬ・ｈ繧雁ｹ・ｒ迢ｭ縺上☆繧・*/
 .question-add-shell .question-add-time-limit {
   width: 160px;
 }
 
-/* --- 配点 --- */
+/* --- 驟咲せ --- */
 
 .question-add-shell .question-add-points-input {
   width: 100%;
@@ -282,7 +284,7 @@
   font-weight: 600;
 }
 
-/* 正解として選択中の行はチェック項目を目立たせる（文字色とボーダーのみ・控えめな強調） */
+/* 豁｣隗｣縺ｨ縺励※驕ｸ謚樔ｸｭ縺ｮ陦後・繝√ぉ繝・け鬆・岼繧堤岼遶九◆縺帙ｋ・域枚蟄苓牡縺ｨ繝懊・繝繝ｼ縺ｮ縺ｿ繝ｻ謗ｧ縺医ａ縺ｪ蠑ｷ隱ｿ・・*/
 .question-add-shell .question-add-correct-text.is-selected {
   color: #1769c2;
   font-weight: 700;
@@ -295,7 +297,7 @@
 .question-add-shell .question-add-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end; /* 右寄せに配置 */
+  justify-content: flex-end; /* 蜿ｳ蟇・○縺ｫ驟咲ｽｮ */
   gap: 16px;
   flex-wrap: wrap;
 }

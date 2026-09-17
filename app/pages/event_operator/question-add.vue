@@ -1,9 +1,9 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useId } from 'vue'
 import { createQuestion } from '~/features/problems/api/client'
 import type { QuestionPayload } from '~/features/problems/api/client'
-import { QUESTION_POINTS_DEFAULT, QUESTION_POINTS_MAX, QUESTION_POINTS_MIN, TIME_LIMIT_SECONDS_MAX } from '~/features/problems/constants'
-import { parseTimeLimitInput, problemErrorMessage, validateImageFile, validatePointsInput, validateTimeLimitInput } from '~/features/problems/validation'
+import { QUESTION_POINTS_DEFAULT, QUESTION_POINTS_MAX, QUESTION_POINTS_MIN } from '~/features/problems/constants'
+import { problemErrorMessage, validateImageFile, validatePointsInput } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 import '~/assets/css/question-add.css'
 
@@ -23,10 +23,8 @@ const form = reactive({
   choiceD: '',
   explanation: '',
   targetAudience: '',
-  /** 入力欄の生文字列。空欄なら制限時間なし。 */
-  timeLimitSeconds: '',
+  isRelayQuestion: false,
 })
-const timeLimitErrorMessage = ref('')
 const correctChoice = ref<ChoiceLabel | null>(null)
 const isSaving = ref(false)
 const submitErrorMessage = ref('')
@@ -99,17 +97,11 @@ const canSave = computed<boolean>(
     && form.choiceC.trim().length > 0
     && form.choiceD.trim().length > 0
     && correctChoice.value !== null
-    && validateTimeLimitInput(form.timeLimitSeconds) === ''
     && validatePointsInput(form.points, QUESTION_POINTS_MIN, QUESTION_POINTS_MAX) === '',
 )
 
 function handleQuestionInput(value: string) {
   form.questionText = value
-}
-
-function handleTimeLimitInput(value: string) {
-  form.timeLimitSeconds = value
-  timeLimitErrorMessage.value = validateTimeLimitInput(value)
 }
 
 function handleChoiceInput(choice: ChoiceLabel, value: string) {
@@ -138,7 +130,7 @@ async function save() {
     explanation: form.explanation.trim(),
     targetAudience: form.targetAudience.trim(),
     points: Number(form.points),
-    timeLimitSeconds: parseTimeLimitInput(form.timeLimitSeconds),
+    isRelayQuestion: form.isRelayQuestion,
     image: imageFile.value,
   }
 
@@ -183,7 +175,7 @@ onUnmounted(() => {
           Event operator
         </p>
         <h1 :id="titleId">問題追加</h1>
-        <p class="muted-copy">
+        <p class="muted-copy question-add-description">
           クイズ大会で出題する問題文・4つの選択肢と正解を入力して登録します。
         </p>
       </header>
@@ -233,14 +225,14 @@ onUnmounted(() => {
             <input
               class="question-add-file-input"
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
+              accept="image/webp"
               :disabled="isSaving"
               @change="handleImageChange"
             >
             <div class="question-add-dropzone-content">
-              <p class="question-add-dropzone-text">ここに画像をドラッグ&ドロップ</p>
+              <p class="question-add-dropzone-text">ここに画像をドラック＆ドロップまたはクリックして選択</p>
               <p class="question-add-dropzone-hint">
-                またはクリックして選択（PNG・JPEG・WEBP・GIF、5MB以下）
+                対応形式：WEBP、最大サイズ：5MB
               </p>
             </div>
           </div>
@@ -266,28 +258,6 @@ onUnmounted(() => {
             :disabled="isSaving"
             @input="form.targetAudience = ($event.target as HTMLInputElement).value"
           >
-        </label>
-
-        <label class="question-add-field">
-          <span class="question-add-label">制限時間（秒・任意）</span>
-          <input
-            class="question-add-choice-input question-add-time-limit"
-            type="number"
-            min="1"
-            :max="TIME_LIMIT_SECONDS_MAX"
-            step="1"
-            inputmode="numeric"
-            placeholder="空欄で制限時間なし"
-            :value="form.timeLimitSeconds"
-            :disabled="isSaving"
-            @input="handleTimeLimitInput(($event.target as HTMLInputElement).value)"
-          >
-          <p class="question-add-hint">
-            出題管理画面のタイマーで使用します。空欄の場合は制限時間を設けません。
-          </p>
-          <p v-if="timeLimitErrorMessage" class="status-message error" role="alert">
-            {{ timeLimitErrorMessage }}
-          </p>
         </label>
 
         <fieldset class="question-add-field question-add-choices">
@@ -354,6 +324,10 @@ onUnmounted(() => {
         </p>
 
         <div class="question-add-actions">
+          <label class="question-add-checkbox-field">
+            <input v-model="form.isRelayQuestion" type="checkbox" :disabled="isSaving">
+            <span>中継問題として扱う</span>
+          </label>
           <button
             type="button"
             class="question-add-cancel"

@@ -298,6 +298,7 @@
   border-color: #1769c2;
 }
 
+.question-add-shell .question-add-checkbox-field { display: flex; align-items: center; gap: 8px; margin-right: auto; font-weight: 700; white-space: nowrap; }
 .question-add-shell .question-add-actions {
   display: flex;
   align-items: center;

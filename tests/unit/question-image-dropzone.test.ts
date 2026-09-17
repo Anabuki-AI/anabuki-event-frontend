@@ -15,7 +15,7 @@ const question: Question = {
 }
 
 function makeImageFile(): File {
-  return new File(['dummy'], 'photo.png', { type: 'image/png' })
+  return new File(['dummy'], 'photo.webp', { type: 'image/webp' })
 }
 
 describe('問題画像のドラッグ&ドロップ', () => {
