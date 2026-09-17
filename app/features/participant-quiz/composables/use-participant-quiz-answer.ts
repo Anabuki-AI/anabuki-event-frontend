@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+﻿import { computed, ref, watch } from 'vue'
 import { submitParticipantQuizAnswer } from '../api/client'
 import type {
   AnswerChoice,
@@ -8,8 +8,6 @@ import type {
 import { CONFIDENCE_LEVEL_LABELS } from '../types'
 import { ApiError } from '~/lib/api/error'
 import { useParticipantQuizState } from './use-participant-quiz-state'
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 export interface ConfidenceOption {
   value: ConfidenceLevel
@@ -107,14 +105,6 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     }
   }))
 
-  const displayConfidenceOptions = computed<ConfidenceOption[]>(() => confidenceOptions.value.map((option) => {
-    const key = ({ 3: 'high', 2: 'normal', 1: 'low' } as const)[option.value]
-    const multiplier = state.value?.confidence_multipliers?.[key]
-    return { ...option, multiplier: multiplier != null ? `×${multiplier.toFixed(2)}` : '—' }
-  }))
-
-  const displaySelectedMultiplier = computed(() => displayConfidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '—')
-
   const fixedConfidenceOptions = computed<ConfidenceOption[]>(() => confidenceOptions.value.map((option) => {
     const multiplier = state.value?.confidence_multipliers?.[option.value]
     return { ...option, multiplier: multiplier != null ? `\u00d7${multiplier.toFixed(2)}` : '\u2014' }
@@ -126,8 +116,6 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     const selected = choices.value.find(choice => choice.key === selectedChoice.value)
     return selected ? `${selected.key}. ${selected.text}` : '未選択'
   })
-
-  const selectedMultiplier = computed(() => confidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '—')
   const canSubmit = computed(() => screen.value === 'answer'
     && Boolean(selectedChoice.value)
     && !isSubmitting.value
