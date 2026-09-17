@@ -18,6 +18,9 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
       // Enable only once the server implements docs/admin-monitoring-contract.md.
       adminMonitoringEnabled: false,
+      // Rails GET /api/admin/api-status is already implemented (AdminApiStatus),
+      // so this panel is on by default; the flag remains as a kill switch.
+      adminApiStatusEnabled: true,
     },
   },
   nitro: {
