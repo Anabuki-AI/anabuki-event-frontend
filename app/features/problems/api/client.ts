@@ -14,6 +14,7 @@ export interface QuestionPayload {
   correctAnswer: Question['correctAnswer']
   explanation: string
   targetAudience: string
+  isRelayQuestion: boolean
   /** 配点。この問題に正解した場合の基礎得点。 */
   points: number
   /**
@@ -44,6 +45,7 @@ function toFormData(payload: QuestionPayload): FormData {
   formData.append('correctAnswer', payload.correctAnswer)
   formData.append('explanation', payload.explanation)
   formData.append('targetAudience', payload.targetAudience)
+  formData.append('isRelayQuestion', String(payload.isRelayQuestion))
   formData.append('points', String(payload.points))
   if (payload.timeLimitSeconds !== undefined) {
     formData.append('time_limit_seconds', payload.timeLimitSeconds === null ? '' : String(payload.timeLimitSeconds))

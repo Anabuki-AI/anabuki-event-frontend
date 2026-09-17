@@ -13,7 +13,7 @@ export const QUESTION_POINTS_DEFAULT = 100
 export const TIME_LIMIT_SECONDS_MAX = 2_147_483_647
 
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024
-export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+export const ALLOWED_IMAGE_TYPES = ['image/webp']
 
 export const CONFIDENCE_MULTIPLIER_MIN = 0
 export const CONFIDENCE_MULTIPLIER_MAX = 9.99

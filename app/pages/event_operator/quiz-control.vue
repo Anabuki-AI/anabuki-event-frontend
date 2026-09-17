@@ -9,6 +9,8 @@ import { useQuizClock } from '~/features/quiz-control/useQuizClock'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/quiz-control.css'
 
+const QUIZ_COUNTDOWN_SECONDS = 10
+
 useSeoMeta({
   title: 'クイズ出題管理画面',
   description: 'イベント開始から問題公開・解答締め切り・答え表示までを管理する画面です。',
@@ -125,7 +127,7 @@ const {
             <QuizTimerPanel
               :phase="phase"
               :phase-started-at="state.phase_started_at ?? null"
-              :time-limit-seconds="state.current?.time_limit_seconds ?? null"
+              :time-limit-seconds="QUIZ_COUNTDOWN_SECONDS"
               :question-id="state.current?.question_id ?? null"
               :now="now"
               :is-acting="isActing"
