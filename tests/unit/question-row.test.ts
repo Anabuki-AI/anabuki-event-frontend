@@ -4,6 +4,8 @@ import {
   correctChoiceText,
   formatCorrectBadge,
   formatQuestionPosition,
+  formatTimeLimit,
+  getQuestionTimeLimitSeconds,
 } from '../../app/features/problems/components/QuestionRow'
 import type { Question } from '../../app/features/problems/types'
 
@@ -36,5 +38,23 @@ describe('QuestionRow表示ユーティリティ', () => {
   it('正解選択肢と任意の選択肢をAPIレスポンスから取得する', () => {
     expect(correctChoiceText(question)).toBe('東京')
     expect(choiceText(question, 'D')).toBe('福岡')
+  })
+
+  it('制限時間はtimeLimitSecondsが未定義/nullなら「制限時間なし」を返す', () => {
+    expect(getQuestionTimeLimitSeconds(question)).toBeNull()
+    expect(formatTimeLimit(question)).toBe('制限時間なし')
+    expect(getQuestionTimeLimitSeconds({ ...question, timeLimitSeconds: null })).toBeNull()
+  })
+
+  it('制限時間(timeLimitSeconds)が設定されていれば秒数を返す', () => {
+    const withLimit = { ...question, timeLimitSeconds: 30 }
+    expect(getQuestionTimeLimitSeconds(withLimit)).toBe(30)
+    expect(formatTimeLimit(withLimit)).toBe('30秒')
+  })
+
+  it('バックエンドがsnake_caseのtime_limit_secondsで返してきても防御的に読み取る', () => {
+    const snakeCaseResponse = { ...question, time_limit_seconds: 45 } as unknown as Question
+    expect(getQuestionTimeLimitSeconds(snakeCaseResponse)).toBe(45)
+    expect(formatTimeLimit(snakeCaseResponse)).toBe('45秒')
   })
 })

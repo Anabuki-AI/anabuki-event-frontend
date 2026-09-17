@@ -245,6 +245,11 @@
   opacity: 0.65;
 }
 
+/* 制限時間は秒数のみのため、選択肢入力欄より幅を狭くする */
+.question-add-shell .question-add-time-limit {
+  width: 160px;
+}
+
 /* --- 配点 --- */
 
 .question-add-shell .question-add-points-input {
