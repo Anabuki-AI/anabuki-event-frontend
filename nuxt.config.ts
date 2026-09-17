@@ -22,6 +22,9 @@ export default defineNuxtConfig({
       // and deployed; see docs/audit-log-contract.md. While false, the console
       // makes no request and keeps the explicit unconnected state.
       adminAuditLogEnabled: false,
+      // Rails GET /api/admin/api-status is already implemented (AdminApiStatus),
+      // so this panel is on by default; the flag remains as a kill switch.
+      adminApiStatusEnabled: true,
     },
   },
   nitro: {
