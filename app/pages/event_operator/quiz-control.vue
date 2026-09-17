@@ -26,6 +26,7 @@ const {
   publish,
   close,
   reveal,
+  finish,
 } = useQuizControl()
 
 const {
@@ -127,6 +128,7 @@ const {
               @publish="publish"
               @close="close"
               @reveal="reveal"
+              @finish="finish"
             />
             <QuizCurrentQuestionCard :state="state" />
           </div>
