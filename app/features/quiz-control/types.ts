@@ -43,6 +43,11 @@ export interface OperatorQuizState {
    */
   phase_started_at?: string | null
   /**
+   * 終了操作時にサーバーが固定した経過秒数。status が finished 以外なら null。
+   * バックエンドの段階的デプロイ中は未定義になりうる。
+   */
+  finished_elapsed_seconds?: number | null
+  /**
    * 次に公開される問題の簡易プレビュー。無ければ null。
    * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
    */

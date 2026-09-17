@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { computeCountdown, createExpireGuard, formatElapsed } from '../useQuizClock'
+import { computeCountdown, createExpireGuard, formatElapsed, formatElapsedSeconds } from '../useQuizClock'
 import type { QuizPhase } from '../types'
 
 const props = defineProps<{
   phase: QuizPhase | null
   phaseStartedAt: string | null
+  finishedElapsedSeconds: number | null
   timeLimitSeconds: number | null
   /** カウントダウンの発火ガードを問題単位でリセットするためのキー。 */
   questionId: number | null
@@ -19,7 +20,14 @@ const emit = defineEmits<{
   expire: []
 }>()
 
-const elapsedLabel = computed(() => formatElapsed(props.phaseStartedAt, props.now))
+const elapsedLabel = computed(() => {
+  if (props.phase === 'FINISHED') {
+    return props.finishedElapsedSeconds === null
+      ? '--:--'
+      : formatElapsedSeconds(props.finishedElapsedSeconds)
+  }
+  return formatElapsed(props.phaseStartedAt, props.now)
+})
 const countdown = computed(() => computeCountdown(props.phaseStartedAt, props.timeLimitSeconds, props.now))
 
 const expireGuard = createExpireGuard()
