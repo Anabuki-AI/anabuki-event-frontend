@@ -362,6 +362,79 @@
   opacity: 0.45;
 }
 
+.answer-shell .confidence-help {
+  margin: 0;
+  color: #516176;
+  font-size: 0.8125rem;
+}
+
+.answer-shell .confidence-item:disabled,
+.answer-shell .choice-item:disabled {
+  cursor: not-allowed;
+}
+
+.answer-shell .confidence-item.is-locked:not(.is-selected) {
+  opacity: 0.45;
+}
+
+.answer-shell .confidence-item.is-locked.is-selected {
+  color: #ffffff;
+  background: #1769c2;
+  border-color: #1769c2;
+}
+
+.answer-shell .confidence-confirmation-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  padding: 16px;
+  background: rgb(19 34 56 / 48%);
+}
+
+.answer-shell .confidence-confirmation-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 480px);
+  margin-inline: auto;
+  padding: 20px;
+  border-radius: 16px;
+  color: #132238;
+  background: #ffffff;
+  box-shadow: 0 12px 36px rgb(19 34 56 / 25%);
+}
+
+.answer-shell .confidence-confirmation-dialog h2,
+.answer-shell .confidence-confirmation-dialog p {
+  margin: 0;
+}
+
+.answer-shell .confidence-confirmation-dialog p {
+  color: #516176;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.answer-shell .confidence-confirmation-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.answer-shell .confidence-confirmation-actions .button-cancel {
+  min-height: 52px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #132238;
+  background: #ffffff;
+  font-weight: 700;
+}
+
+.answer-shell .confidence-confirmation-actions .answer-submit {
+  width: 100%;
+}
+
 /* 正答発表 */
 .answer-shell .result-panel,
 .answer-shell .total-score-panel {

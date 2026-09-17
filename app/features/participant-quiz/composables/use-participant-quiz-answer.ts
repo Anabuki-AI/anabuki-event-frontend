@@ -1,5 +1,5 @@
-﻿import { computed, ref, watch } from 'vue'
-import { submitParticipantQuizAnswer } from '../api/client'
+import { computed, ref, watch } from 'vue'
+import { confirmParticipantQuizConfidence, submitParticipantQuizAnswer } from '../api/client'
 import type {
   AnswerChoice,
   ConfidenceLevel,
@@ -46,18 +46,21 @@ export function getParticipantQuizScreen(
   return 'answer'
 }
 
-const CONFIDENCE_LEVELS: ConfidenceLevel[] = ['high', 'normal', 'low']
+const CONFIDENCE_LEVELS: ConfidenceLevel[] = ['low', 'normal', 'high']
 
-/** 解答送信・問題状態に応じた表示分岐を、参加者クイズAPIの状態から構成する。 */
+/** 解答送信・自信度の事前確定・問題状態に応じた表示分岐を構成する。 */
 export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOptions) {
   const selectedChoice = ref<AnswerChoice>()
-  const confidenceLevel = ref<ConfidenceLevel>('normal')
   const isSubmitting = ref(false)
   const isOperationBlocked = ref(false)
   const submissionMessage = ref('')
   const submittedForQuestionId = ref<number>()
+  const pendingConfidenceLevel = ref<ConfidenceLevel>()
+  const isConfidenceConfirmOpen = ref(false)
+  const isConfirmingConfidence = ref(false)
+  const confidenceMessage = ref('')
 
-  const { state, isLoading, loadError, refresh } = useParticipantQuizState({
+  const { state, isLoading, loadError, applyState, refresh } = useParticipantQuizState({
     onState: (nextState) => {
       if (isParticipantQuizWaitingState(nextState)) options.onWaiting()
     },
@@ -69,15 +72,20 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const question = computed(() => state.value?.question)
   const myAnswer = computed(() => state.value?.my_answer ?? null)
   const correctAnswer = computed(() => state.value?.correct_answer ?? null)
+  const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
+  const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked || lockedConfidenceLevel.value))
 
   watch(() => question.value?.question_id, (questionId, previousQuestionId) => {
     if (!questionId || questionId === previousQuestionId) return
 
     selectedChoice.value = undefined
-    confidenceLevel.value = 'normal'
     isOperationBlocked.value = false
     submissionMessage.value = ''
     submittedForQuestionId.value = undefined
+    pendingConfidenceLevel.value = undefined
+    isConfidenceConfirmOpen.value = false
+    isConfirmingConfidence.value = false
+    confidenceMessage.value = ''
   })
 
   const screen = computed(() => getParticipantQuizScreen(
@@ -90,10 +98,9 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     const currentQuestion = question.value
     if (!currentQuestion) return []
 
-    return (['A', 'B', 'C', 'D'] as const).map(key => ({
-      key,
-      text: currentQuestion.choices[key],
-    }))
+    return (['A', 'B', 'C', 'D'] as const)
+      .filter(key => currentQuestion.choices[key] != null)
+      .map(key => ({ key, text: currentQuestion.choices[key]! }))
   })
 
   const confidenceOptions = computed<ConfidenceOption[]>(() => CONFIDENCE_LEVELS.map(level => {
@@ -105,16 +112,81 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     }
   }))
 
-  const selectedMultiplier = computed(() => confidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '—')
+  const selectedMultiplier = computed(() => {
+    if (!lockedConfidenceLevel.value) return '—'
+    return confidenceOptions.value.find(option => option.value === lockedConfidenceLevel.value)?.multiplier ?? '—'
+  })
 
   const selectedChoiceText = computed(() => {
     const selected = choices.value.find(choice => choice.key === selectedChoice.value)
     return selected ? `${selected.key}. ${selected.text}` : '未選択'
   })
+
   const canSubmit = computed(() => screen.value === 'answer'
+    && isConfidenceLocked.value
     && Boolean(selectedChoice.value)
     && !isSubmitting.value
     && !isOperationBlocked.value)
+
+  function selectConfidenceLevel(level: ConfidenceLevel) {
+    if (isConfidenceLocked.value || isConfirmingConfidence.value) return
+
+    confidenceMessage.value = ''
+    if (level === 'low') {
+      pendingConfidenceLevel.value = level
+      isConfidenceConfirmOpen.value = true
+      return
+    }
+
+    void confirmConfidenceLevel(level)
+  }
+
+  function cancelConfidenceSelection() {
+    if (isConfirmingConfidence.value) return
+
+    pendingConfidenceLevel.value = undefined
+    isConfidenceConfirmOpen.value = false
+  }
+
+  async function confirmPendingConfidenceSelection() {
+    const level = pendingConfidenceLevel.value
+    if (!level) return
+
+    await confirmConfidenceLevel(level)
+  }
+
+  async function confirmConfidenceLevel(level: ConfidenceLevel) {
+    const currentQuestion = question.value
+    if (!currentQuestion || isConfidenceLocked.value || isConfirmingConfidence.value) return
+
+    isConfirmingConfidence.value = true
+    confidenceMessage.value = ''
+    try {
+      applyState(await confirmParticipantQuizConfidence({
+        question_id: currentQuestion.question_id,
+        confidence_level: level,
+      }))
+      pendingConfidenceLevel.value = undefined
+      isConfidenceConfirmOpen.value = false
+    }
+    catch (error) {
+      if (error instanceof ApiError) {
+        if (error.statusCode === 401) {
+          options.onUnauthorized()
+          return
+        }
+        if (error.statusCode === 409) {
+          confidenceMessage.value = '自信度を確定できませんでした。問題の状態を確認しています。'
+          await refresh()
+          return
+        }
+      }
+      confidenceMessage.value = '自信度を確定できませんでした。通信状況を確認して、もう一度お試しください。'
+    }
+    finally {
+      isConfirmingConfidence.value = false
+    }
+  }
 
   async function submitAnswer() {
     const currentQuestion = question.value
@@ -126,7 +198,6 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       await submitParticipantQuizAnswer({
         question_id: currentQuestion.question_id,
         choice: selectedChoice.value,
-        confidence_level: confidenceLevel.value,
       })
       submittedForQuestionId.value = currentQuestion.question_id
       await refresh()
@@ -138,7 +209,6 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
           return
         }
         if (error.statusCode === 409) {
-          // 受付締切後や問題が切り替わった直後の送信。最新状態を取り直して画面に反映する。
           isOperationBlocked.value = true
           submissionMessage.value = '解答受付の状態が変わりました。最新の状態を確認しています。'
           await refresh()
@@ -167,13 +237,20 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     screen,
     choices,
     confidenceOptions,
+    lockedConfidenceLevel,
+    isConfidenceLocked,
     selectedChoice,
-    confidenceLevel,
     selectedChoiceText,
     selectedMultiplier,
+    isConfidenceConfirmOpen,
+    isConfirmingConfidence,
+    confidenceMessage,
     isSubmitting,
     canSubmit,
     submissionMessage,
+    selectConfidenceLevel,
+    cancelConfidenceSelection,
+    confirmPendingConfidenceSelection,
     submitAnswer,
   }
 }
