@@ -146,8 +146,7 @@
 
 /* 問題文の下に表示する画像（任意）。スマホ画面で見やすいよう、
    横幅いっぱいに収めつつビューポート高さに応じて上限を設け、
-   クロップせず全体が見えるようにする。画像が無い問題ではimg自体を描画しないため
-   選択肢がそのまま問題文の下に続く。 */
+   クロップせず全体が見えるようにする。 */
 .answer-shell .question-image {
   display: block;
   width: 100%;
@@ -361,6 +360,46 @@
 .answer-shell .answer-submit:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+/* 正答発表 */
+.answer-shell .result-panel,
+.answer-shell .total-score-panel {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid rgb(23 105 194 / 25%);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.answer-shell .result-label,
+.answer-shell .total-score-panel p {
+  margin: 0;
+  color: #516176;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.answer-shell .result-value,
+.answer-shell .result-score,
+.answer-shell .total-score-panel strong {
+  margin: 0 0 8px;
+  color: #132238;
+  font-size: 1.0625rem;
+  font-weight: 750;
+}
+
+.answer-shell .result-score,
+.answer-shell .total-score-panel strong {
+  margin-bottom: 0;
+  color: #1769c2;
+  font-size: 1.5rem;
+}
+
+.answer-shell .result-score span,
+.answer-shell .total-score-panel strong span {
+  font-size: 0.8125rem;
 }
 
 /* 送信後の待機画面 */

@@ -1,45 +1,29 @@
 import type { QuizState } from '../types'
 import { request } from '~/lib/api/client'
-import {
-  mockCloseAnswers,
-  mockFetchQuizState,
-  mockPublishQuestion,
-  mockRevealAnswer,
-  mockStartQuiz,
-} from '../mock'
 
-/**
- * バックエンドAPI(/api/admin/quiz)未結合でも画面を確認できるよう
- * 仮データ・擬似遷移を返すフラグ。実API結合時に false にする。
- */
-const USE_MOCK = true
+const credentials = 'include' as const
 
-export async function fetchQuizState(): Promise<QuizState> {
-  if (USE_MOCK) {
-    return mockFetchQuizState()
-  }
-  return request<QuizState>('/admin/quiz/state')
+/** manager Cookie を使う運営者クイズ進行API。 */
+export function fetchQuizState(): Promise<QuizState> {
+  return request<QuizState>('/operator/quiz/state', { credentials, retry: 0 })
 }
 
-async function act(mockAction: () => Promise<QuizState>, path: string): Promise<QuizState> {
-  if (USE_MOCK) {
-    return mockAction()
-  }
-  return request<QuizState>(path, { method: 'POST' })
+function act(path: string): Promise<QuizState> {
+  return request<QuizState>(path, { method: 'POST', credentials, retry: 0 })
 }
 
 export function startQuiz(): Promise<QuizState> {
-  return act(mockStartQuiz, '/admin/quiz/start')
+  return act('/operator/quiz/start')
 }
 
 export function publishQuestion(): Promise<QuizState> {
-  return act(mockPublishQuestion, '/admin/quiz/publish')
+  return act('/operator/quiz/publish')
 }
 
 export function closeAnswers(): Promise<QuizState> {
-  return act(mockCloseAnswers, '/admin/quiz/close')
+  return act('/operator/quiz/close')
 }
 
 export function revealAnswer(): Promise<QuizState> {
-  return act(mockRevealAnswer, '/admin/quiz/reveal')
+  return act('/operator/quiz/reveal')
 }

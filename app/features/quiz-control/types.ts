@@ -1,44 +1,74 @@
-export type QuizPhase = 'IDLE' | 'PUBLISHING' | 'CLOSED' | 'REVEALED' | 'ENDED'
-
+export type QuizEventStatus = 'ACTIVE' | 'FINISHED'
+export type QuizQuestionStatus = 'PENDING' | 'PUBLISHED' | 'CLOSED' | 'REVEALED'
+export type QuizPhase = 'IDLE' | 'READY' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED'
 export type ChoiceKey = 'A' | 'B' | 'C' | 'D'
 
+export interface ConfidenceMultipliers {
+  high: string
+  normal: string
+  low: string
+}
+
+/** GET /api/operator/quiz/state と進行操作が返すイベント。 */
+export interface QuizEvent {
+  id: number
+  status: QuizEventStatus
+  startedAt: string
+  finishedAt: string | null
+  confidenceMultipliers: ConfidenceMultipliers
+}
+
+/** イベント開始時に固定された、運営者向けの問題スナップショット。 */
 export interface QuizQuestion {
   id: number
+  sourceQuestionId: number
+  position: number
+  status: QuizQuestionStatus
   questionText: string
-  choices: Record<ChoiceKey, string>
+  choiceA: string
+  choiceB: string
+  choiceC: string
+  choiceD: string
   correctAnswer: ChoiceKey
-  /** 自信度倍率。文字列で受け取り表示時に整形する（例: "1.00"） */
-  confidenceMultiplier: string
+  imageUrl: string | null
+  basePoints: number
 }
 
+/** 運営APIのレスポンスそのもの。画面フェーズは questions から導出する。 */
 export interface QuizState {
-  phase: QuizPhase
-  currentQuestion: QuizQuestion | null
-  nextQuestion: QuizQuestion | null
-  totalQuestions: number
-  /** ISO 8601 文字列 or null */
-  startedAt: string | null
-  publishedAt: string | null
-  closedAt: string | null
-  revealedAt: string | null
+  event: QuizEvent | null
+  questions: QuizQuestion[]
 }
 
-/** 画面表示用のフェーズラベル */
 export const PHASE_LABELS: Record<QuizPhase, string> = {
   IDLE: 'イベント開始前',
-  PUBLISHING: '解答受付中',
+  READY: '問題公開待ち',
+  PUBLISHED: '解答受付中',
   CLOSED: '解答締め切り',
   REVEALED: '答え表示中',
-  ENDED: 'イベント終了',
+  FINISHED: 'イベント終了',
 }
 
 export const CHOICE_KEYS = ['A', 'B', 'C', 'D'] as const satisfies readonly ChoiceKey[]
 
-/** 自信度倍率を小数2桁の文字列に整形する（"1.5" → "1.50"） */
-export function formatMultiplier(value: string | number): string {
-  const numeric = typeof value === 'number' ? value : Number(value)
-  if (Number.isNaN(numeric)) {
-    return String(value)
-  }
-  return numeric.toFixed(2)
+export function getQuizPhase(state: QuizState): QuizPhase {
+  if (!state.event) return 'IDLE'
+  if (state.event.status === 'FINISHED') return 'FINISHED'
+
+  const currentQuestion = getCurrentQuizQuestion(state)
+  if (currentQuestion && currentQuestion.status !== 'PENDING') return currentQuestion.status
+  return 'READY'
+}
+
+/** PUBLISHED/CLOSED/REVEALED のうち、最も後ろの問題を現在問として扱う。 */
+export function getCurrentQuizQuestion(state: QuizState): QuizQuestion | null {
+  return [...state.questions]
+    .filter(question => question.status !== 'PENDING')
+    .sort((left, right) => right.position - left.position)[0] ?? null
+}
+
+export function getNextQuizQuestion(state: QuizState): QuizQuestion | null {
+  return [...state.questions]
+    .filter(question => question.status === 'PENDING')
+    .sort((left, right) => left.position - right.position)[0] ?? null
 }

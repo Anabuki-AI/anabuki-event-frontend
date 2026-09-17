@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { getNextQuizQuestion, getQuizPhase } from '../types'
 import type { QuizPhase, QuizState } from '../types'
 
 const props = defineProps<{
@@ -14,7 +15,6 @@ const emit = defineEmits<{
   reveal: []
 }>()
 
-/** 進行ステップの定義。答え表示後に次の問題公開へ戻る */
 const STEPS = [
   { key: 'start', label: 'イベント開始' },
   { key: 'publish', label: '問題公開' },
@@ -28,57 +28,53 @@ interface StepView {
   state: 'done' | 'current' | 'todo'
 }
 
+const phase = computed(() => getQuizPhase(props.state))
+const nextQuestion = computed(() => getNextQuizQuestion(props.state))
+const phaseIndex: Record<QuizPhase, number> = {
+  IDLE: 0,
+  READY: 1,
+  PUBLISHED: 2,
+  CLOSED: 3,
+  REVEALED: 4,
+  FINISHED: 4,
+}
+
 const steps = computed<StepView[]>(() => {
-  const phase = props.state.phase
-  const currentIndex: Record<QuizPhase, number> = {
-    IDLE: 0,
-    PUBLISHING: 1,
-    CLOSED: 2,
-    REVEALED: 3,
-    ENDED: 4,
-  }
-  const idx = currentIndex[phase]
-  return STEPS.map((step, i) => ({
+  const currentIndex = phaseIndex[phase.value]
+  return STEPS.map((step, index) => ({
     key: step.key,
     label: step.label,
-    state: i < idx ? 'done' : i === idx ? 'current' : 'todo',
+    state: index < currentIndex ? 'done' : index === currentIndex ? 'current' : 'todo',
   }))
 })
 
 const action = computed(() => {
-  switch (props.state.phase) {
+  switch (phase.value) {
     case 'IDLE':
-      return props.state.startedAt === null
-        ? { key: 'start', label: 'イベント開始', hint: 'イベントを開始すると問題を公開できるようになります。' }
-        : { key: 'publish', label: '問題公開', hint: '次の問題を公開して解答を受け付けます。' }
-    case 'PUBLISHING':
+      return { key: 'start', label: 'イベント開始', hint: 'イベントを開始すると問題を公開できるようになります。' }
+    case 'READY':
+      return nextQuestion.value ? { key: 'publish', label: '問題公開', hint: `Q${nextQuestion.value.position} を公開して解答を受け付けます。` } : null
+    case 'PUBLISHED':
       return { key: 'close', label: '解答締め切り', hint: '参加者の解答受付を締め切ります。' }
     case 'CLOSED':
-      return { key: 'reveal', label: '答え表示', hint: '正解と解説を参加者に表示します。' }
+      return { key: 'reveal', label: '答え表示', hint: '正解と得点を参加者に表示します。' }
     case 'REVEALED':
-      return props.state.nextQuestion !== null
-        ? { key: 'publish', label: '次の問題を公開', hint: `次は Q${props.state.nextQuestion.id} です。` }
-        : null
-    case 'ENDED':
-      return null
+      return nextQuestion.value ? { key: 'publish', label: '次の問題を公開', hint: `次は Q${nextQuestion.value.position} です。` } : null
     default:
       return null
   }
 })
 
 const stepsListEl = ref<HTMLOListElement | null>(null)
-
-// 横幅が足りず一部が隠れても、操作中に見失わないよう現在地は常にスクロールして見せる
-watch(() => props.state.phase, () => {
+watch(phase, () => {
   nextTick(() => {
     stepsListEl.value?.querySelector('.is-current')?.scrollIntoView({ inline: 'end', block: 'nearest' })
   })
 }, { immediate: true })
 
 function handleAction() {
-  if (action.value === null || props.isActing) {
-    return
-  }
+  if (!action.value || props.isActing) return
+
   switch (action.value.key) {
     case 'start':
       emit('start')
@@ -91,36 +87,25 @@ function handleAction() {
       break
     case 'reveal':
       emit('reveal')
-      break
   }
 }
 </script>
 
 <template>
   <section class="quiz-phase-panel">
-    <ol
-      ref="stepsListEl"
-      class="quiz-phase-steps"
-      aria-label="進行状況"
-    >
+    <ol ref="stepsListEl" class="quiz-phase-steps" aria-label="進行状況">
       <li
         v-for="(step, index) in steps"
         :key="step.key"
         class="quiz-phase-step"
         :class="`is-${step.state}`"
       >
-        <span
-          class="quiz-phase-marker"
-          aria-hidden="true"
-        >{{ step.state === 'done' ? '✓' : index + 1 }}</span>
+        <span class="quiz-phase-marker" aria-hidden="true">{{ step.state === 'done' ? '✓' : index + 1 }}</span>
         <span class="quiz-phase-label">{{ step.label }}</span>
       </li>
     </ol>
 
-    <div
-      v-if="action"
-      class="quiz-phase-action"
-    >
+    <div v-if="action" class="quiz-phase-action">
       <p class="quiz-phase-hint">
         {{ action.hint }}
       </p>
@@ -133,12 +118,8 @@ function handleAction() {
         {{ isActing ? '処理中…' : action.label }}
       </button>
     </div>
-    <p
-      v-else
-      class="quiz-phase-done"
-      role="status"
-    >
-      すべての問題を出題し終えました。お疲れさまでした。
+    <p v-else class="quiz-phase-done" role="status">
+      {{ phase === 'FINISHED' ? 'クイズ大会は終了しました。お疲れさまでした。' : '進行できる問題はありません。' }}
     </p>
   </section>
 </template>
