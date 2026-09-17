@@ -30,8 +30,9 @@ function redirectToWaiting() {
 }
 
 const {
-  event,
   question,
+  myAnswer,
+  correctAnswer,
   loadError,
   screen,
   choices,
@@ -49,7 +50,7 @@ const {
   onUnauthorized: redirectToRegistration,
 })
 
-const correctChoiceText = computed(() => choices.value.find(choice => choice.key === question.value?.correctAnswer)?.text)
+const correctChoiceText = computed(() => choices.value.find(choice => choice.key === correctAnswer.value)?.text)
 
 onMounted(async () => {
   try {
@@ -109,9 +110,9 @@ onMounted(async () => {
             Q{{ question.position }}
           </p>
           <p class="question-text">
-            {{ question.questionText }}
+            {{ question.question_text }}
           </p>
-          <img v-if="question.imageUrl" class="question-image" :src="question.imageUrl" alt="">
+          <img v-if="question.image_url" class="question-image" :src="question.image_url" alt="">
         </div>
 
         <div class="choice-list">
@@ -152,7 +153,7 @@ onMounted(async () => {
                 {{ option.label }}
               </span>
               <span class="confidence-rate">
-                ×{{ option.multiplier }}
+                {{ option.multiplier }}
               </span>
             </button>
           </div>
@@ -163,10 +164,10 @@ onMounted(async () => {
             現在の選択：{{ selectedChoiceText }}／自信度：{{ confidenceOptions.find(option => option.value === confidenceLevel)?.label }}
           </p>
           <p class="point-value">
-            ×{{ selectedMultiplier }}
+            {{ selectedMultiplier }}
           </p>
           <p class="point-caption">
-            正解時に適用される倍率
+            選択中の自信度レベル
           </p>
         </div>
 
@@ -223,30 +224,20 @@ onMounted(async () => {
         <p class="eyebrow">
           Result
         </p>
-        <h2>{{ question.myAnswer?.isCorrect ? '正解です！' : '今回の結果' }}</h2>
+        <h2>結果発表</h2>
         <div class="result-panel">
           <p class="result-label">
             正解
           </p>
           <p class="result-value">
-            {{ question.correctAnswer }}{{ correctChoiceText ? `. ${correctChoiceText}` : '' }}
+            {{ correctAnswer }}{{ correctChoiceText ? `. ${correctChoiceText}` : '' }}
           </p>
           <p class="result-label">
             あなたの解答
           </p>
           <p class="result-value">
-            {{ question.myAnswer ? `${question.myAnswer.answer}（${question.myAnswer.confidenceLevel}）` : '解答なし' }}
+            {{ myAnswer ? `${myAnswer.choice}（自信度 ${myAnswer.confidence_level}）` : '解答なし' }}
           </p>
-          <p class="result-label">
-            今回の得点
-          </p>
-          <p class="result-score">
-            {{ question.myAnswer?.points ?? '0.00' }}<span> pt</span>
-          </p>
-        </div>
-        <div class="total-score-panel">
-          <p>累計得点</p>
-          <strong>{{ event?.totalScore ?? '0.00' }}<span> pt</span></strong>
         </div>
         <p class="answer-note">
           次の問題が公開されると、画面が自動的に切り替わります。

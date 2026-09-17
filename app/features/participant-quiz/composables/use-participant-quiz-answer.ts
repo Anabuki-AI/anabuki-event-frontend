@@ -1,12 +1,18 @@
 import { computed, ref, watch } from 'vue'
 import { submitParticipantQuizAnswer } from '../api/client'
-import type { AnswerChoice, ConfidenceLevel, ParticipantQuizState } from '../types'
+import type {
+  AnswerChoice,
+  ConfidenceLevel,
+  ParticipantQuizState,
+} from '../types'
+import { CONFIDENCE_LEVEL_LABELS } from '../types'
 import { ApiError } from '~/lib/api/error'
 import { useParticipantQuizState } from './use-participant-quiz-state'
 
 export interface ConfidenceOption {
   value: ConfidenceLevel
   label: string
+  /** API契約では自信度の倍率値は参加者に返さないため、level表示を使う。 */
   multiplier: string
 }
 
@@ -16,11 +22,12 @@ export interface UseParticipantQuizAnswerOptions {
 }
 
 export function isParticipantQuizFinishedState(state: ParticipantQuizState): boolean {
-  return state.event?.status === 'FINISHED'
+  return state.status === 'finished'
 }
 
 export function isParticipantQuizWaitingState(state: ParticipantQuizState): boolean {
-  return !isParticipantQuizFinishedState(state) && (!state.event || !state.question || state.question.status === 'PENDING')
+  if (isParticipantQuizFinishedState(state)) return false
+  return state.status === 'waiting' || state.question === null || state.phase === null
 }
 
 export type ParticipantQuizScreen = 'loading' | 'answer' | 'submitted' | 'closed' | 'revealed' | 'waiting' | 'finished'
@@ -31,20 +38,25 @@ export function getParticipantQuizScreen(
   isLoading: boolean,
   submittedForQuestionId?: number,
 ): ParticipantQuizScreen {
-  const currentQuestion = state?.question
   if (isLoading && !state) return 'loading'
   if (state && isParticipantQuizFinishedState(state)) return 'finished'
   if (!state || isParticipantQuizWaitingState(state)) return 'waiting'
-  if (currentQuestion?.status === 'REVEALED') return 'revealed'
-  if (currentQuestion?.status === 'CLOSED') return 'closed'
-  if (currentQuestion?.status === 'PUBLISHED' && (currentQuestion.myAnswer || submittedForQuestionId === currentQuestion.id)) return 'submitted'
+  if (state.phase === 'revealed') return 'revealed'
+  if (state.phase === 'closed') return 'closed'
+  if (state.answered || submittedForQuestionId === state.question?.question_id) return 'submitted'
   return 'answer'
 }
+
+const CONFIDENCE_OPTIONS: ConfidenceOption[] = [3, 2, 1].map(level => ({
+  value: level as ConfidenceLevel,
+  label: CONFIDENCE_LEVEL_LABELS[level as ConfidenceLevel],
+  multiplier: `Lv.${level}`,
+}))
 
 /** 解答送信・問題状態に応じた表示分岐を、参加者クイズAPIの状態から構成する。 */
 export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOptions) {
   const selectedChoice = ref<AnswerChoice>()
-  const confidenceLevel = ref<ConfidenceLevel>('normal')
+  const confidenceLevel = ref<ConfidenceLevel>(2)
   const isSubmitting = ref(false)
   const isOperationBlocked = ref(false)
   const submissionMessage = ref('')
@@ -60,13 +72,14 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   })
 
   const question = computed(() => state.value?.question)
-  const event = computed(() => state.value?.event)
+  const myAnswer = computed(() => state.value?.my_answer ?? null)
+  const correctAnswer = computed(() => state.value?.correct_answer ?? null)
 
-  watch(() => question.value?.id, (questionId, previousQuestionId) => {
+  watch(() => question.value?.question_id, (questionId, previousQuestionId) => {
     if (!questionId || questionId === previousQuestionId) return
 
     selectedChoice.value = undefined
-    confidenceLevel.value = 'normal'
+    confidenceLevel.value = 2
     isOperationBlocked.value = false
     submissionMessage.value = ''
     submittedForQuestionId.value = undefined
@@ -82,22 +95,13 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     const currentQuestion = question.value
     if (!currentQuestion) return []
 
-    return [
-      { key: 'A' as const, text: currentQuestion.choiceA },
-      { key: 'B' as const, text: currentQuestion.choiceB },
-      { key: 'C' as const, text: currentQuestion.choiceC },
-      { key: 'D' as const, text: currentQuestion.choiceD },
-    ]
+    return (['A', 'B', 'C', 'D'] as const).map(key => ({
+      key,
+      text: currentQuestion.choices[key],
+    }))
   })
 
-  const confidenceOptions = computed<ConfidenceOption[]>(() => {
-    const multipliers = event.value?.confidenceMultipliers
-    return [
-      { value: 'high', label: '高い', multiplier: multipliers?.high ?? '—' },
-      { value: 'normal', label: '普通', multiplier: multipliers?.normal ?? '—' },
-      { value: 'low', label: '低い', multiplier: multipliers?.low ?? '—' },
-    ]
-  })
+  const confidenceOptions = computed(() => CONFIDENCE_OPTIONS)
 
   const selectedChoiceText = computed(() => {
     const selected = choices.value.find(choice => choice.key === selectedChoice.value)
@@ -118,11 +122,11 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     submissionMessage.value = ''
     try {
       await submitParticipantQuizAnswer({
-        quizEventQuestionId: currentQuestion.id,
-        answer: selectedChoice.value,
-        confidenceLevel: confidenceLevel.value,
+        question_id: currentQuestion.question_id,
+        choice: selectedChoice.value,
+        confidence_level: confidenceLevel.value,
       })
-      submittedForQuestionId.value = currentQuestion.id
+      submittedForQuestionId.value = currentQuestion.question_id
       await refresh()
     }
     catch (error) {
@@ -132,6 +136,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
           return
         }
         if (error.statusCode === 409) {
+          // 受付締切後や問題が切り替わった直後の送信。最新状態を取り直して画面に反映する。
           isOperationBlocked.value = true
           submissionMessage.value = '解答受付の状態が変わりました。最新の状態を確認しています。'
           await refresh()
@@ -152,8 +157,9 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
   return {
     state,
-    event,
     question,
+    myAnswer,
+    correctAnswer,
     isLoading,
     loadError,
     screen,
