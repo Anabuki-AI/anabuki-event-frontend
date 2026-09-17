@@ -19,6 +19,7 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
   const accountsLoading = ref(false)
   const accountsLoaded = ref(false)
   const accountsError = ref('')
+  const accountRemoving = ref(false)
   const operatorAccounts = ref<OperatorAccount[]>([])
   const operatorAccountsLoading = ref(false)
   const operatorAccountsLoaded = ref(false)
@@ -98,6 +99,27 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
     }
   }
 
+  async function removeAccount(id: string) {
+    if (accountRemoving.value || disposed) return
+    accountRemoving.value = true
+    accountsError.value = ''
+    try {
+      await adminConsoleApi.deleteAllowedEmail(id)
+      if (!disposed) accounts.value = accounts.value.filter(item => item.id !== id)
+    }
+    catch (cause) {
+      if (disposed) return
+      if (cause instanceof ApiError && [401, 403].includes(cause.statusCode ?? 0)) {
+        accountsError.value = '許可メールを削除する権限、またはログインの有効期限を確認できません。'
+        await onAccessLost()
+      }
+      else accountsError.value = '許可メールを削除できませんでした。接続を確認して再試行してください。'
+    }
+    finally {
+      if (!disposed) accountRemoving.value = false
+    }
+  }
+
   async function checkHealth() {
     if (healthLoading.value || disposed) return
     healthLoading.value = true
@@ -143,5 +165,5 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
     }
   }
 
-  return { accounts, accountsLoading, accountsLoaded, accountsError, operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError, health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError, loadAccounts, loadOperatorAccounts, setOperatorAccess, checkHealth, loadMonitoring }
+  return { accounts, accountsLoading, accountsLoaded, accountsError, accountRemoving, operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError, health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError, loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadMonitoring }
 }
