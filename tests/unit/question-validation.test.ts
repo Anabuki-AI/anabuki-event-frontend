@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { problemErrorMessage, validateMultiplierInput, validatePointsInput } from '../../app/features/problems/validation'
+import { parseTimeLimitInput, problemErrorMessage, validateMultiplierInput, validatePointsInput, validateTimeLimitInput } from '../../app/features/problems/validation'
 import { formatMultiplier } from '../../app/features/problems/constants'
 
 describe('problemErrorMessage', () => {
@@ -31,6 +31,45 @@ describe('validateMultiplierInput', () => {
     expect(validateMultiplierInput('0', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('9.99', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('1.5', 0, 9.99)).toBe('')
+  })
+})
+
+describe('validateTimeLimitInput', () => {
+  it('空欄は制限時間なしとして許可する', () => {
+    expect(validateTimeLimitInput('')).toBe('')
+    expect(validateTimeLimitInput('   ')).toBe('')
+  })
+
+  it('数値以外・小数はエラー', () => {
+    expect(validateTimeLimitInput('abc')).toContain('整数')
+    expect(validateTimeLimitInput('1.5')).toContain('整数')
+  })
+
+  it('0以下はエラー', () => {
+    expect(validateTimeLimitInput('0')).toContain('1秒以上')
+    expect(validateTimeLimitInput('-5')).toContain('1秒以上')
+  })
+
+  it('正の整数はOK', () => {
+    expect(validateTimeLimitInput('1')).toBe('')
+    expect(validateTimeLimitInput('30')).toBe('')
+    expect(validateTimeLimitInput('2147483647')).toBe('')
+  })
+
+  it('APIが受け付ける上限を超える値はエラー', () => {
+    expect(validateTimeLimitInput('2147483648')).toContain('2147483647秒以下')
+  })
+})
+
+describe('parseTimeLimitInput', () => {
+  it('空欄は null(制限時間なし)に変換する', () => {
+    expect(parseTimeLimitInput('')).toBeNull()
+    expect(parseTimeLimitInput('   ')).toBeNull()
+  })
+
+  it('数値文字列は整数の秒数に変換する', () => {
+    expect(parseTimeLimitInput('30')).toBe(30)
+    expect(parseTimeLimitInput('45')).toBe(45)
   })
 })
 

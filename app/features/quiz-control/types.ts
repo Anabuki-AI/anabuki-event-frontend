@@ -14,6 +14,20 @@ export interface OperatorQuizCurrentQuestion {
   answered_count: number
   /** 0〜1 の小数。 */
   answered_rate: number
+  /**
+   * この問題の制限時間(秒)。null なら制限時間なし。
+   * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
+   */
+  time_limit_seconds?: number | null
+}
+
+/** GET /api/operator/quiz/state の next_question。correct_answer は含まれない。 */
+export interface OperatorNextQuestion {
+  question_id: number
+  position: number
+  question_text: string
+  choices: Record<ChoiceKey, string>
+  image_url: string | null
 }
 
 /** クイズ本番セッションAPI契約(Phase 0)どおりの運営者向けレスポンス。 */
@@ -23,6 +37,16 @@ export interface OperatorQuizState {
   current: OperatorQuizCurrentQuestion | null
   question_count: number
   total_participants: number
+  /**
+   * 現在のフェーズが始まった時刻(ISO8601)。
+   * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
+   */
+  phase_started_at?: string | null
+  /**
+   * 次に公開される問題の簡易プレビュー。無ければ null。
+   * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
+   */
+  next_question?: OperatorNextQuestion | null
 }
 
 export const PHASE_LABELS: Record<QuizPhase, string> = {

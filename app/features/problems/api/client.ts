@@ -15,6 +15,13 @@ export interface QuestionPayload {
   targetAudience: string
   /** 配点。この問題に正解した場合の基礎得点。 */
   points: number
+  /**
+   * 制限時間(秒)。null で「制限時間なし」。
+   * 運営クイズAPI(OperatorQuizCurrentQuestion.time_limit_seconds)と揃えるため、
+   * このフィールドだけ他のcamelCase項目と異なり time_limit_seconds のsnake_caseで送信する。
+   * undefined の場合は送信しない(既存値を変更しない)。
+   */
+  timeLimitSeconds?: number | null
   /** 新しい画像ファイル。未指定なら既存の画像を変更しない。 */
   image?: File | null
   /** 既存の画像を削除する場合に true を送る。 */
@@ -37,6 +44,9 @@ function toFormData(payload: QuestionPayload): FormData {
   formData.append('explanation', payload.explanation)
   formData.append('targetAudience', payload.targetAudience)
   formData.append('points', String(payload.points))
+  if (payload.timeLimitSeconds !== undefined) {
+    formData.append('time_limit_seconds', payload.timeLimitSeconds === null ? '' : String(payload.timeLimitSeconds))
+  }
   if (payload.image) formData.append('image', payload.image)
   if (payload.removeImage) formData.append('removeImage', 'true')
   return formData

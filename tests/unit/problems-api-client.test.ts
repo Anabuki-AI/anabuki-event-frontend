@@ -70,6 +70,19 @@ describe('問題管理API client', () => {
     expect(mockedRequest).toHaveBeenNthCalledWith(3, '/admin/questions/12', { method: 'DELETE', credentials: 'include' })
   })
 
+  it('制限時間(timeLimitSeconds)は snake_case の time_limit_seconds として送信し、未指定なら送らない', async () => {
+    mockedRequest.mockResolvedValue(undefined)
+
+    await createQuestion({ ...payload, timeLimitSeconds: 30 })
+    expect(formDataEntries(mockedRequest.mock.calls[0]?.[1]?.body)).toMatchObject({ time_limit_seconds: '30' })
+
+    await createQuestion({ ...payload, timeLimitSeconds: null })
+    expect(formDataEntries(mockedRequest.mock.calls[1]?.[1]?.body)).toMatchObject({ time_limit_seconds: '' })
+
+    await createQuestion(payload)
+    expect(formDataEntries(mockedRequest.mock.calls[2]?.[1]?.body)).not.toHaveProperty('time_limit_seconds')
+  })
+
   it('画像ファイルと削除フラグをFormDataに含める', async () => {
     mockedRequest.mockResolvedValue(undefined)
     const image = new File(['dummy'], 'question.png', { type: 'image/png' })

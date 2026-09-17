@@ -1,4 +1,4 @@
-import type { AccessRequest as SharedAccessRequest } from '~/lib/auth/access-request'
+import type { AdminAccessRequest } from '~/lib/auth/access-request'
 
 export type AdminAccessSource =
   | 'APPLICANT'
@@ -14,5 +14,5 @@ export interface AdminSession {
 }
 
 // Admin access requests use the primary database's numeric IDs.
-export type AccessRequest = SharedAccessRequest<number>
-export type { AccessRequestDecision, AccessRequestStatus } from '~/lib/auth/access-request'
+export type AccessRequest = AdminAccessRequest
+export type { AccessRequestDecision, AccessRequestStatus, OperatorAccessRequest } from '~/lib/auth/access-request'

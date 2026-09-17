@@ -2,9 +2,12 @@
 import QuizClockPanel from '~/features/quiz-control/components/QuizClockPanel.vue'
 import QuizPhasePanel from '~/features/quiz-control/components/QuizPhasePanel.vue'
 import QuizCurrentQuestionCard from '~/features/quiz-control/components/QuizCurrentQuestionCard.vue'
+import QuizTimerPanel from '~/features/quiz-control/components/QuizTimerPanel.vue'
+import QuizNextQuestionPreview from '~/features/quiz-control/components/QuizNextQuestionPreview.vue'
 import { useQuizControl } from '~/features/quiz-control/useQuizControl'
 import { useQuizClock } from '~/features/quiz-control/useQuizClock'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
+import '~/assets/css/quiz-control.css'
 
 useSeoMeta({
   title: 'クイズ出題管理画面',
@@ -112,14 +115,25 @@ const {
         </p>
 
         <div class="quiz-control-grid">
-          <!-- 左側: 時間表示 -->
-          <QuizClockPanel
-            :state="state"
-            :now="now"
-            :history="history"
-          />
+          <!-- 左側: 時間表示(補助情報) -->
+          <div class="quiz-control-aside">
+            <QuizClockPanel
+              :state="state"
+              :now="now"
+              :history="history"
+            />
+            <QuizTimerPanel
+              :phase="phase"
+              :phase-started-at="state.phase_started_at ?? null"
+              :time-limit-seconds="state.current?.time_limit_seconds ?? null"
+              :question-id="state.current?.question_id ?? null"
+              :now="now"
+              :is-acting="isActing"
+              @expire="close"
+            />
+          </div>
 
-          <!-- 右側: 進行管理 -->
+          <!-- 右側: 進行管理(現在の問題が主、次問プレビューは補助) -->
           <div class="quiz-control-main">
             <QuizPhasePanel
               :state="state"
@@ -131,6 +145,7 @@ const {
               @finish="finish"
             />
             <QuizCurrentQuestionCard :state="state" />
+            <QuizNextQuestionPreview :next-question="state.next_question ?? null" />
           </div>
         </div>
 

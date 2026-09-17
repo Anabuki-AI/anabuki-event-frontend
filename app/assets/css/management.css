@@ -117,6 +117,7 @@
 .points-badge { flex: 0 0 auto; padding: 4px 10px; border-radius: 999px; color: #1769c2; background: #edeffa; font-size: 12px; font-weight: 750; }
 .question-row-detail { display: grid; gap: 12px; padding: 12px 18px 18px; border-top: 1px solid rgb(19 34 56 / 8%); }
 .question-target-audience,
+.question-time-limit,
 .question-explanation { margin: 0; color: #516176; font-size: 14px; line-height: 1.6; }
 .question-choices-row { flex-wrap: wrap; align-items: flex-end; }
 .question-choices { display: grid; flex: 1 1 500px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; margin: 0; padding: 0; list-style: none; color: #253750; font-size: 16px; }
