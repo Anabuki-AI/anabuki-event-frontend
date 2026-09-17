@@ -167,7 +167,7 @@ onMounted(async () => {
             {{ selectedMultiplier }}
           </p>
           <p class="point-caption">
-            選択中の自信度レベル
+            選択中の自信度倍率
           </p>
         </div>
 

@@ -30,6 +30,7 @@ export interface ParticipantQuizState {
   my_answer: ParticipantQuizMyAnswer | null
   /** phase=revealed のときだけ文字列で返る。 */
   correct_answer: AnswerChoice | null
+  confidence_multipliers?: { high: number; normal: number; low: number }
 }
 
 export interface SubmitParticipantQuizAnswerInput {
@@ -44,7 +45,7 @@ export interface SubmitParticipantQuizAnswerResult {
 }
 
 export const CONFIDENCE_LEVEL_LABELS: Record<ConfidenceLevel, string> = {
-  3: '高い',
+  3: 'あり',
   2: '普通',
-  1: '低い',
+  1: 'なし',
 }
