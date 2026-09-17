@@ -33,16 +33,13 @@ const titleId = useId()
 const imageFile = ref<File | null>(null)
 const imagePreviewUrl = ref<string | null>(null)
 const imageErrorMessage = ref('')
+const isImageDragOver = ref(false)
+let imageDragDepth = 0
 
-function handleImageChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0] ?? null
-  if (!file) return
-
+function applyImageFile(file: File) {
   const error = validateImageFile(file)
   if (error) {
     imageErrorMessage.value = error
-    input.value = ''
     return
   }
 
@@ -50,6 +47,14 @@ function handleImageChange(event: Event) {
   if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value)
   imageFile.value = file
   imagePreviewUrl.value = URL.createObjectURL(file)
+}
+
+function handleImageChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  if (!file) return
+
+  applyImageFile(file)
   input.value = ''
 }
 
@@ -58,6 +63,28 @@ function handleImageClear() {
   imageFile.value = null
   imagePreviewUrl.value = null
   imageErrorMessage.value = ''
+}
+
+function handleImageDragEnter() {
+  if (isSaving.value) return
+  imageDragDepth += 1
+  isImageDragOver.value = true
+}
+
+function handleImageDragLeave() {
+  if (isSaving.value) return
+  imageDragDepth = Math.max(0, imageDragDepth - 1)
+  if (imageDragDepth === 0) isImageDragOver.value = false
+}
+
+function handleImageDrop(event: DragEvent) {
+  imageDragDepth = 0
+  isImageDragOver.value = false
+  if (isSaving.value) return
+
+  const file = event.dataTransfer?.files?.[0] ?? null
+  if (!file) return
+  applyImageFile(file)
 }
 
 const canSave = computed<boolean>(
@@ -185,13 +212,28 @@ onUnmounted(() => {
 
         <label class="question-add-field">
           <span class="question-add-label">問題画像（任意・出題画面に表示されます）</span>
-          <input
-            class="question-add-file-input"
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            :disabled="isSaving"
-            @change="handleImageChange"
+          <div
+            class="question-add-dropzone"
+            :class="{ 'is-dragover': isImageDragOver }"
+            @dragenter.prevent="handleImageDragEnter"
+            @dragover.prevent
+            @dragleave.prevent="handleImageDragLeave"
+            @drop.prevent="handleImageDrop"
           >
+            <input
+              class="question-add-file-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              :disabled="isSaving"
+              @change="handleImageChange"
+            >
+            <div class="question-add-dropzone-content">
+              <p class="question-add-dropzone-text">ここに画像をドラッグ&ドロップ</p>
+              <p class="question-add-dropzone-hint">
+                またはクリックして選択（PNG・JPEG・WEBP・GIF、5MB以下）
+              </p>
+            </div>
+          </div>
           <p v-if="imageErrorMessage" class="status-message error" role="alert">
             {{ imageErrorMessage }}
           </p>
