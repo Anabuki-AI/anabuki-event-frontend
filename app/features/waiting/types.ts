@@ -1,4 +1,6 @@
+import type { ParticipantReactionEmoji } from '~/features/participants/types'
+
 export interface ReactionOption {
-  emoji: string
+  emoji: ParticipantReactionEmoji
   label: string
 }
