@@ -20,6 +20,7 @@ function state(overrides: Partial<OperatorQuizState> = {}): OperatorQuizState {
     current: currentQuestion,
     question_count: 10,
     total_participants: 60,
+    next_question: { ...currentQuestion, question_id: 13, position: 3 },
     ...overrides,
   }
 }
@@ -33,9 +34,12 @@ describe('運営クイズ状態の導出', () => {
     expect(getQuizPhase(state({ status: 'finished', phase: null, current: null }))).toBe('FINISHED')
   })
 
-  it('次問の位置は現在問+1で、最終問や未開始では取得できない', () => {
+  it('サーバーが返した実在する次問を使い、最終問や未開始では取得できない', () => {
     expect(getNextQuizPosition(state())).toBe(3)
-    expect(getNextQuizPosition(state({ current: { ...currentQuestion, position: 10 } }))).toBeNull()
+    expect(getNextQuizPosition(state({
+      next_question: { ...currentQuestion, question_id: 14, position: 11 },
+    }))).toBe(11)
+    expect(getNextQuizPosition(state({ next_question: null }))).toBeNull()
     expect(getNextQuizPosition(state({ status: 'waiting', current: null }))).toBeNull()
   })
 })

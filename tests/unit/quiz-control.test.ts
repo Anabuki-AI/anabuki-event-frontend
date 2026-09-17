@@ -73,7 +73,7 @@ describe('useQuizControl', () => {
     wrapper.unmount()
   })
 
-  it('公開は未公開の先頭位置をpositionに送る', async () => {
+  it('公開は位置を推測せずサーバーへ委譲する', async () => {
     const wrapper = mount(Harness)
     await flushPromises()
     mockedFetch.mockResolvedValueOnce({
@@ -93,12 +93,13 @@ describe('useQuizControl', () => {
     })
 
     const control = wrapper.vm as unknown as ReturnType<typeof useQuizControl>
-    // publish は最新stateの current から次の位置を決めるため、先に再取得しておく
+    // 次問の位置はAPI stateに含まれる事実を表示に使うだけで、POSTには送らない。
     await control.refresh()
     mockedPublish.mockResolvedValueOnce(state)
     await control.publish()
 
-    expect(mockedPublish).toHaveBeenCalledWith(2)
+    expect(mockedPublish).toHaveBeenCalledOnce()
+    expect(mockedPublish).toHaveBeenCalledWith()
     wrapper.unmount()
   })
 

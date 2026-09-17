@@ -73,9 +73,8 @@ export function getQuizPhase(state: OperatorQuizState): QuizPhase {
   }
 }
 
-/** まだ公開されていない次の問題の位置。終了済み・最終問なら null。 */
+/** サーバーが実在すると判定した次問の位置。終了済み・最終問なら null。 */
 export function getNextQuizPosition(state: OperatorQuizState): number | null {
   if (state.status !== 'in_progress' || state.current === null) return null
-  const next = state.current.position + 1
-  return next <= state.question_count ? next : null
+  return state.next_question?.position ?? null
 }

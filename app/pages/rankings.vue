@@ -123,7 +123,7 @@ const {
         <p class="muted-copy">
           参加登録すると、あなたの順位がここに表示されます。
         </p>
-        <NuxtLink class="primary-link" to="/users/new">
+        <NuxtLink class="primary-link" to="/participants/new">
           参加登録する
         </NuxtLink>
       </section>

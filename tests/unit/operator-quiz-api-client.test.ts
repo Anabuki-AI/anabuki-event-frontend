@@ -35,7 +35,7 @@ describe('運営クイズ進行 API client', () => {
 
   it.each([
     ['start', () => startQuiz(), '/operator/quiz/start', undefined],
-    ['publish', () => publishQuestion(2), '/operator/quiz/publish', { position: 2 }],
+    ['publish', () => publishQuestion(), '/operator/quiz/publish', undefined],
     ['close', () => closeAnswers(), '/operator/quiz/close', undefined],
     ['reveal', () => revealAnswer(), '/operator/quiz/reveal', undefined],
     ['finish', () => finishQuiz(), '/operator/quiz/finish', undefined],

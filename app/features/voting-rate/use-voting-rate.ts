@@ -1,13 +1,30 @@
 import { computed, onMounted, ref } from 'vue'
 import { request } from '~/lib/api/client'
-import type { QuestionChoice, VotingRateQuestion, VotingRateResponse } from './types'
+import type { QuestionChoice, VotingRateQuestion, VotingRateQuestionWire, VotingRateResponse, VotingRateResponseWire } from './types'
 import { toApiError } from '~/lib/api/error'
 
 const credentials = 'include' as const
 
 /** 運営者セッションで問題ごとの解答状況を取得する。 */
-export function fetchVotingRate(): Promise<VotingRateResponse> {
-  return request<VotingRateResponse>('/operator/voting-rate', { credentials, retry: 0 })
+function toVotingRateQuestion(question: VotingRateQuestionWire): VotingRateQuestion {
+  return {
+    questionId: question.question_id,
+    position: question.position,
+    answeredCount: question.answered_count,
+    answeredRate: question.answered_rate,
+  }
+}
+
+function fromWire(response: VotingRateResponseWire): VotingRateResponse {
+  return {
+    questions: response.questions.map(toVotingRateQuestion),
+    totalParticipants: response.total_participants,
+  }
+}
+
+export async function fetchVotingRate(): Promise<VotingRateResponse> {
+  const response = await request<VotingRateResponseWire>('/operator/voting-rate', { credentials, retry: 0 })
+  return fromWire(response)
 }
 
 function createQuestionChoices(questions: VotingRateQuestion[]): QuestionChoice[] {
@@ -45,7 +62,7 @@ export function useVotingRate() {
     try {
       const response = await fetchVotingRate()
       questions.value = [...response.questions].sort((left, right) => left.position - right.position)
-      totalParticipants.value = response.total_participants
+      totalParticipants.value = response.totalParticipants
       if (!findQuestion(questions.value, selectedQuestionValue.value)) {
         selectedQuestionValue.value = questions.value[0] ? String(questions.value[0].questionId) : ''
       }

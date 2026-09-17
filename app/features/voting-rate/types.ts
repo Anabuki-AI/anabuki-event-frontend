@@ -3,17 +3,29 @@ export interface QuestionChoice {
   label: string
 }
 
-/** GET /api/operator/voting-rate の問題ごとの解答状況。 */
+/** GET /api/operator/voting-rate の wire format (Rails JSON, snake_case). */
+export interface VotingRateQuestionWire {
+  question_id: number
+  position: number
+  answered_count: number
+  /** 0〜1 の小数。 */
+  answered_rate: number
+}
+
+export interface VotingRateResponseWire {
+  questions: VotingRateQuestionWire[]
+  total_participants: number
+}
+
+/** 投票率APIの画面用DTO。 */
 export interface VotingRateQuestion {
   questionId: number
   position: number
   answeredCount: number
-  /** 0〜1 の小数。 */
   answeredRate: number
 }
 
-/** 投票率APIのレスポンス(契約: docs/quiz-session-contract.md)。 */
 export interface VotingRateResponse {
   questions: VotingRateQuestion[]
-  total_participants: number
+  totalParticipants: number
 }
