@@ -16,10 +16,9 @@ export interface OperatorAccount {
 }
 
 export const adminConsoleApi = {
-  // Rails AdminApiStatus snapshot: provider availability plus error rate /
-  // response time metrics, all normalized server-side.
-  apiStatus: () => request<unknown>('/admin/api-status', { credentials: 'include', retry: 0, timeout: 10000 }),
-  monitoring: () => request<unknown>('/admin/monitoring', { credentials: 'include', retry: 0, timeout: 10000 }),
+  // Rails AdminApiStatus snapshot. The browser keeps the management session
+  // cookie, while Rails owns all provider credentials and upstream requests.
+  monitoring: () => request<unknown>('/admin/api-status', { credentials: 'include', retry: 0, timeout: 10000 }),
   accounts: () => request<ManagementAccount[]>('/admin/allowed-emails', { credentials: 'include', retry: 0 }),
   operatorAccounts: () => request<OperatorAccount[]>('/admin/operator-identities', { credentials: 'include', retry: 0 }),
   setOperatorAccess: (id: string, managerEnabled: boolean) => request<OperatorAccount>(`/admin/operator-identities/${id}`, { method: 'PATCH', body: { managerEnabled }, credentials: 'include', retry: 0 }),

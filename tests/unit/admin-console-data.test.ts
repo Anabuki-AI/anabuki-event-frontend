@@ -3,10 +3,17 @@ import { defineComponent, h } from 'vue'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { adminConsoleApi } from '~/admin/api/admin-console'
 import { useAdminConsoleData } from '~/admin/composables/useAdminConsoleData'
-import { unconfiguredMonitoring } from '~/admin/monitoring-contract'
+import type { MonitoringSnapshotWire } from '~/admin/monitoring-contract'
 import { ApiError } from '~/lib/api/error'
 
 vi.mock('~/admin/api/admin-console', () => ({ adminConsoleApi: { accounts: vi.fn(), operatorAccounts: vi.fn(), setOperatorAccess: vi.fn(), health: vi.fn(), monitoring: vi.fn() } }))
+const apiStatusFixture: MonitoringSnapshotWire = {
+  generatedAt: '2026-09-28T01:00:00Z', cached: false,
+  providers: [
+    { provider: 'statuspage', source: 'Statuspage', state: 'available', fetchedAt: '2026-09-28T01:00:00Z', availability: { state: 'available', value: 'operational' }, metrics: { errorRate: { state: 'not_provided', value: null, unit: 'percent' }, responseTime: { state: 'not_provided', value: null, unit: 'milliseconds' } } },
+    { provider: 'datadog', source: 'Datadog', state: 'available', fetchedAt: '2026-09-28T01:00:00Z', availability: { state: 'not_provided', value: null }, metrics: { errorRate: { state: 'available', value: 0, unit: 'percent' }, responseTime: { state: 'available', value: 15, unit: 'milliseconds' } } },
+  ],
+}
 const api = vi.mocked(adminConsoleApi)
 let wrapper: VueWrapper
 let data: ReturnType<typeof useAdminConsoleData>
@@ -26,7 +33,7 @@ describe('admin console resource boundaries', () => {
     expect(api.health).not.toHaveBeenCalled()
     expect(state.health.value).toBeNull()
     expect(state.accountsLoaded.value).toBe(false)
-    expect(state.monitoring.value.sources.every(source => source.state === 'unconfigured')).toBe(true)
+    expect(state.monitoring.value.providers.every(provider => provider.state === 'unconfigured')).toBe(true)
   })
 
   it('loads real account access flags without inventing roles', async () => {
@@ -108,10 +115,11 @@ describe('admin console resource boundaries', () => {
   })
 
   it('loads the monitoring contract only when enabled', async () => {
-    api.monitoring.mockResolvedValue(unconfiguredMonitoring())
+    api.monitoring.mockResolvedValue(apiStatusFixture)
     const state = start(true)
     await state.loadMonitoring()
     expect(api.monitoring).toHaveBeenCalledOnce()
+    expect(state.monitoring.value.providers[1]?.metrics.errorRate.value).toBe(0)
     expect(state.monitoringError.value).toBe('')
   })
 
@@ -128,6 +136,26 @@ describe('admin console resource boundaries', () => {
     await state.loadMonitoring()
     expect(state.monitoringError.value).toContain(code === 401 ? '再ログイン' : code === 403 ? '権限' : '取得できません')
     expect(refreshSession).toHaveBeenCalledTimes(code === 401 ? 1 : 0)
+    expect(state.monitoring.value.providers.every(provider => provider.state === 'unconfigured')).toBe(true)
+  })
+
+  it('treats a timeout as a fetch failure without rechecking a valid session', async () => {
+    api.monitoring.mockRejectedValue(new Error('timeout'))
+    const state = start(true)
+    await state.loadMonitoring()
+    expect(state.monitoringError.value).toContain('取得できません')
+    expect(refreshSession).not.toHaveBeenCalled()
+  })
+
+  it('does not restore monitoring data after unmount', async () => {
+    let resolve!: (value: MonitoringSnapshotWire) => void
+    api.monitoring.mockImplementation(() => new Promise(done => { resolve = done }))
+    const state = start(true)
+    void state.loadMonitoring()
+    wrapper.unmount()
+    resolve(apiStatusFixture)
+    await flushPromises()
+    expect(state.monitoring.value.providers.every(provider => provider.state === 'unconfigured')).toBe(true)
   })
 
   it('does not restore data after unmount (including logout)', async () => {

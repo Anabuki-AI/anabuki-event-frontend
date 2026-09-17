@@ -4,7 +4,6 @@ import type { AccessRequest, AdminSession } from '../api/admin-auth'
 import type { ManagementAccount, OperatorAccount } from '../api/admin-console'
 import { accessSourceLabel, consolePages, formatConsoleDate, getConsolePage } from '../console-presentation'
 import { useAdminConsoleData } from '../composables/useAdminConsoleData'
-import ApiStatusPanel from './ApiStatusPanel.vue'
 import { useAuditLogs } from '../composables/useAuditLogs'
 import AuditLogPanel from './AuditLogPanel.vue'
 import MonitoringPanel from './MonitoringPanel.vue'
@@ -24,7 +23,6 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const monitoringEnabled = String(config.public.adminMonitoringEnabled) === 'true'
 const auditLogEnabled = String(config.public.adminAuditLogEnabled) === 'true'
-const apiStatusEnabled = String(config.public.adminApiStatusEnabled) === 'true'
 const page = computed(() => getConsolePage(route.path))
 const heading = ref<HTMLElement | null>(null)
 const dialog = ref<HTMLDialogElement | null>(null)
@@ -38,9 +36,9 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
 const {
   accounts, accountsLoading, accountsLoaded, accountsError, accountRemoving,
   operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError,
-  health, healthLoading, healthError, apiStatus, apiStatusLoading, apiStatusError, monitoring, monitoringLoading, monitoringError,
-  loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadApiStatus, loadMonitoring,
-} = useAdminConsoleData(props.refresh, monitoringEnabled, apiStatusEnabled)
+  health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError,
+  loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadMonitoring,
+} = useAdminConsoleData(props.refresh, monitoringEnabled)
 const auditLogs = useAuditLogs(props.refresh, auditLogEnabled)
 
 useHead({ title: computed(() => page.value.label) })
@@ -50,10 +48,7 @@ watch(() => page.value.key, async (key, previous) => {
     void loadAccounts()
     void loadOperatorAccounts()
   }
-  if (key === 'status') {
-    void loadApiStatus()
-    void loadMonitoring()
-  }
+  if (key === 'status') void loadMonitoring()
   if (key === 'logs') void auditLogs.load()
   if (previous) {
     await nextTick()
@@ -183,7 +178,6 @@ async function refreshTeam() {
         </template>
 
         <template v-else-if="page.key === 'status'">
-          <ApiStatusPanel :snapshot="apiStatus" :loading="apiStatusLoading" :error="apiStatusError" :enabled="apiStatusEnabled" @refresh="loadApiStatus" />
           <MonitoringPanel :snapshot="monitoring" :loading="monitoringLoading" :error="monitoringError" :enabled="monitoringEnabled" @refresh="loadMonitoring" />
           <section class="surface probe-section" aria-labelledby="probe-title" :aria-busy="healthLoading"><div class="section-heading"><div><p class="kicker">LOCAL CONNECTIVITY</p><h2 id="probe-title">このブラウザからの疎通確認</h2></div><button class="button secondary" :disabled="healthLoading" @click="checkHealth"><PortalIcon name="refresh" />{{ healthLoading ? '確認中…' : '疎通を確認' }}</button></div><p class="section-description">フロントエンドのプロキシを経由し、Rails の /health に接続します。</p><div v-if="healthError" class="feedback error" role="alert">{{ healthError }}</div><div class="probe-grid" aria-live="polite"><div><span>今回の確認結果</span><strong>{{ healthLoading ? '確認中' : health ? health.available ? '疎通成功' : '応答内容を確認できません' : healthError ? '確認できません' : '未確認' }}</strong></div><div><span>ブラウザ往復時間</span><strong>{{ health ? `${health.elapsedMs} ms` : '未計測' }}</strong></div><div><span>確認時刻（日本時間）</span><strong>{{ health ? formatConsoleDate(health.checkedAt) : '未確認' }}</strong></div></div><p class="footnote">単発の疎通結果です。DB・外部サービスの正常性、全APIの稼働率、サーバー処理時間を示すものではありません。</p></section>
         </template>
