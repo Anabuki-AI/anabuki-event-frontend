@@ -1,43 +1,37 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError } from '../../app/lib/api/error'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { request } from '../../app/lib/api/client'
 
 vi.mock('~/lib/api/client', () => ({
   request: vi.fn(),
 }))
 
-const { fetchMyRanking, fetchRanking } = await import('../../app/features/rankings/api/get-rankings')
+const mockedRequest = vi.mocked(request)
+const { fetchRankings } = await import('../../app/features/rankings/api/get-rankings')
 
-const mockEntry = { rank: 1, userId: 101, userName: 'アナブキ太郎', points: 320 }
+const response = {
+  rankings: [
+    { rank: 1, participant_id: 7, display_name: 'アナブキ太郎' },
+    { rank: 2, participant_id: 31, display_name: 'さくら' },
+  ],
+  me: { rank: 4, participant_id: 31, display_name: 'さくら' },
+}
 
-describe('fetchRanking (USE_MOCK=true)', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
+describe('fetchRankings (実API接続)', () => {
+  beforeEach(() => {
+    mockedRequest.mockReset()
   })
 
-  it('returns the mock ranking without touching the API', async () => {
-    const entries = await fetchRanking()
+  it('Cookie付きで /api/rankings を取得する', async () => {
+    mockedRequest.mockResolvedValueOnce(response)
 
-    expect(entries).toHaveLength(10)
-    expect(entries[0]).toMatchObject({ rank: 1, userName: expect.any(String) })
+    await expect(fetchRankings()).resolves.toEqual(response)
+    expect(mockedRequest).toHaveBeenCalledWith('/rankings', { credentials: 'include', retry: 0 })
   })
 
-  it('returns a copy so callers cannot mutate the mock source', async () => {
-    const entries = await fetchRanking()
-    entries[0].points = -1
+  it('参加者セッションが無い場合は me が null のレスポンスをそのまま返す', async () => {
+    const anonymous = { rankings: response.rankings, me: null }
+    mockedRequest.mockResolvedValueOnce(anonymous)
 
-    expect((await fetchRanking())[0].points).toBe(320)
-  })
-})
-
-describe('fetchMyRanking (USE_MOCK=true)', () => {
-  it('resolves the mock entry for a known mock userId', async () => {
-    await expect(fetchMyRanking(mockEntry.userId)).resolves.toMatchObject({ rank: 1, userName: 'アナブキ太郎' })
-  })
-
-  it('rejects with a 404 ApiError for an unknown mock userId', async () => {
-    const error = await fetchMyRanking(999).catch((caught: ApiError) => caught)
-
-    expect(error).toBeInstanceOf(ApiError)
-    expect(error.statusCode).toBe(404)
+    await expect(fetchRankings()).resolves.toEqual(anonymous)
   })
 })

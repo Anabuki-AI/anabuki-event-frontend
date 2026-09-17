@@ -1,103 +1,78 @@
-import { computed, ref } from 'vue'
-import type { QuestionChoice, VotingRateQuestion } from './types'
+import { computed, onMounted, ref } from 'vue'
+import { request } from '~/lib/api/client'
+import type { QuestionChoice, VotingRateQuestion, VotingRateResponse } from './types'
+import { toApiError } from '~/lib/api/error'
 
-// TODO: API接続後に実データへ置き換え
-const dummyQuestions: VotingRateQuestion[] = [
-  {
-    value: 'q1',
-    number: 'Q1',
-    text: '日本の首都はどこでしょう？',
-    participantCount: 48,
-    options: [
-      { key: 'A', label: '選択肢A', text: '東京都', votes: 28, rate: 62 },
-      { key: 'B', label: '選択肢B', text: '大阪府', votes: 9, rate: 20 },
-      { key: 'C', label: '選択肢C', text: '愛知県', votes: 5, rate: 11 },
-      { key: 'D', label: '選択肢D', text: '福岡県', votes: 3, rate: 7 },
-    ],
-  },
-  {
-    value: 'q2',
-    number: 'Q2',
-    text: '四国で面積が最も大きい県はどこでしょう？',
-    participantCount: 48,
-    options: [
-      { key: 'A', label: '選択肢A', text: '東京都', votes: 6, rate: 13 },
-      { key: 'B', label: '選択肢B', text: '大阪府', votes: 4, rate: 9 },
-      { key: 'C', label: '選択肢C', text: '愛知県', votes: 8, rate: 18 },
-      { key: 'D', label: '選択肢D', text: '福岡県', votes: 12, rate: 27 },
-    ],
-  },
-  {
-    value: 'q3',
-    number: 'Q3',
-    text: '世界で最も人口が多い国はどこでしょう？',
-    participantCount: 48,
-    options: [
-      { key: 'A', label: '選択肢A', text: '東京都', votes: 15, rate: 34 },
-      { key: 'B', label: '選択肢B', text: '大阪府', votes: 10, rate: 23 },
-      { key: 'C', label: '選択肢C', text: '愛知県', votes: 7, rate: 16 },
-      { key: 'D', label: '選択肢D', text: '福岡県', votes: 2, rate: 5 },
-    ],
-  },
-]
+const credentials = 'include' as const
 
-function cloneQuestions(source: VotingRateQuestion[]): VotingRateQuestion[] {
-  return source.map(question => ({
-    ...question,
-    options: question.options.map(option => ({ ...option })),
-  }))
+/** 運営者セッションで問題ごとの解答状況を取得する。 */
+export function fetchVotingRate(): Promise<VotingRateResponse> {
+  return request<VotingRateResponse>('/operator/voting-rate', { credentials, retry: 0 })
 }
 
 function createQuestionChoices(questions: VotingRateQuestion[]): QuestionChoice[] {
-  return questions.map(question => ({ value: question.value, label: question.number }))
+  return questions.map(question => ({ value: String(question.questionId), label: `Q${question.position}` }))
 }
 
-function firstQuestion(questions: VotingRateQuestion[]): VotingRateQuestion {
-  const first = questions[0]
-  if (!first) {
-    throw new Error('投票率データが1件も存在しません')
-  }
-  return first
-}
-
-function findQuestion(questions: VotingRateQuestion[], value: string): VotingRateQuestion {
-  return questions.find(question => question.value === value) ?? firstQuestion(questions)
+function findQuestion(questions: VotingRateQuestion[], value: string): VotingRateQuestion | null {
+  return questions.find(question => String(question.questionId) === value) ?? questions[0] ?? null
 }
 
 export function useVotingRate() {
-  const questions = ref<VotingRateQuestion[]>(cloneQuestions(dummyQuestions))
-  const selectedQuestionValue = ref(firstQuestion(questions.value).value)
+  const questions = ref<VotingRateQuestion[]>([])
+  const totalParticipants = ref(0)
+  const isLoading = ref(false)
+  const errorMessage = ref('')
+  const selectedQuestionValue = ref('')
 
   const questionChoices = computed<QuestionChoice[]>(() => createQuestionChoices(questions.value))
-  const currentQuestion = computed<VotingRateQuestion>(() =>
+  const currentQuestion = computed<VotingRateQuestion | null>(() =>
     findQuestion(questions.value, selectedQuestionValue.value),
   )
 
-  const participantCount = computed(() => currentQuestion.value.participantCount)
-  const answeredCount = computed(() =>
-    currentQuestion.value.options.reduce((total, option) => total + option.votes, 0),
-  )
+  const participantCount = computed(() => totalParticipants.value)
+  const answeredCount = computed(() => currentQuestion.value?.answeredCount ?? 0)
   const unansweredCount = computed(() => Math.max(participantCount.value - answeredCount.value, 0))
+  const answeredRatePercent = computed(() =>
+    currentQuestion.value ? Math.round(currentQuestion.value.answeredRate * 100) : 0,
+  )
 
-  const options = computed(() => currentQuestion.value.options)
+  async function refresh() {
+    if (isLoading.value) return
 
-  // TODO: API接続後に実装（APIから投票率データを取得して questions を更新する）
-  function loadVotingRate() {
-    questions.value = cloneQuestions(dummyQuestions)
+    isLoading.value = true
+    errorMessage.value = ''
+    try {
+      const response = await fetchVotingRate()
+      questions.value = [...response.questions].sort((left, right) => left.position - right.position)
+      totalParticipants.value = response.total_participants
+      if (!findQuestion(questions.value, selectedQuestionValue.value)) {
+        selectedQuestionValue.value = questions.value[0] ? String(questions.value[0].questionId) : ''
+      }
+    }
+    catch (error) {
+      errorMessage.value = toApiError(error).message
+    }
+    finally {
+      isLoading.value = false
+    }
   }
 
-  function refresh() {
-    loadVotingRate()
-  }
+  onMounted(() => {
+    void refresh()
+  })
 
   return {
+    questions,
+    isLoading,
+    errorMessage,
     questionChoices,
     selectedQuestionValue,
     currentQuestion,
     participantCount,
     answeredCount,
     unansweredCount,
-    options,
+    answeredRatePercent,
     refresh,
   }
 }

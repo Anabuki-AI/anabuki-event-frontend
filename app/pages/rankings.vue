@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { myRankingViewState, formatMyRankingLine } from '~/features/rankings/components/MyRankingPanel'
-import { formatListPoints, formatRank } from '~/features/rankings/components/RankingList'
+import { formatMyRankingLine } from '~/features/rankings/components/MyRankingPanel'
+import { formatRank } from '~/features/rankings/components/RankingList'
 import { rankingMedalFor } from '~/features/rankings/components/RankingTopCards'
 import { useRankings } from '~/features/rankings/composables/use-rankings'
 
@@ -16,10 +16,6 @@ const {
   ranking,
   status,
   myRanking,
-  myUserId,
-  myRankingError,
-  myRankingNotFound,
-  isMyRankingLoading,
   isRefreshing,
   formattedUpdatedAt,
   handleRefresh,
@@ -78,7 +74,7 @@ const {
         <ul class="ranking-top-cards">
           <li
             v-for="(entry, index) in topThree"
-            :key="entry.userId"
+            :key="entry.participantId"
             class="ranking-card"
           >
             <p class="ranking-card-medal">
@@ -86,10 +82,7 @@ const {
               <span class="ranking-card-rank">{{ formatRank(entry.rank) }}</span>
             </p>
             <p class="ranking-card-name">
-              {{ entry.userName }}
-            </p>
-            <p class="ranking-card-points">
-              {{ entry.points.toLocaleString('ja-JP') }}<span class="ranking-card-unit">ポイント</span>
+              {{ entry.displayName }}
             </p>
           </li>
         </ul>
@@ -98,60 +91,26 @@ const {
         <ol class="ranking-list">
           <li
             v-for="entry in rest"
-            :key="entry.userId"
+            :key="entry.participantId"
             class="ranking-list-item"
           >
             <span class="ranking-list-rank">{{ formatRank(entry.rank) }}</span>
-            <span class="ranking-list-name">{{ entry.userName }}</span>
-            <span class="ranking-list-points">{{ formatListPoints(entry.points) }}</span>
+            <span class="ranking-list-name">{{ entry.displayName }}</span>
           </li>
         </ol>
       </template>
 
       <hr class="ranking-divider">
 
-      <!-- 自分の順位パネル(旧MyRankingPanel.vue) -->
+      <!-- 自分の順位パネル(旧MyRankingPanel.vue)。me は参加者セッションがあるときだけ返る -->
       <section
-        v-if="myUserId !== null"
+        v-if="myRanking"
         class="my-ranking"
         aria-label="自分の順位"
-        :aria-busy="isMyRankingLoading"
       >
-        <p
-          v-if="myRankingViewState(myRanking, myRankingError, isMyRankingLoading) === 'loading'"
-          class="muted-copy"
-        >
-          順位を確認しています…
-        </p>
-        <p
-          v-else-if="myRanking"
-          class="my-ranking-line"
-        >
+        <p class="my-ranking-line">
           {{ formatMyRankingLine(myRanking) }}
         </p>
-        <p
-          v-else-if="myRankingError"
-          class="status-message error"
-          role="alert"
-        >
-          {{ myRankingError }}
-        </p>
-      </section>
-      <section
-        v-else-if="myRankingNotFound"
-        class="my-ranking"
-        aria-label="参加登録の再案内"
-      >
-        <p class="my-ranking-label">
-          あなたの順位
-        </p>
-        <p class="muted-copy">
-          参加登録情報が見つかりませんでした。登録が削除されている可能性があります。
-          もう一度参加登録すると、自分の順位がここに表示されます。
-        </p>
-        <NuxtLink class="primary-link" to="/users/new">
-          もう一度参加登録する
-        </NuxtLink>
       </section>
       <section
         v-else
@@ -162,7 +121,7 @@ const {
           あなたの順位
         </p>
         <p class="muted-copy">
-          参加登録すると、自分の順位と獲得ポイントがここに表示されます。
+          参加登録すると、あなたの順位がここに表示されます。
         </p>
         <NuxtLink class="primary-link" to="/users/new">
           参加登録する
