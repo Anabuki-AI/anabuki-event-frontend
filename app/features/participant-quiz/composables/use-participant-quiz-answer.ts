@@ -12,7 +12,6 @@ import { useParticipantQuizState } from './use-participant-quiz-state'
 export interface ConfidenceOption {
   value: ConfidenceLevel
   label: string
-  /** API契約では自信度の倍率値は参加者に返さないため、level表示を使う。 */
   multiplier: string
 }
 
@@ -46,12 +45,6 @@ export function getParticipantQuizScreen(
   if (state.answered || submittedForQuestionId === state.question?.question_id) return 'submitted'
   return 'answer'
 }
-
-const CONFIDENCE_OPTIONS: ConfidenceOption[] = [3, 2, 1].map(level => ({
-  value: level as ConfidenceLevel,
-  label: CONFIDENCE_LEVEL_LABELS[level as ConfidenceLevel],
-  multiplier: `Lv.${level}`,
-}))
 
 /** 解答送信・問題状態に応じた表示分岐を、参加者クイズAPIの状態から構成する。 */
 export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOptions) {
@@ -101,7 +94,15 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     }))
   })
 
-  const confidenceOptions = computed(() => CONFIDENCE_OPTIONS)
+  const confidenceOptions = computed<ConfidenceOption[]>(() => [3, 2, 1].map(level => {
+    const key = ({ 3: 'high', 2: 'normal', 1: 'low' } as const)[level as ConfidenceLevel]
+    const multiplier = state.value?.confidence_multipliers?.[key]
+    return {
+      value: level as ConfidenceLevel,
+      label: CONFIDENCE_LEVEL_LABELS[level as ConfidenceLevel],
+      multiplier: multiplier != null ? `×${multiplier.toFixed(2)}` : '—',
+    }
+  }))
 
   const selectedChoiceText = computed(() => {
     const selected = choices.value.find(choice => choice.key === selectedChoice.value)
