@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "anabuki-event-frontend",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-08-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./.output/public"
+  },
+  "services": [
+    {
+      "binding": "BACKEND",
+      "service": "anabuki-event-backend"
+    }
+  ]
+}

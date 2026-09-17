@@ -91,3 +91,24 @@ app/
 - endpoint固有処理は `features/<feature>/api/` に置きます。
 - 複数featureで共有するHTTP処理は `app/lib/api/` に置きます。
 - 将来必要になるかもしれない空のfeatureや抽象層は先に作りません。
+
+## Cloudflare Workers production deployment
+
+Nuxt uses Nitro's `cloudflare_module` preset and produces `.output/server/index.mjs` plus `.output/public`. `wrangler.jsonc` explicitly maps the latter to the Cloudflare Workers Static Assets binding `ASSETS`; without this `assets.directory`, the Worker bundle is deployed but Nuxt's `_nuxt/*` JavaScript/CSS files are not uploaded. Nitro's generated Cloudflare handler calls `env.ASSETS.fetch()` for public asset paths, so the binding name must stay `ASSETS`.
+
+The existing `server/api/[...path].ts` remains the single `/api/**` proxy. In Cloudflare it obtains `BACKEND` from Nitro's `event.context.cloudflare.env` and uses the Worker service binding; local development falls back to `NUXT_BACKEND_BASE_URL`/the existing dev proxy. Request `Origin` is preserved for Rails' exact same-origin check, client-controlled forwarded-protocol headers are replaced with the Worker request protocol, redirects remain manual, and h3's `getSetCookie()` path preserves multiple `Set-Cookie` values. The admin service-health endpoint uses the same binding and does not forward cookies or Origin.
+
+`.github/workflows/ci.yml` runs lint, type-check, tests, and build for pull requests and `main` pushes. Production deployment runs only after `check` succeeds on a `main` push, or from `workflow_dispatch` selected on `main`; pull requests never deploy. The deploy job targets the GitHub `production` environment, uses a non-canceling deployment concurrency group, and compares `github.sha` with the current `origin/main` ref immediately before deployment so an older queued run is skipped instead of rolling back a newer main commit. The frontend `notify-parent` and `deploy-production` jobs intentionally both depend only on `check` and may run in parallel; parent gitlink synchronization is not a deployment prerequisite and keeps its own same-SHA guard. The deploy job validates only `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, uses read-only `contents` permission, and installs the pinned Wrangler version from `package.json`.
+
+Deploy the backend Worker first on initial setup. The `BACKEND` service binding in `wrangler.jsonc` targets the Worker name `anabuki-event-backend`; that backend config disables its public `workers.dev` endpoint, leaving the service binding as the application path. The frontend's production `routes`/custom domain are intentionally **unset** because this change does not alter DNS. Add the approved fixed-domain route to this file only as a separately reviewed configuration change.
+
+Local Cloudflare build validation (Node.js 22.19.0+):
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm exec wrangler deploy --dry-run --config wrangler.jsonc
+```
