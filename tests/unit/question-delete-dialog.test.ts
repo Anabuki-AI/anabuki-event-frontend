@@ -9,6 +9,7 @@ const question: Question = {
   questionText: '削除対象の問題',
   choiceA: 'A', choiceB: 'B', choiceC: 'C', choiceD: 'D',
   correctAnswer: 'A', imageUrl: null,
+  explanation: null, targetAudience: null, points: 100,
   createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
 }
 

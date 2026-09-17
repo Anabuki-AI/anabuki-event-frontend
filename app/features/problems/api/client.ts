@@ -13,6 +13,8 @@ export interface QuestionPayload {
   correctAnswer: Question['correctAnswer']
   explanation: string
   targetAudience: string
+  /** 配点。この問題に正解した場合の基礎得点。 */
+  points: number
   /** 新しい画像ファイル。未指定なら既存の画像を変更しない。 */
   image?: File | null
   /** 既存の画像を削除する場合に true を送る。 */
@@ -34,6 +36,7 @@ function toFormData(payload: QuestionPayload): FormData {
   formData.append('correctAnswer', payload.correctAnswer)
   formData.append('explanation', payload.explanation)
   formData.append('targetAudience', payload.targetAudience)
+  formData.append('points', String(payload.points))
   if (payload.image) formData.append('image', payload.image)
   if (payload.removeImage) formData.append('removeImage', 'true')
   return formData

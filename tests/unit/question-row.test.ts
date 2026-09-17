@@ -17,6 +17,9 @@ const question: Question = {
   choiceD: '福岡',
   correctAnswer: 'A',
   imageUrl: null,
+  explanation: null,
+  targetAudience: null,
+  points: 100,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 }
