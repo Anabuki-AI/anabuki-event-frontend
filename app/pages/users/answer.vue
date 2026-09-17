@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import ParticipantQuizFinishedPanel from '~/features/participant-quiz/components/ParticipantQuizFinishedPanel.vue'
 import { useParticipantQuizAnswer } from '~/features/participant-quiz/composables/use-participant-quiz-answer'
+import { CONFIDENCE_LEVEL_LABELS } from '~/features/participant-quiz/types'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
 import type { Participant } from '~/features/participants/types'
 import { ApiError } from '~/lib/api/error'
@@ -51,6 +52,7 @@ const {
 })
 
 const correctChoiceText = computed(() => choices.value.find(choice => choice.key === correctAnswer.value)?.text)
+const myAnswerConfidenceLabel = computed(() => myAnswer.value && CONFIDENCE_LEVEL_LABELS[myAnswer.value.confidence_level])
 
 onMounted(async () => {
   try {
@@ -236,7 +238,7 @@ onMounted(async () => {
             あなたの解答
           </p>
           <p class="result-value">
-            {{ myAnswer ? `${myAnswer.choice}（自信度 ${myAnswer.confidence_level}）` : '解答なし' }}
+            {{ myAnswer ? `${myAnswer.choice}（自信度 ${myAnswerConfidenceLabel}）` : '解答なし' }}
           </p>
         </div>
         <p class="answer-note">

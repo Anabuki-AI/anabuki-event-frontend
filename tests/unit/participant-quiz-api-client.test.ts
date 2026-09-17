@@ -21,8 +21,8 @@ describe('参加者クイズ API client', () => {
   })
 
   it('解答をCookie付きPOSTで送り、更新後のmy_answerを受け取る', async () => {
-    const input = { question_id: 12, choice: 'B' as const, confidence_level: 2 as const }
-    const result = { my_answer: { choice: 'B' as const, confidence_level: 2 as const } }
+    const input = { question_id: 12, choice: 'B' as const, confidence_level: 'normal' as const }
+    const result = { my_answer: { choice: 'B' as const, confidence_level: 'normal' as const } }
     mockedRequest.mockResolvedValueOnce(result)
 
     await expect(submitParticipantQuizAnswer(input)).resolves.toEqual(result)

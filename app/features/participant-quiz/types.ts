@@ -2,11 +2,8 @@ export type AnswerChoice = 'A' | 'B' | 'C' | 'D'
 export type QuizSessionStatus = 'waiting' | 'in_progress' | 'finished'
 export type QuizSessionPhase = 'answering' | 'closed' | 'revealed'
 
-/**
- * confidence_multipliers の level。数値が大きいほど高い自信度
- * (3=高い / 2=普通 / 1=低い)。
- */
-export type ConfidenceLevel = 1 | 2 | 3
+/** バックエンドの confidence_multipliers で使用する自信度キー。 */
+export type ConfidenceLevel = 'high' | 'normal' | 'low'
 
 export interface ParticipantQuizQuestion {
   question_id: number
@@ -45,7 +42,7 @@ export interface SubmitParticipantQuizAnswerResult {
 }
 
 export const CONFIDENCE_LEVEL_LABELS: Record<ConfidenceLevel, string> = {
-  3: 'あり',
-  2: '普通',
-  1: 'なし',
+  high: 'あり',
+  normal: '普通',
+  low: 'なし',
 }
