@@ -3,6 +3,7 @@ import { defineComponent, nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   closeAnswers,
+  closeAnswersImmediately,
   fetchQuizState,
   finishQuiz,
   publishQuestion,
@@ -14,6 +15,7 @@ import { ApiError } from '~/lib/api/error'
 
 vi.mock('~/features/quiz-control/api/client', () => ({
   closeAnswers: vi.fn(),
+  closeAnswersImmediately: vi.fn(),
   fetchQuizState: vi.fn(),
   finishQuiz: vi.fn(),
   publishQuestion: vi.fn(),
@@ -49,6 +51,7 @@ describe('useQuizControl', () => {
     mockedStart.mockReset()
     mockedPublish.mockReset()
     vi.mocked(closeAnswers).mockReset()
+    vi.mocked(closeAnswersImmediately).mockReset()
     vi.mocked(revealAnswer).mockReset()
     mockedFinish.mockReset()
   })
@@ -117,6 +120,19 @@ describe('useQuizControl', () => {
 
     await control.start()
     expect((wrapper.vm as { errorMessage: string }).errorMessage).toContain('現在の状態では実行できない操作')
+    wrapper.unmount()
+  })
+
+  it('手動締め切りは10秒カウントダウンを開始する', async () => {
+    const wrapper = mount(Harness)
+    await flushPromises()
+    vi.mocked(closeAnswers).mockResolvedValueOnce(state)
+
+    const control = wrapper.vm as unknown as ReturnType<typeof useQuizControl>
+    await control.close()
+
+    expect(closeAnswers).toHaveBeenCalledOnce()
+    expect((wrapper.vm as { noticeMessage: string }).noticeMessage).toBe('10秒後に解答受付を締め切ります。')
     wrapper.unmount()
   })
 

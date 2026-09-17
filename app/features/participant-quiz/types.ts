@@ -1,6 +1,6 @@
 export type AnswerChoice = 'A' | 'B' | 'C' | 'D'
 export type QuizSessionStatus = 'waiting' | 'in_progress' | 'finished'
-export type QuizSessionPhase = 'answering' | 'closed' | 'revealed'
+export type QuizSessionPhase = 'answering' | 'closing' | 'closed' | 'revealed'
 
 /** バックエンドの confidence_multipliers で使用する自信度キー。 */
 export type ConfidenceLevel = 'high' | 'normal' | 'low'
@@ -22,6 +22,8 @@ export interface ParticipantQuizMyAnswer {
 export interface ParticipantQuizState {
   status: QuizSessionStatus
   phase: QuizSessionPhase | null
+  /** 現在のフェーズが始まったサーバー時刻。closing 時は10秒カウントダウンの基準。 */
+  phase_started_at?: string | null
   question: ParticipantQuizQuestion | null
   answered: boolean
   my_answer: ParticipantQuizMyAnswer | null

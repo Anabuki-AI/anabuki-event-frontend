@@ -31,6 +31,7 @@ describe('参加者クイズの画面遷移状態', () => {
 
   it('出題中・締切・解答発表中の問題は解答画面で扱う', () => {
     expect(isParticipantQuizWaitingState(inProgress)).toBe(false)
+    expect(isParticipantQuizWaitingState({ ...inProgress, phase: 'closing' })).toBe(false)
     expect(isParticipantQuizWaitingState({ ...inProgress, phase: 'closed' })).toBe(false)
     expect(isParticipantQuizWaitingState({ ...inProgress, phase: 'revealed', correct_answer: 'B' })).toBe(false)
   })
@@ -47,6 +48,11 @@ describe('参加者クイズの画面遷移状態', () => {
     expect(getParticipantQuizScreen(inProgress, false)).toBe('answer')
     expect(getParticipantQuizScreen({ ...inProgress, answered: true, my_answer: { choice: 'A', confidence_level: 'normal' } }, false)).toBe('submitted')
     expect(getParticipantQuizScreen(inProgress, false, 12)).toBe('submitted')
+  })
+
+  it('phase=closingでは未解答者にも解答フォームを維持する', () => {
+    expect(getParticipantQuizScreen({ ...inProgress, phase: 'closing', phase_started_at: '2026-09-20T10:00:00Z' }, false)).toBe('answer')
+    expect(getParticipantQuizScreen({ ...inProgress, phase: 'closing', answered: true }, false)).toBe('submitted')
   })
 
   it('phase=closed/revealedはそれぞれ締切・結果画面', () => {

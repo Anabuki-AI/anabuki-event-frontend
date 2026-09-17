@@ -29,6 +29,7 @@ describe('運営クイズ状態の導出', () => {
   it('status/phaseから画面フェーズを導出する', () => {
     expect(getQuizPhase(state({ status: 'waiting', phase: null, current: null }))).toBe('IDLE')
     expect(getQuizPhase(state({ phase: 'answering' }))).toBe('PUBLISHED')
+    expect(getQuizPhase(state({ phase: 'closing' }))).toBe('CLOSING')
     expect(getQuizPhase(state({ phase: 'closed' }))).toBe('CLOSED')
     expect(getQuizPhase(state({ phase: 'revealed' }))).toBe('REVEALED')
     expect(getQuizPhase(state({ status: 'finished', phase: null, current: null }))).toBe('FINISHED')
