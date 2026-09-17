@@ -20,6 +20,9 @@ export const adminConsoleApi = {
   accounts: () => request<ManagementAccount[]>('/admin/allowed-emails', { credentials: 'include', retry: 0 }),
   operatorAccounts: () => request<OperatorAccount[]>('/admin/operator-identities', { credentials: 'include', retry: 0 }),
   setOperatorAccess: (id: string, managerEnabled: boolean) => request<OperatorAccount>(`/admin/operator-identities/${id}`, { method: 'PATCH', body: { managerEnabled }, credentials: 'include', retry: 0 }),
+  deleteAllowedEmail: async (id: string): Promise<void> => {
+    await request<unknown>(`/admin/allowed-emails/${id}`, { method: 'DELETE', credentials: 'include', retry: 0 })
+  },
   // This fixed Nuxt route forwards only the Rails public /health endpoint.
   health: () => request<{ status: string }>('/admin/service-health', { credentials: 'omit', retry: 0, timeout: 8000 }),
 }
