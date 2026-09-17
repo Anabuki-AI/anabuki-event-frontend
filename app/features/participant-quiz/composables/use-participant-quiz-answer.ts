@@ -116,8 +116,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const displaySelectedMultiplier = computed(() => displayConfidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '—')
 
   const fixedConfidenceOptions = computed<ConfidenceOption[]>(() => confidenceOptions.value.map((option) => {
-    const key = ({ 3: 'high', 2: 'normal', 1: 'low' } as const)[option.value]
-    const multiplier = state.value?.confidence_multipliers?.[key]
+    const multiplier = state.value?.confidence_multipliers?.[option.value]
     return { ...option, multiplier: multiplier != null ? `\u00d7${multiplier.toFixed(2)}` : '\u2014' }
   }))
 
