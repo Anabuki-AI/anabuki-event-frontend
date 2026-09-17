@@ -24,3 +24,12 @@ export function validateMultiplierInput(value: string | number, min: number, max
   if (decimals != null && decimals.length > 2) return '小数点以下は2桁までで入力してください'
   return ''
 }
+
+export function validatePointsInput(value: string | number, min: number, max: number): string {
+  const text = String(value).trim()
+  if (text === '') return '配点を入力してください'
+  if (!/^\d+$/.test(text)) return '整数で入力してください'
+  const numeric = Number(text)
+  if (numeric < min || numeric > max) return `${min}〜${max}の範囲で入力してください`
+  return ''
+}

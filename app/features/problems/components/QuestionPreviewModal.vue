@@ -16,13 +16,14 @@ interface ConfidenceOption {
   rate: string
 }
 
-// users/answer.vue（見た目確認用ダミー）と同じ自信度選択肢・配点。プレビュー専用で送信は行わない。
+// users/answer.vue（見た目確認用ダミー）と同じ自信度選択肢・倍率。プレビュー専用で送信は行わない。
 const confidenceOptions: ConfidenceOption[] = [
   { label: 'あり', rate: '×1.5' },
   { label: '普通', rate: '×1.0' },
   { label: 'なし', rate: '×0.5' },
 ]
-const CONFIDENCE_POINTS: Record<Confidence, number> = { あり: 150, 普通: 100, なし: 50 }
+// 獲得予定ポイントの基礎点は、この問題に設定された配点（question.points）を使う。
+const CONFIDENCE_RATE: Record<Confidence, number> = { あり: 1.5, 普通: 1, なし: 0.5 }
 
 const imageUrl = resolveQuestionImageUrl(props.question.imageUrl)
 const selectedChoice = ref<Question['correctAnswer'] | null>(null)
@@ -35,7 +36,7 @@ const selectedChoiceText = computed(() => {
   if (selectedChoice.value === null) return '未選択'
   return `${selectedChoice.value}. ${choiceText(props.question, selectedChoice.value)}`
 })
-const expectedPoint = computed(() => CONFIDENCE_POINTS[confidence.value])
+const expectedPoint = computed(() => Math.round(props.question.points * CONFIDENCE_RATE[confidence.value]))
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') emit('close')

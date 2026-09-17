@@ -23,6 +23,7 @@ const payload = {
   correctAnswer: 'A' as const,
   explanation: '解説テキスト',
   targetAudience: '初級者向け',
+  points: 100,
 }
 
 function formDataEntries(formData: unknown): Record<string, unknown> {
@@ -55,6 +56,7 @@ describe('問題管理API client', () => {
       correctAnswer: 'A',
       explanation: '解説テキスト',
       targetAudience: '初級者向け',
+      points: '100',
     }
 
     expect(mockedRequest.mock.calls[0]?.[0]).toBe('/admin/questions')

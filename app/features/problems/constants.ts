@@ -7,6 +7,10 @@ export const CHOICE_TEXT_MAX = 100
 export const EXPLANATION_MAX = 500
 export const TARGET_AUDIENCE_MAX = 100
 
+export const QUESTION_POINTS_MIN = 1
+export const QUESTION_POINTS_MAX = 1000
+export const QUESTION_POINTS_DEFAULT = 100
+
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024
 export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
