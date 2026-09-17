@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatListPoints, formatRank } from '../../app/features/rankings/components/RankingList'
+import { formatRank } from '../../app/features/rankings/components/RankingList'
 import { rankingMedalFor } from '../../app/features/rankings/components/RankingTopCards'
 
 describe('RankingList formatting', () => {
-  it('formats every entry with rank and locale-formatted points', () => {
+  it('formats ranks (API returns no points)', () => {
     expect(formatRank(4)).toBe('4位')
-    expect(formatListPoints(200)).toBe('200ポイント')
-  })
-
-  it('formats large points with locale separators', () => {
-    expect(formatListPoints(12345)).toBe('12,345ポイント')
   })
 })
 

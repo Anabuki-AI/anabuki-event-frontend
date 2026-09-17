@@ -5,17 +5,19 @@ import '~/assets/css/voting-rate.css'
 
 useSeoMeta({
   title: '投票率確認',
-  description: 'クイズ大会の問題ごとの解答状況と選択肢ごとの投票率を確認するイベント運営者向けページです。',
+  description: 'クイズ大会の問題ごとの解答状況を確認するイベント運営者向けページです。',
 })
 
 const {
+  isLoading,
+  errorMessage,
   questionChoices,
   selectedQuestionValue,
   currentQuestion,
   participantCount,
   answeredCount,
   unansweredCount,
-  options,
+  answeredRatePercent,
   refresh,
 } = useVotingRate()
 
@@ -62,69 +64,83 @@ const {
           </p>
           <h1>投票率確認</h1>
           <p class="muted-copy">
-            問題ごとの解答状況と、選択肢ごとの投票率を確認できます。
+            問題ごとの解答状況を確認できます。
           </p>
         </div>
       </header>
 
-      <ul class="voting-summary">
-        <li class="summary-item">
-          <span class="summary-label">現在の参加人数</span>
-          <strong class="summary-value">{{ participantCount }} / {{ participantCount }}<span class="summary-unit">人</span></strong>
-        </li>
-        <li class="summary-item">
-          <span class="summary-label">解答人数</span>
-          <strong class="summary-value">{{ answeredCount }} / {{ participantCount }}<span class="summary-unit">人</span></strong>
-        </li>
-        <li class="summary-item">
-          <span class="summary-label">未解答人数</span>
-          <strong class="summary-value">{{ unansweredCount }} / {{ participantCount }}<span class="summary-unit">人</span></strong>
-        </li>
-      </ul>
+      <p
+        v-if="errorMessage"
+        class="status-message error"
+        role="alert"
+      >
+        {{ errorMessage }}
+      </p>
+      <p
+        v-else-if="isLoading && !currentQuestion"
+        class="status-message"
+        role="status"
+      >
+        読み込み中…
+      </p>
 
-      <div class="question-panel">
-        <div class="question-select-row">
-          <label class="question-select">
-            <span>表示する問題</span>
-            <select v-model="selectedQuestionValue">
-              <option v-for="question in questionChoices" :key="question.value" :value="question.value">
-                {{ question.label }}
-              </option>
-            </select>
-          </label>
-          <button type="button" class="voting-refresh" @click="refresh()">
-            更新
-          </button>
+      <template v-else-if="currentQuestion">
+        <ul class="voting-summary">
+          <li class="summary-item">
+            <span class="summary-label">参加人数</span>
+            <strong class="summary-value">{{ participantCount }}<span class="summary-unit">人</span></strong>
+          </li>
+          <li class="summary-item">
+            <span class="summary-label">解答人数</span>
+            <strong class="summary-value">{{ answeredCount }} / {{ participantCount }}<span class="summary-unit">人</span></strong>
+          </li>
+          <li class="summary-item">
+            <span class="summary-label">未解答人数</span>
+            <strong class="summary-value">{{ unansweredCount }} / {{ participantCount }}<span class="summary-unit">人</span></strong>
+          </li>
+        </ul>
+
+        <div class="question-panel">
+          <div class="question-select-row">
+            <label class="question-select">
+              <span>表示する問題</span>
+              <select v-model="selectedQuestionValue">
+                <option v-for="question in questionChoices" :key="question.value" :value="question.value">
+                  {{ question.label }}
+                </option>
+              </select>
+            </label>
+            <button type="button" class="voting-refresh" :disabled="isLoading" @click="refresh()">
+              {{ isLoading ? '更新中…' : '更新' }}
+            </button>
+          </div>
+          <p class="question-number">
+            Q{{ currentQuestion.position }}
+          </p>
+          <p class="question-text">
+            {{ answeredCount }} / {{ participantCount }}人が解答（{{ answeredRatePercent }}%）
+          </p>
         </div>
-        <p class="question-number">
-          {{ currentQuestion.number }}
-        </p>
-        <p class="question-text">
-          {{ currentQuestion.text }}
-        </p>
-      </div>
 
-      <ul class="option-list">
-        <li v-for="option in options" :key="option.key" class="option-item">
-          <div class="option-head">
-            <p class="option-label">
-              {{ option.label }}
-            </p>
-            <p class="option-text">
-              {{ option.text }}
-            </p>
-            <p class="option-stats">
-              {{ option.votes }}人・{{ option.rate }}%
-            </p>
-          </div>
-          <div class="option-bar">
-            <div class="option-bar-fill" :style="{ width: `${option.rate}%` }" />
-          </div>
-        </li>
-      </ul>
+        <ul class="option-list">
+          <li class="option-item">
+            <div class="option-head">
+              <p class="option-label">
+                解答率
+              </p>
+              <p class="option-stats">
+                {{ answeredCount }}人・{{ answeredRatePercent }}%
+              </p>
+            </div>
+            <div class="option-bar">
+              <div class="option-bar-fill" :style="{ width: `${answeredRatePercent}%` }" />
+            </div>
+          </li>
+        </ul>
+      </template>
 
-      <p class="voting-note">
-        ※ この画面はダミーデータによる見た目確認用です（API未接続）。
+      <p v-else class="muted-copy">
+        表示できる問題データがありません。
       </p>
     </section>
   </main>
