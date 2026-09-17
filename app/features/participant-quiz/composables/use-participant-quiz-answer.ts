@@ -9,6 +9,8 @@ import { CONFIDENCE_LEVEL_LABELS } from '../types'
 import { ApiError } from '~/lib/api/error'
 import { useParticipantQuizState } from './use-participant-quiz-state'
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 export interface ConfidenceOption {
   value: ConfidenceLevel
   label: string
