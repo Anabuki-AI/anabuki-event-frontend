@@ -1,60 +1,50 @@
 export type AnswerChoice = 'A' | 'B' | 'C' | 'D'
-export type ConfidenceLevel = 'high' | 'normal' | 'low'
-export type QuizEventStatus = 'ACTIVE' | 'FINISHED'
-export type QuizQuestionStatus = 'PENDING' | 'PUBLISHED' | 'CLOSED' | 'REVEALED'
+export type QuizSessionStatus = 'waiting' | 'in_progress' | 'finished'
+export type QuizSessionPhase = 'answering' | 'closed' | 'revealed'
 
-export interface ConfidenceMultipliers {
-  high: string
-  normal: string
-  low: string
-}
-
-export interface ParticipantQuizAnswer {
-  id: number
-  quizEventQuestionId: number
-  answer: AnswerChoice
-  confidenceLevel: ConfidenceLevel
-  submittedAt: string
-  /** REVEALED の問題だけで返る。 */
-  isCorrect?: boolean
-  /** REVEALED の問題だけで返る文字列小数の得点。 */
-  points?: string
-}
-
-export interface ParticipantQuizEvent {
-  id: number
-  status: QuizEventStatus
-  startedAt: string
-  finishedAt: string | null
-  totalQuestions: number
-  revealedQuestionCount: number
-  confidenceMultipliers: ConfidenceMultipliers
-  /** 少なくとも1問が REVEALED のときだけで返る文字列小数の累計得点。 */
-  totalScore?: string
-}
+/**
+ * confidence_multipliers の level。数値が大きいほど高い自信度
+ * (3=高い / 2=普通 / 1=低い)。
+ */
+export type ConfidenceLevel = 1 | 2 | 3
 
 export interface ParticipantQuizQuestion {
-  id: number
+  question_id: number
   position: number
-  status: QuizQuestionStatus
-  questionText: string
-  choiceA: string
-  choiceB: string
-  choiceC: string
-  choiceD: string
-  imageUrl: string | null
-  myAnswer?: ParticipantQuizAnswer
-  /** REVEALED の問題だけで返る。 */
-  correctAnswer?: AnswerChoice
+  question_text: string
+  choices: Record<AnswerChoice, string>
+  image_url: string | null
 }
 
+export interface ParticipantQuizMyAnswer {
+  choice: AnswerChoice
+  confidence_level: ConfidenceLevel
+}
+
+/** GET /api/participant/quiz/state のレスポンス(契約: docs/quiz-session-contract.md)。 */
 export interface ParticipantQuizState {
-  event: ParticipantQuizEvent | null
+  status: QuizSessionStatus
+  phase: QuizSessionPhase | null
   question: ParticipantQuizQuestion | null
+  answered: boolean
+  my_answer: ParticipantQuizMyAnswer | null
+  /** phase=revealed のときだけ文字列で返る。 */
+  correct_answer: AnswerChoice | null
 }
 
 export interface SubmitParticipantQuizAnswerInput {
-  quizEventQuestionId: number
-  answer: AnswerChoice
-  confidenceLevel: ConfidenceLevel
+  question_id: number
+  choice: AnswerChoice
+  confidence_level: ConfidenceLevel
+}
+
+/** POST /api/participant/quiz/answers のレスポンス(更新後の my_answer)。 */
+export interface SubmitParticipantQuizAnswerResult {
+  my_answer: ParticipantQuizMyAnswer
+}
+
+export const CONFIDENCE_LEVEL_LABELS: Record<ConfidenceLevel, string> = {
+  3: '高い',
+  2: '普通',
+  1: '低い',
 }

@@ -5,7 +5,14 @@ import {
 } from '~/features/participant-quiz/composables/use-participant-quiz-state'
 import type { ParticipantQuizState } from '~/features/participant-quiz/types'
 
-const waitingState: ParticipantQuizState = { event: null, question: null }
+const waitingState: ParticipantQuizState = {
+  status: 'waiting',
+  phase: null,
+  question: null,
+  answered: false,
+  my_answer: null,
+  correct_answer: null,
+}
 
 async function flushPromises() {
   await Promise.resolve()

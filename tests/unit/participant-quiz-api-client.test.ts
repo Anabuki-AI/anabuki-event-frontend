@@ -10,7 +10,7 @@ describe('参加者クイズ API client', () => {
   beforeEach(() => mockedRequest.mockReset())
 
   it('状態をCookie付き・リトライなしで取得する', async () => {
-    const state = { event: null, question: null }
+    const state = { status: 'waiting', phase: null, question: null, answered: false, my_answer: null, correct_answer: null }
     mockedRequest.mockResolvedValueOnce(state)
 
     await expect(fetchParticipantQuizState()).resolves.toEqual(state)
@@ -20,12 +20,12 @@ describe('参加者クイズ API client', () => {
     })
   })
 
-  it('解答をCookie付きPOSTで一度だけ送る', async () => {
-    const input = { quizEventQuestionId: 31, answer: 'B' as const, confidenceLevel: 'high' as const }
-    mockedRequest.mockResolvedValueOnce({ id: 91, ...input, submittedAt: '2026-09-30T01:01:00Z' })
+  it('解答をCookie付きPOSTで送り、更新後のmy_answerを受け取る', async () => {
+    const input = { question_id: 12, choice: 'B' as const, confidence_level: 2 as const }
+    const result = { my_answer: { choice: 'B' as const, confidence_level: 2 as const } }
+    mockedRequest.mockResolvedValueOnce(result)
 
-    await submitParticipantQuizAnswer(input)
-
+    await expect(submitParticipantQuizAnswer(input)).resolves.toEqual(result)
     expect(mockedRequest).toHaveBeenCalledWith('/participant/quiz/answers', {
       method: 'POST',
       body: input,

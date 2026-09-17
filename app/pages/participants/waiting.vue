@@ -31,7 +31,7 @@ function redirectToAnswer() {
 
 const { state, isLoading, loadError } = useParticipantQuizState({
   onState: (nextState) => {
-    if (nextState.event?.status !== 'FINISHED' && nextState.question && ['PUBLISHED', 'CLOSED', 'REVEALED'].includes(nextState.question.status)) {
+    if (nextState.status === 'in_progress' && nextState.phase !== null && nextState.question !== null) {
       redirectToAnswer()
     }
   },
@@ -42,8 +42,8 @@ const { state, isLoading, loadError } = useParticipantQuizState({
 
 const waitingMessage = computed(() => {
   if (isLoading.value && !state.value) return 'クイズの状態を確認しています…'
-  if (state.value?.event?.status === 'FINISHED') return 'クイズ大会は終了しました。ご参加ありがとうございました。'
-  if (state.value?.event) return '次の問題の公開をお待ちください。'
+  if (state.value?.status === 'finished') return 'クイズ大会は終了しました。ご参加ありがとうございました。'
+  if (state.value?.status === 'in_progress') return '次の問題の公開をお待ちください。'
   return 'クイズ大会の開始をお待ちください。'
 })
 
