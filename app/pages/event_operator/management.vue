@@ -204,6 +204,7 @@ onMounted(() => {
             <summary class="question-row-summary">
               <span class="question-id">{{ formatQuestionPosition(question.position) }}</span>
               <span class="question-text">{{ question.questionText }}</span>
+              <span class="points-badge">配点 {{ question.points }}点</span>
               <span class="correct-badge" :title="`正解: ${correctChoiceText(question)}`">{{ formatCorrectBadge(question) }}</span>
             </summary>
             <div class="question-row-detail">

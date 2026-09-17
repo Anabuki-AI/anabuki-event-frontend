@@ -245,6 +245,13 @@
   opacity: 0.65;
 }
 
+/* --- 配点 --- */
+
+.question-add-shell .question-add-points-input {
+  width: 100%;
+  max-width: 160px;
+}
+
 .question-add-shell .question-add-correct {
   display: inline-flex;
   align-items: center;

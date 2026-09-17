@@ -4,7 +4,8 @@ import { resolveQuestionImageUrl, updateQuestion } from '~/features/problems/api
 import type { QuestionPayload } from '~/features/problems/api/client'
 import type { Question } from '~/features/problems/types'
 import { formatQuestionPosition } from '~/features/problems/components/QuestionRow'
-import { problemErrorMessage, validateImageFile } from '~/features/problems/validation'
+import { QUESTION_POINTS_MAX, QUESTION_POINTS_MIN } from '~/features/problems/constants'
+import { problemErrorMessage, validateImageFile, validatePointsInput } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 import '~/assets/css/questionedit2.css'
 
@@ -18,6 +19,7 @@ type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
 
 const form = reactive({
   questionText: props.question.questionText,
+  points: String(props.question.points),
   choiceA: props.question.choiceA,
   choiceB: props.question.choiceB,
   choiceC: props.question.choiceC,
@@ -112,7 +114,8 @@ const canSave = computed<boolean>(
     && form.choiceA.trim().length > 0
     && form.choiceB.trim().length > 0
     && form.choiceC.trim().length > 0
-    && form.choiceD.trim().length > 0,
+    && form.choiceD.trim().length > 0
+    && validatePointsInput(form.points, QUESTION_POINTS_MIN, QUESTION_POINTS_MAX) === '',
 )
 
 function handleQuestionInput(value: string) {
@@ -144,6 +147,7 @@ async function save() {
     correctAnswer: correctChoice.value,
     explanation: form.explanation.trim(),
     targetAudience: form.targetAudience.trim(),
+    points: Number(form.points),
     image: imageFile.value,
     removeImage: removeImage.value,
   }
@@ -201,6 +205,24 @@ onUnmounted(() => {
             :disabled="isSaving"
             @input="handleQuestionInput(($event.target as HTMLTextAreaElement).value)"
           />
+        </label>
+
+        <label class="question-add-field">
+          <span class="question-add-label">配点</span>
+          <input
+            class="question-add-choice-input question-add-points-input"
+            type="number"
+            inputmode="numeric"
+            :min="QUESTION_POINTS_MIN"
+            :max="QUESTION_POINTS_MAX"
+            step="1"
+            :value="form.points"
+            :disabled="isSaving"
+            @input="form.points = ($event.target as HTMLInputElement).value"
+          >
+          <p class="question-add-hint">
+            {{ QUESTION_POINTS_MIN }}〜{{ QUESTION_POINTS_MAX }}の整数で入力してください。
+          </p>
         </label>
 
         <label class="question-add-field">

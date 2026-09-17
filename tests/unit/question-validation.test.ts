@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { problemErrorMessage, validateMultiplierInput } from '../../app/features/problems/validation'
+import { problemErrorMessage, validateMultiplierInput, validatePointsInput } from '../../app/features/problems/validation'
 import { formatMultiplier } from '../../app/features/problems/constants'
 
 describe('problemErrorMessage', () => {
@@ -31,6 +31,29 @@ describe('validateMultiplierInput', () => {
     expect(validateMultiplierInput('0', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('9.99', 0, 9.99)).toBe('')
     expect(validateMultiplierInput('1.5', 0, 9.99)).toBe('')
+  })
+})
+
+describe('validatePointsInput', () => {
+  it('空入力はエラー', () => {
+    expect(validatePointsInput('', 1, 1000)).toBe('配点を入力してください')
+  })
+
+  it('整数以外はエラー', () => {
+    expect(validatePointsInput('abc', 1, 1000)).toBe('整数で入力してください')
+    expect(validatePointsInput('1.5', 1, 1000)).toBe('整数で入力してください')
+    expect(validatePointsInput('-1', 1, 1000)).toBe('整数で入力してください')
+  })
+
+  it('範囲外はエラー', () => {
+    expect(validatePointsInput('0', 1, 1000)).toContain('範囲')
+    expect(validatePointsInput('1001', 1, 1000)).toContain('範囲')
+  })
+
+  it('境界値は OK', () => {
+    expect(validatePointsInput('1', 1, 1000)).toBe('')
+    expect(validatePointsInput('1000', 1, 1000)).toBe('')
+    expect(validatePointsInput(100, 1, 1000)).toBe('')
   })
 })
 
