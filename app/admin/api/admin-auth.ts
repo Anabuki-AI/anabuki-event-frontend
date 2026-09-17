@@ -3,9 +3,10 @@ import type {
   AccessRequest,
   AccessRequestDecision,
   AdminSession,
+  OperatorAccessRequest,
 } from '../types'
 
-export type { AccessRequest, AccessRequestDecision, AdminSession } from '../types'
+export type { AccessRequest, AccessRequestDecision, AdminSession, OperatorAccessRequest } from '../types'
 
 // Credentials stay in the backend's HttpOnly cookies, never in browser storage.
 const credentials = 'include' as const
@@ -19,4 +20,7 @@ export const adminAuthApi = {
   logout: () => request<undefined>('/admin/auth/logout', { method: 'POST', credentials, retry: 0 }),
   pendingRequests: () => request<AccessRequest[]>('/admin/access-requests', { credentials }),
   decide: (id: number, decision: AccessRequestDecision) => request<AccessRequest>(`/admin/access-requests/${id}/${decision}`, { method: 'POST', credentials, retry: 0 }),
+  pendingOperatorRequests: () => request<OperatorAccessRequest[]>('/admin/operator-access-requests', { credentials }),
+  // UUID strings are interpolated unchanged to match the existing request URL policy.
+  decideOperatorRequest: (id: string, decision: AccessRequestDecision) => request<OperatorAccessRequest>(`/admin/operator-access-requests/${id}/${decision}`, { method: 'POST', credentials, retry: 0 }),
 }

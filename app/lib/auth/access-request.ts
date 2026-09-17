@@ -9,7 +9,12 @@ export type AccessRequestStatus =
 
 export type AccessRequestDecision = 'approve' | 'reject'
 
-export interface AccessRequest<Id extends string | number = string | number> {
+export type AccessRequestId = number | string
+
+// The primary admin database uses numeric request IDs, while the operator
+// schema uses UUID strings. Callers must choose one rather than accepting a
+// mixed ID type at an API boundary.
+export interface AccessRequest<Id extends AccessRequestId> {
   id: Id
   email: string
   status: AccessRequestStatus
@@ -19,6 +24,9 @@ export interface AccessRequest<Id extends string | number = string | number> {
   cancellationReason: string | null
   decidedAt: string | null
 }
+
+export type AdminAccessRequest = AccessRequest<number>
+export type OperatorAccessRequest = AccessRequest<string>
 
 export const ACCESS_REQUEST_POLL_INTERVAL_MS = 10_000
 
