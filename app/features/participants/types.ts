@@ -21,6 +21,7 @@ export interface ParticipantReactionRequest {
 
 export interface ParticipantPresence {
   activeParticipantCount: number
+  totalParticipantCount: number
   observedAt: string
   activeWindowSeconds: number
 }

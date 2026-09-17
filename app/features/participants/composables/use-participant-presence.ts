@@ -9,6 +9,7 @@ export const PARTICIPANT_PRESENCE_POLL_INTERVAL_MS = 20_000
  */
 export function useParticipantPresence() {
   const participantCount = ref<number | null>(null)
+  const totalParticipantCount = ref<number | null>(null)
   const isRefreshing = ref(false)
   let pollTimer: ReturnType<typeof setInterval> | undefined
 
@@ -21,6 +22,7 @@ export function useParticipantPresence() {
     try {
       const presence = await reportParticipantPresence()
       participantCount.value = presence.activeParticipantCount
+      totalParticipantCount.value = presence.totalParticipantCount
     }
     catch {
       // Keep the most recently confirmed count when a transient request fails.
@@ -70,6 +72,7 @@ export function useParticipantPresence() {
 
   return {
     participantCount,
+    totalParticipantCount,
     isRefreshing,
     refresh,
   }

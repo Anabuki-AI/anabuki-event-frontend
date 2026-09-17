@@ -14,6 +14,7 @@ vi.mock('~/features/participants/api/report-presence', () => ({
 const reportPresence = vi.mocked(reportParticipantPresence)
 const presence = {
   activeParticipantCount: 24,
+  totalParticipantCount: 60,
   observedAt: '2026-09-28T01:00:00Z',
   activeWindowSeconds: 60,
 }
@@ -53,6 +54,7 @@ describe('useParticipantPresence', () => {
 
     expect(reportPresence).toHaveBeenCalledTimes(1)
     expect(current.participantCount.value).toBe(24)
+    expect(current.totalParticipantCount.value).toBe(60)
 
     await vi.advanceTimersByTimeAsync(PARTICIPANT_PRESENCE_POLL_INTERVAL_MS)
     expect(reportPresence).toHaveBeenCalledTimes(2)
@@ -88,6 +90,7 @@ describe('useParticipantPresence', () => {
     resolvePresence(presence)
     await flushPromises()
     expect(state.participantCount.value).toBe(24)
+    expect(state.totalParticipantCount.value).toBe(60)
   })
 
   it('keeps the last successful count when a later request fails', async () => {
@@ -97,6 +100,7 @@ describe('useParticipantPresence', () => {
 
     await vi.advanceTimersByTimeAsync(PARTICIPANT_PRESENCE_POLL_INTERVAL_MS)
     expect(current.participantCount.value).toBe(24)
+    expect(current.totalParticipantCount.value).toBe(60)
   })
 
   it('removes the timer and visibility listener on unmount', async () => {
