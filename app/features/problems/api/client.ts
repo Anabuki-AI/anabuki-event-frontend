@@ -1,5 +1,6 @@
 import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '../types'
 import { request } from '~/lib/api/client'
+import { resolveApiImageUrl } from '~/lib/api/image'
 
 const credentials = 'include' as const
 
@@ -76,18 +77,8 @@ export function updateQuestion(id: number, payload: QuestionPayload): Promise<Qu
   })
 }
 
-/**
- * question.imageUrl は、アップロード画像の場合は API 相対パス
- * （例: /admin/questions/1/image）、旧方式の外部URL貼り付けの場合は
- * 完全な http(s) URL のいずれかを返す。表示用に絶対URLへ解決する。
- */
-export function resolveQuestionImageUrl(imageUrl: string | null): string | null {
-  if (!imageUrl) return null
-  if (/^https?:\/\//i.test(imageUrl)) return imageUrl
-
-  const config = useRuntimeConfig()
-  return `${config.public.apiBase}${imageUrl}`
-}
+/** 問題管理・クイズAPIの画像フィールドを表示用URLへ解決する。 */
+export const resolveQuestionImageUrl = resolveApiImageUrl
 
 export async function deleteQuestion(id: number): Promise<void> {
   await request<null>(`/admin/questions/${id}`, {

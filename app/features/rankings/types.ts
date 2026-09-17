@@ -1,10 +1,23 @@
+/** GET /api/rankings の wire format (Rails JSON, snake_case). */
+export interface RankingEntryWire {
+  rank: number
+  participant_id: string
+  display_name: string
+}
+
+/** Ranking data used by the frontend after the API boundary conversion. */
 export interface RankingEntry {
   rank: number
-  participantId: number
+  participantId: string
   displayName: string
 }
 
-/** GET /api/rankings のレスポンス(契約: docs/quiz-session-contract.md)。 */
+export interface RankingsResponseWire {
+  rankings: RankingEntryWire[]
+  me: RankingEntryWire | null
+}
+
+/** GET /api/rankings のレスポンスを画面用の型へ変換した結果。 */
 export interface RankingsResponse {
   rankings: RankingEntry[]
   /** 参加者セッションがない場合は null。 */

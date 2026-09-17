@@ -16,8 +16,8 @@ export function startQuiz(): Promise<OperatorQuizState> {
   return act('/operator/quiz/start')
 }
 
-export function publishQuestion(position: number): Promise<OperatorQuizState> {
-  return act('/operator/quiz/publish', { position })
+export function publishQuestion(): Promise<OperatorQuizState> {
+  return act('/operator/quiz/publish')
 }
 
 export function closeAnswers(): Promise<OperatorQuizState> {

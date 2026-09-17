@@ -21,6 +21,7 @@ function makeState(overrides: Partial<OperatorQuizState>): OperatorQuizState {
     current: null,
     question_count: 3,
     total_participants: 60,
+    next_question: null,
     ...overrides,
   }
 }
@@ -49,6 +50,13 @@ describe('QuizPhasePanel のAPI状態別描画', () => {
       status: 'in_progress',
       phase: 'revealed',
       current: { ...currentQuestion, position: 1 },
+      next_question: {
+        question_id: 13,
+        position: 3,
+        question_text: 'Q3',
+        choices: { A: 'a', B: 'b', C: 'c', D: 'd' },
+        image_url: null,
+      },
       question_count: 3,
     }))
     expect(wrapper.find('.quiz-action-button').text()).toBe('次の問題を公開')

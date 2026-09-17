@@ -86,13 +86,11 @@ export function useQuizControl() {
 
   const start = () => act(startQuiz, 'イベントを開始しました。', 'イベント開始')
 
-  const publish = () => {
-    // 契約どおり publish は position を必須で送る。未公開問題のうち先頭の位置を指定する。
-    const position = state.value
-      ? (state.value.current?.position ?? 0) + 1
-      : 1
-    return act(() => publishQuestion(position), `Q${position} を公開しました。参加者は解答できます。`, '問題公開')
-  }
+  const publish = () => act(
+    publishQuestion,
+    '次の問題を公開しました。参加者は解答できます。',
+    '問題公開',
+  )
 
   const close = () => act(closeAnswers, '解答の受付を締め切りました。', '解答締め切り')
   const reveal = () => act(revealAnswer, '答えを表示しました。', '答え表示')

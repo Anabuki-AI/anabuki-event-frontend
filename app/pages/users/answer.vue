@@ -6,6 +6,7 @@ import { CONFIDENCE_LEVEL_LABELS } from '~/features/participant-quiz/types'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
 import type { Participant } from '~/features/participants/types'
 import { ApiError } from '~/lib/api/error'
+import { resolveApiImageUrl } from '~/lib/api/image'
 
 import '~/assets/css/answer.css'
 
@@ -114,7 +115,7 @@ onMounted(async () => {
           <p class="question-text">
             {{ question.question_text }}
           </p>
-          <img v-if="question.image_url" class="question-image" :src="question.image_url" alt="">
+          <img v-if="question.image_url" class="question-image" :src="resolveApiImageUrl(question.image_url) ?? undefined" alt="">
         </div>
 
         <div class="choice-list">

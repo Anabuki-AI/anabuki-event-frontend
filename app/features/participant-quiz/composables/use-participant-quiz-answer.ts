@@ -105,12 +105,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     }
   }))
 
-  const fixedConfidenceOptions = computed<ConfidenceOption[]>(() => confidenceOptions.value.map((option) => {
-    const multiplier = state.value?.confidence_multipliers?.[option.value]
-    return { ...option, multiplier: multiplier != null ? `\u00d7${multiplier.toFixed(2)}` : '\u2014' }
-  }))
-
-  const fixedSelectedMultiplier = computed(() => fixedConfidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '\u2014')
+  const selectedMultiplier = computed(() => confidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '—')
 
   const selectedChoiceText = computed(() => {
     const selected = choices.value.find(choice => choice.key === selectedChoice.value)
@@ -171,11 +166,11 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     loadError,
     screen,
     choices,
-    confidenceOptions: fixedConfidenceOptions,
+    confidenceOptions,
     selectedChoice,
     confidenceLevel,
     selectedChoiceText,
-    selectedMultiplier: fixedSelectedMultiplier,
+    selectedMultiplier,
     isSubmitting,
     canSubmit,
     submissionMessage,

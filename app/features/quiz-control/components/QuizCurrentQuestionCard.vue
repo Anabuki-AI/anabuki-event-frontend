@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { CHOICE_KEYS, getQuizPhase } from '../types'
 import type { OperatorQuizState } from '../types'
+import { resolveApiImageUrl } from '~/lib/api/image'
 
 const props = defineProps<{
   state: OperatorQuizState
@@ -9,6 +10,7 @@ const props = defineProps<{
 
 const phase = computed(() => getQuizPhase(props.state))
 const currentQuestion = computed(() => props.state.current)
+const imageUrl = computed(() => resolveApiImageUrl(currentQuestion.value?.image_url ?? null))
 const isAnswerVisible = computed(() => phase.value === 'REVEALED' || phase.value === 'FINISHED')
 const statusLabel = computed(() => {
   switch (phase.value) {
@@ -42,6 +44,13 @@ const answeredRatePercent = computed(() =>
     <p class="quiz-question-text">
       {{ currentQuestion.question_text }}
     </p>
+
+    <img
+      v-if="imageUrl"
+      class="quiz-question-image"
+      :src="imageUrl"
+      alt=""
+    >
 
     <ul class="quiz-question-choices">
       <li
