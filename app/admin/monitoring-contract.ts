@@ -1,70 +1,158 @@
-// Frontend/backend boundary: providers are queried server-side only. No API keys
-// or direct Statuspage/Datadog requests belong in the browser.
+// Wire contract for Rails GET /api/admin/api-status. External providers are
+// queried only by Rails; credentials and metric queries never reach the browser.
 export type MonitoringProvider = 'statuspage' | 'datadog'
-export type MonitoringState = 'unconfigured' | 'unauthenticated' | 'forbidden' | 'error' | 'ready'
-export type ServiceCondition = 'operational' | 'degraded' | 'partial_outage' | 'major_outage' | 'unknown'
-export interface MonitoringSource {
-  provider: MonitoringProvider
-  state: MonitoringState
-  condition: ServiceCondition
-  fetchedAt: string | null
-  updatedAt: string | null
-  stale: boolean
-  metrics: {
-    errorRatePercent: number | null
-    responseTimeMs: number | null
-    windowLabel: string | null
-  }
+export type MonitoringProviderState = 'available' | 'partial' | 'unconfigured' | 'error'
+export type MonitoringAvailabilityState = 'available' | 'unavailable' | 'not_provided'
+export type MonitoringCondition = 'operational' | 'degraded' | 'partial_outage' | 'major_outage' | 'unknown'
+export type MonitoringMetricState = 'available' | 'unconfigured' | 'unavailable' | 'error' | 'not_provided'
+export type MonitoringMetricUnit = 'percent' | 'milliseconds'
+
+export interface MonitoringIssue { code: string; message: string }
+export interface MonitoringMetricWire {
+  state: MonitoringMetricState
+  value: number | null
+  unit: MonitoringMetricUnit
+  observedAt?: string | null
+  fetchedAt?: string | null
+  issue?: MonitoringIssue | null
 }
-export interface MonitoringSnapshot { sources: MonitoringSource[] }
+export interface MonitoringAvailabilityWire {
+  state: MonitoringAvailabilityState
+  value: MonitoringCondition | null
+  externalStatus?: string | null
+}
+export interface MonitoringProviderWire {
+  provider: MonitoringProvider
+  source: string
+  state: MonitoringProviderState
+  fetchedAt: string | null
+  availability: MonitoringAvailabilityWire
+  metrics: { errorRate: MonitoringMetricWire; responseTime: MonitoringMetricWire }
+  issue?: MonitoringIssue | null
+}
+export interface MonitoringSnapshotWire {
+  generatedAt: string
+  cached: boolean
+  providers: MonitoringProviderWire[]
+}
+
+// The view model is deliberately separate from the wire type. It contains no
+// derived provider update time, aggregation window, or synthetic metric value.
+export type MonitoringMetricView = MonitoringMetricWire
+export interface MonitoringProviderView extends Omit<MonitoringProviderWire, 'metrics'> {
+  metrics: { errorRate: MonitoringMetricView; responseTime: MonitoringMetricView }
+}
+export interface MonitoringSnapshot {
+  generatedAt: string | null
+  cached: boolean
+  providers: MonitoringProviderView[]
+}
 
 export const providerLabels: Record<MonitoringProvider, string> = { statuspage: 'Atlassian Statuspage', datadog: 'Datadog' }
-export const conditionLabels: Record<ServiceCondition, string> = {
+export const providerStateLabels: Record<MonitoringProviderState, string> = {
+  available: '取得済み', partial: '一部の指標のみ取得', unconfigured: '未設定', error: '取得失敗',
+}
+export const conditionLabels: Record<MonitoringCondition, string> = {
   operational: '正常稼働', degraded: '性能低下', partial_outage: '部分障害', major_outage: '広範囲の障害', unknown: '稼働状況は不明',
 }
-export const monitoringStateLabels: Record<Exclude<MonitoringState, 'ready'>, string> = {
-  unconfigured: '未設定・未連携', unauthenticated: '連携先の認証が必要', forbidden: '連携先への権限不足', error: '取得失敗',
+export const availabilityStateLabels: Record<MonitoringAvailabilityState, string> = {
+  available: '稼働状況を取得', unavailable: '稼働状況を取得できません', not_provided: '稼働状況は提供なし',
 }
-export const monitoringStateDescriptions: Record<Exclude<MonitoringState, 'ready'>, string> = {
-  unconfigured: 'サーバー側で監視サービスを設定すると、ここに観測結果が表示されます。',
-  unauthenticated: '監視サービスの認証情報を管理担当者に確認してください。Googleへの再ログインでは解消しません。',
-  forbidden: '監視サービスを読み取る権限が不足しています。管理担当者へ確認してください。',
-  error: '監視データを取得できませんでした。サービスの停止を意味するものではありません。',
+export const metricStateLabels: Record<MonitoringMetricState, string> = {
+  available: '取得済み', unconfigured: '未設定', unavailable: 'データなし', error: '取得失敗', not_provided: '提供なし',
 }
 
 export function unconfiguredMonitoring(): MonitoringSnapshot {
-  return { sources: (['statuspage', 'datadog'] as const).map(provider => ({
-    provider, state: 'unconfigured', condition: 'unknown', fetchedAt: null, updatedAt: null, stale: false,
-    metrics: { errorRatePercent: null, responseTimeMs: null, windowLabel: null },
-  })) }
+  return {
+    generatedAt: null,
+    cached: false,
+    providers: (['statuspage', 'datadog'] as const).map(provider => ({
+      provider,
+      source: providerLabels[provider],
+      state: 'unconfigured',
+      fetchedAt: null,
+      availability: { state: provider === 'statuspage' ? 'unavailable' : 'not_provided', value: null },
+      metrics: {
+        errorRate: { state: 'not_provided', value: null, unit: 'percent' },
+        responseTime: { state: 'not_provided', value: null, unit: 'milliseconds' },
+      },
+    })),
+  }
 }
 
-// Last fetch freshness, not the time of the last incident/change at the provider.
-export function isMonitoringStale(source: MonitoringSource, now = Date.now()) {
-  return source.stale || !source.fetchedAt || now - Date.parse(source.fetchedAt) > 5 * 60_000
+const staleAfterMs = 5 * 60_000
+export function isTimestampStale(value: string | null | undefined, now = Date.now()) {
+  return !value || now - Date.parse(value) > staleAfterMs
+}
+export function isProviderStale(provider: MonitoringProviderView, now = Date.now()) {
+  return isTimestampStale(provider.fetchedAt, now)
+}
+export function isMetricStale(metric: MonitoringMetricView, now = Date.now()) {
+  // Datadog observation time is the relevant freshness signal when supplied;
+  // otherwise only the metric fetch time can be evaluated.
+  return isTimestampStale(metric.observedAt ?? metric.fetchedAt, now)
 }
 
 function record(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null }
 function timestamp(value: unknown): value is string | null { return value === null || (typeof value === 'string' && Number.isFinite(Date.parse(value))) }
-function metric(value: unknown, max = Infinity): value is number | null { return value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= max) }
+function issue(value: unknown): value is MonitoringIssue | null | undefined {
+  return value === undefined || value === null || (record(value) && typeof value.code === 'string' && typeof value.message === 'string')
+}
+function condition(value: unknown): value is MonitoringCondition | null {
+  return value === null || (typeof value === 'string' && ['operational', 'degraded', 'partial_outage', 'major_outage', 'unknown'].includes(value))
+}
 
-// Fail closed on a malformed/partial contract. Missing providers must not silently
-// disappear, and missing metrics must never be coerced to zero.
-export function parseMonitoringSnapshot(value: unknown): MonitoringSnapshot {
-  if (!record(value) || !Array.isArray(value.sources) || value.sources.length !== 2) throw new Error('Invalid monitoring snapshot')
-  const providers = new Set<string>()
-  for (const source of value.sources) {
-    if (!record(source) || !['statuspage', 'datadog'].includes(String(source.provider)) || providers.has(String(source.provider))
-      || !['unconfigured', 'unauthenticated', 'forbidden', 'error', 'ready'].includes(String(source.state))
-      || !['operational', 'degraded', 'partial_outage', 'major_outage', 'unknown'].includes(String(source.condition))
-      || !timestamp(source.fetchedAt) || !timestamp(source.updatedAt) || typeof source.stale !== 'boolean'
-      || !record(source.metrics) || !metric(source.metrics.errorRatePercent, 100) || !metric(source.metrics.responseTimeMs)
-      || !(source.metrics.windowLabel === null || typeof source.metrics.windowLabel === 'string')
-      || (source.state === 'ready' && (!source.fetchedAt || !source.updatedAt))
-      || ((source.metrics.errorRatePercent !== null || source.metrics.responseTimeMs !== null) && !source.metrics.windowLabel)) {
-      throw new Error('Invalid monitoring source')
-    }
-    providers.add(String(source.provider))
+function parseMetric(value: unknown, unit: MonitoringMetricUnit): MonitoringMetricWire {
+  if (!record(value) || !['available', 'unconfigured', 'unavailable', 'error', 'not_provided'].includes(String(value.state))
+    || value.unit !== unit || !('value' in value) || !(value.value === null || (typeof value.value === 'number' && Number.isFinite(value.value)))
+    || !('observedAt' in value ? timestamp(value.observedAt) : true)
+    || !('fetchedAt' in value ? timestamp(value.fetchedAt) : true) || !issue(value.issue)
+    || (value.state === 'available' && typeof value.value !== 'number')
+    || (value.state !== 'available' && value.value !== null)) {
+    throw new Error(`Invalid api-status metric: ${unit}`)
   }
-  return value as unknown as MonitoringSnapshot
+  return value as unknown as MonitoringMetricWire
+}
+
+function parseProvider(value: unknown): MonitoringProviderWire {
+  if (!record(value) || !['statuspage', 'datadog'].includes(String(value.provider)) || typeof value.source !== 'string'
+    || !['available', 'partial', 'unconfigured', 'error'].includes(String(value.state)) || !timestamp(value.fetchedAt)
+    || !record(value.availability) || !['available', 'unavailable', 'not_provided'].includes(String(value.availability.state))
+    || !condition(value.availability.value) || !issue(value.issue)
+    || !(value.availability.externalStatus === undefined || value.availability.externalStatus === null || typeof value.availability.externalStatus === 'string')
+    || !record(value.metrics)
+    || (value.availability.state === 'available' && value.availability.value === null)
+    || (value.availability.state !== 'available' && value.availability.value !== null)) {
+    throw new Error('Invalid api-status provider')
+  }
+  return {
+    ...(value as unknown as Omit<MonitoringProviderWire, 'metrics'>),
+    metrics: {
+      errorRate: parseMetric(value.metrics.errorRate, 'percent'),
+      responseTime: parseMetric(value.metrics.responseTime, 'milliseconds'),
+    },
+  }
+}
+
+// Fail closed: both known providers and both metric objects are required.
+export function parseMonitoringSnapshot(value: unknown): MonitoringSnapshotWire {
+  if (!record(value) || !timestamp(value.generatedAt) || value.generatedAt === null || typeof value.cached !== 'boolean'
+    || !Array.isArray(value.providers) || value.providers.length !== 2) {
+    throw new Error('Invalid api-status snapshot')
+  }
+  const providers = value.providers.map(parseProvider)
+  if (new Set(providers.map(provider => provider.provider)).size !== 2) throw new Error('Invalid api-status providers')
+  return { generatedAt: value.generatedAt, cached: value.cached, providers }
+}
+
+export function toMonitoringView(snapshot: MonitoringSnapshotWire): MonitoringSnapshot {
+  return {
+    generatedAt: snapshot.generatedAt,
+    cached: snapshot.cached,
+    providers: snapshot.providers.map(provider => ({
+      ...provider,
+      availability: { ...provider.availability },
+      metrics: { errorRate: { ...provider.metrics.errorRate }, responseTime: { ...provider.metrics.responseTime } },
+    })),
+  }
 }

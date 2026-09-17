@@ -1,45 +1,57 @@
-# Admin console: external monitoring contract (frontend proposal)
+# Admin console: API status contract
 
-Status: **frontend implemented; backend work is separate (Terra)**. No Rails files are changed by this PR. The provider integration below is opt-in and off by default. Confirm this contract with the backend implementation before enabling it.
+Status: Rails `AdminApiStatus` is the canonical contract. This frontend integration is opt-in and **off by default**. Enable it only after the deployment's provider configuration and authenticated proxy path have been verified.
 
 ## Boundary and activation
 
-- Proposed endpoint: `GET /api/admin/monitoring`, through the existing same-origin Nuxt API proxy.
+- Endpoint: `GET /api/admin/api-status`, through the existing same-origin Nuxt API proxy.
 - Browser sends its existing HttpOnly admin-session cookies. Backend must enforce a management session and any additional monitoring-read permission.
 - Only the backend calls **Atlassian Statuspage** / **Datadog**, stores credentials, determines aggregation windows, and resolves provider-specific errors.
 - Never expose API keys, upstream authentication responses, unfiltered errors, or private dashboard URLs in this payload.
 - Response must use `Cache-Control: no-store` (the existing Nuxt proxy also applies this).
-- After deploying this contract, set the frontend runtime variable `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=true`. The default is `false`; when disabled, the UI makes **no call to a nonexistent endpoint** and shows two explicitly unconfigured sources.
+- After verifying this contract in the target deployment, set `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=true`. The default is `false`; when disabled, the UI sends **zero requests** to the API-status endpoint and shows explicitly unconfigured providers.
 - This switch is presentation configuration, **not authorization**. Backend authorization is mandatory regardless of the switch.
 - The frontend uses a 10-second request timeout, no automatic retries, and a deliberate refresh button. It clears previous results while updating or after an error, rather than presenting stale green success as current.
 
 ## JSON schema shape
 
-The canonical frontend types and runtime validation live in `app/features/admin/monitoring-contract.ts`.
+The wire types and fail-closed runtime validator live in `app/admin/monitoring-contract.ts`. The parser accepts exactly one `statuspage` and one `datadog` provider, then `toMonitoringView` creates the separate UI model without inventing values.
 
 ```ts
-interface MonitoringSnapshot {
-  // Exactly one of each known provider, even when one is unconfigured or fails.
-  sources: MonitoringSource[]
+interface MonitoringSnapshotWire {
+  generatedAt: string
+  cached: boolean
+  providers: MonitoringProviderWire[]
 }
-interface MonitoringSource {
+interface MonitoringProviderWire {
   provider: 'statuspage' | 'datadog'
-  state: 'unconfigured' | 'unauthenticated' | 'forbidden' | 'error' | 'ready'
-  condition: 'operational' | 'degraded' | 'partial_outage' | 'major_outage' | 'unknown'
-  fetchedAt: string | null // RFC3339: when the backend fetched this observation
-  updatedAt: string | null // RFC3339: provider observation/update time
-  stale: boolean
-  metrics: {
-    errorRatePercent: number | null // finite, 0..100; null ≠ 0
-    responseTimeMs: number | null // finite, >= 0; null ≠ 0
-    windowLabel: string | null // required when either metric exists
+  source: string
+  state: 'available' | 'partial' | 'unconfigured' | 'error'
+  fetchedAt: string | null
+  availability: {
+    state: 'available' | 'unavailable' | 'not_provided'
+    value: 'operational' | 'degraded' | 'partial_outage' | 'major_outage' | 'unknown' | null
+    externalStatus?: string | null
   }
+  metrics: {
+    errorRate: MonitoringMetricWire // unit: 'percent'
+    responseTime: MonitoringMetricWire // unit: 'milliseconds'
+  }
+  issue?: { code: string; message: string } | null
+}
+interface MonitoringMetricWire {
+  state: 'available' | 'unconfigured' | 'unavailable' | 'error' | 'not_provided'
+  value: number | null
+  unit: 'percent' | 'milliseconds'
+  observedAt?: string | null
+  fetchedAt?: string | null
+  issue?: { code: string; message: string } | null
 }
 ```
 
-For `ready`, both timestamps are required. A metric requires an explicit `windowLabel` describing the actual aggregation window/statistic, e.g. the chosen percentile or average, period, and time range. If no relevant metric exists (common for Statuspage), return `null`; do not synthesize one from an incident count or the browser health probe. The backend must set `stale` for known delayed/invalid observations. The UI additionally treats `fetchedAt` older than five minutes as historical, recalculating every 30 seconds while mounted. `updatedAt` can legitimately be old for an unchanged Statuspage incident feed; frontend freshness therefore uses **fetchedAt**, not last incident change time.
+`available` metrics contain a finite number, including a valid `0`; every other metric state has `value: null`. The UI labels metric states separately as **未設定**, **データなし**, **提供なし**, and **取得失敗**. There is no `updatedAt`, browser/server `stale` flag, or aggregation `windowLabel` in this contract, so the frontend never creates one.
 
-For non-`ready` states, the UI does not render any supplied metrics/condition as current. Prefer `condition: 'unknown'` and null metrics. Last successful timestamps may be returned for context. Distinguish true absence of configuration from provider authentication failure.
+Freshness is client-side only: provider availability uses its `fetchedAt`; a metric uses `observedAt` when supplied, otherwise its own `fetchedAt`. Values older than five minutes are labelled historical and recalculated every 30 seconds. A cache hit preserves the original timestamps; `cached: true` is metadata, not a freshness verdict.
 
 ## Transport state versus provider state
 
@@ -48,13 +60,14 @@ For non-`ready` states, the UI does not render any supplied metrics/condition as
 | No admin session | HTTP 401 | Clear monitoring results, recheck session, return to login when expired |
 | Admin lacks monitoring-read permission | HTTP 403 | Permission-denied panel; do not log out an otherwise valid admin |
 | Backend unavailable / timeout / invalid schema | failure | Fetch-failed panel + manual retry; never claim the service is down |
-| Statuspage/Datadog not configured | HTTP 200, source `unconfigured` | Explicitly unconfigured provider card |
-| Provider credentials invalid/expired | HTTP 200, source `unauthenticated` | Provider-authentication message; Google relogin is not suggested as a fix |
-| Provider read permission missing | HTTP 200, source `forbidden` | Provider permission message |
-| One provider fails | HTTP 200, that source `error` | Preserve the other provider's result in its own card |
-| Partial outage | HTTP 200, source `ready`, condition `partial_outage` | Text + warning tone; not a transport/auth error |
-| Successful but stale observation | source `ready`, `stale: true` or fetch age >5m | Historical label, neutral tone, explicit warning that current health is unknown |
-| Fresh operational observation | source `ready`, `operational` | Green **provider-specific** status, with both timestamps |
+| Provider unconfigured | HTTP 200, provider `unconfigured` | Explicitly unconfigured provider card |
+| Provider failure | HTTP 200, provider `error` | Preserve the other provider's result and display the generic issue |
+| One Datadog metric fails | HTTP 200, provider `partial`, metric `error` | Render any available metric and the failed metric separately |
+| No metric sample | HTTP 200, metric `unavailable` | Display 「データなし」, never 0 |
+| Status information omitted | HTTP 200, availability `not_provided` | Display 「稼働状況は提供なし」 independently of metrics |
+| Partial outage | HTTP 200, availability `available/partial_outage` | Warning tone; this is not a transport/auth error |
+| Old fetch or observation | age >5m from `fetchedAt` / `observedAt` | Historical label, not current health |
+| Fresh operational availability | availability `available/operational` | Green **provider-specific** status only |
 
 No overall all-green badge is derived from just one successful source. The two sources remain independent so partial provider failure and partial service outage cannot be conflated. Extending providers requires updating the explicit union, runtime validator, labels, and tests.
 

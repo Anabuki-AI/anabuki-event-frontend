@@ -56,7 +56,7 @@ pnpm dev
 
 **未連携の情報を正常値として表示しません。** 監査ログは「データ未連携」、管理者/運営ロールは「未連携」です。既存APIの `source` は付与方法であり、ロールとして扱いません。
 
-外部監視は `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=false` が初期値です。バックエンドに `GET /api/admin/monitoring` の契約を実装してから `true` にしてください。詳細な型、未認証・権限不足・部分障害・更新時刻・鮮度の扱いは [監視連携契約](docs/admin-monitoring-contract.md) を参照してください。プロバイダーのAPIキーをフロント側に設定しないでください。
+外部監視は `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=false` が初期値です。Rails `GET /api/admin/api-status` を対象環境で確認してから `true` にしてください。詳細な型、provider/availability/metricごとの状態、観測時刻・鮮度の扱いは [監視連携契約](docs/admin-monitoring-contract.md) を参照してください。プロバイダーのAPIキーをフロント側に設定しないでください。
 
 別枠の「疎通確認」は既存 Rails `/health` に Nuxt を経由して接続します。表示時間はブラウザからの単発往復時間で、Datadogのレイテンシ・全API稼働率・DB正常性ではありません。
 
