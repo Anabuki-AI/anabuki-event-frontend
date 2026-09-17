@@ -23,7 +23,7 @@ export function confirmParticipantQuizConfidence(input: ConfirmParticipantQuizCo
   })
 }
 
-/** 確定済みの自信度で公開中の問題へ解答を送信する。 */
+/** 確定済みの自信度で問題へ解答を送信する。受付中は選択肢だけ再送・更新できる。 */
 export function submitParticipantQuizAnswer(input: SubmitParticipantQuizAnswerInput): Promise<SubmitParticipantQuizAnswerResult> {
   return request<SubmitParticipantQuizAnswerResult>('/participant/quiz/answers', {
     method: 'POST',

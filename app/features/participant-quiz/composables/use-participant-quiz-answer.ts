@@ -55,6 +55,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const isOperationBlocked = ref(false)
   const submissionMessage = ref('')
   const submittedForQuestionId = ref<number>()
+  const isEditingAnswer = ref(false)
   const pendingConfidenceLevel = ref<ConfidenceLevel>()
   const isConfidenceConfirmOpen = ref(false)
   const isConfirmingConfidence = ref(false)
@@ -82,6 +83,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     isOperationBlocked.value = false
     submissionMessage.value = ''
     submittedForQuestionId.value = undefined
+    isEditingAnswer.value = false
     pendingConfidenceLevel.value = undefined
     isConfidenceConfirmOpen.value = false
     isConfirmingConfidence.value = false
@@ -93,6 +95,13 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     isLoading.value,
     submittedForQuestionId.value,
   ))
+
+  watch(() => state.value?.phase, (phase) => {
+    if (phase === 'answering' || phase === 'closing') return
+
+    isEditingAnswer.value = false
+    selectedChoice.value = undefined
+  })
 
   const choices = computed(() => {
     const currentQuestion = question.value
@@ -122,11 +131,32 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     return selected ? `${selected.key}. ${selected.text}` : '未選択'
   })
 
-  const canSubmit = computed(() => screen.value === 'answer'
+  const savedChoice = computed(() => myAnswer.value?.choice ?? null)
+  const isAnswerWindowOpen = computed(() => state.value?.phase === 'answering' || state.value?.phase === 'closing')
+  const hasDraftChange = computed(() => Boolean(isEditingAnswer.value && selectedChoice.value && selectedChoice.value !== savedChoice.value))
+
+  const canSubmit = computed(() => (screen.value === 'answer' || isEditingAnswer.value)
     && isConfidenceLocked.value
     && Boolean(selectedChoice.value)
+    && (!isEditingAnswer.value || hasDraftChange.value)
     && !isSubmitting.value
     && !isOperationBlocked.value)
+
+  function beginAnswerEditing() {
+    if (!myAnswer.value || !isAnswerWindowOpen.value || isSubmitting.value) return
+
+    selectedChoice.value = myAnswer.value.choice
+    isEditingAnswer.value = true
+    submissionMessage.value = ''
+  }
+
+  function cancelAnswerEditing() {
+    if (isSubmitting.value) return
+
+    isEditingAnswer.value = false
+    selectedChoice.value = undefined
+    submissionMessage.value = ''
+  }
 
   function selectConfidenceLevel(level: ConfidenceLevel) {
     if (isConfidenceLocked.value || isConfirmingConfidence.value) return
@@ -195,12 +225,16 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     isSubmitting.value = true
     submissionMessage.value = ''
     try {
-      await submitParticipantQuizAnswer({
+      const result = await submitParticipantQuizAnswer({
         question_id: currentQuestion.question_id,
         choice: selectedChoice.value,
       })
       submittedForQuestionId.value = currentQuestion.question_id
-      await refresh()
+      isEditingAnswer.value = false
+      selectedChoice.value = undefined
+      if (state.value?.question?.question_id === currentQuestion.question_id) {
+        applyState({ ...state.value, answered: true, my_answer: result.my_answer })
+      }
     }
     catch (error) {
       if (error instanceof ApiError) {
@@ -210,6 +244,8 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
         }
         if (error.statusCode === 409) {
           isOperationBlocked.value = true
+          isEditingAnswer.value = false
+          selectedChoice.value = undefined
           submissionMessage.value = '解答受付の状態が変わりました。最新の状態を確認しています。'
           await refresh()
           return
@@ -242,6 +278,12 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     selectedChoice,
     selectedChoiceText,
     selectedMultiplier,
+    savedChoice,
+    hasDraftChange,
+    isEditingAnswer,
+    isAnswerWindowOpen,
+    beginAnswerEditing,
+    cancelAnswerEditing,
     isConfidenceConfirmOpen,
     isConfirmingConfidence,
     confidenceMessage,
