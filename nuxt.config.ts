@@ -29,6 +29,17 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
+    preset: 'cloudflare_module',
+    cloudflare: {
+      wrangler: {
+        services: [
+          {
+            binding: 'BACKEND',
+            service: 'anabuki-event-backend',
+          },
+        ],
+      },
+    },
     devProxy: {
       // h3がマウント済みプレフィックス(/api)をreq.urlから取り除いてから
       // プロキシへ渡すため、転送先に /api パスを含めて復元する

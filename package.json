@@ -28,6 +28,7 @@
     "happy-dom": "^20.6.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.2.5"
+    "vue-tsc": "^3.2.5",
+    "wrangler": "4.133.0"
   }
 }
