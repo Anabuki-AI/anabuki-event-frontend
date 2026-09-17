@@ -1,6 +1,6 @@
 export type QuizSessionStatus = 'waiting' | 'in_progress' | 'finished'
-export type QuizSessionPhase = 'answering' | 'closed' | 'revealed'
-export type QuizPhase = 'IDLE' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED'
+export type QuizSessionPhase = 'answering' | 'closing' | 'closed' | 'revealed'
+export type QuizPhase = 'IDLE' | 'PUBLISHED' | 'CLOSING' | 'CLOSED' | 'REVEALED' | 'FINISHED'
 export type ChoiceKey = 'A' | 'B' | 'C' | 'D'
 
 /** GET /api/operator/quiz/state の current。phase が進むと correct_answer も開示される。 */
@@ -43,6 +43,11 @@ export interface OperatorQuizState {
    */
   phase_started_at?: string | null
   /**
+   * 終了操作時にサーバーが固定した経過秒数。status が finished 以外なら null。
+   * バックエンドの段階的デプロイ中は未定義になりうる。
+   */
+  finished_elapsed_seconds?: number | null
+  /**
    * 次に公開される問題の簡易プレビュー。無ければ null。
    * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
    */
@@ -52,6 +57,7 @@ export interface OperatorQuizState {
 export const PHASE_LABELS: Record<QuizPhase, string> = {
   IDLE: 'イベント開始前',
   PUBLISHED: '解答受付中',
+  CLOSING: '10秒後に解答締め切り',
   CLOSED: '解答締め切り',
   REVEALED: '答え表示中',
   FINISHED: 'イベント終了',
@@ -64,6 +70,8 @@ export function getQuizPhase(state: OperatorQuizState): QuizPhase {
   if (state.status === 'waiting') return 'IDLE'
   if (state.status === 'finished') return 'FINISHED'
   switch (state.phase) {
+    case 'closing':
+      return 'CLOSING'
     case 'closed':
       return 'CLOSED'
     case 'revealed':

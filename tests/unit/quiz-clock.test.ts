@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeCountdown, createExpireGuard, formatClock, formatElapsed } from '../../app/features/quiz-control/useQuizClock'
+import { computeCountdown, createExpireGuard, formatClock, formatElapsed, formatElapsedSeconds } from '../../app/features/quiz-control/useQuizClock'
 
 describe('formatElapsed', () => {
   it('null は --:-- を返す', () => {
@@ -19,6 +19,16 @@ describe('formatElapsed', () => {
   it('未来時刻は 00:00 に丸める', () => {
     const now = new Date('2026-09-07T11:59:00Z')
     expect(formatElapsed('2026-09-07T12:00:00Z', now)).toBe('00:00')
+  })
+})
+
+describe('formatElapsedSeconds', () => {
+  it('固定済みの秒数を MM:SS で返す', () => {
+    expect(formatElapsedSeconds(125)).toBe('02:05')
+  })
+
+  it('負数は 00:00 に丸める', () => {
+    expect(formatElapsedSeconds(-1)).toBe('00:00')
   })
 })
 

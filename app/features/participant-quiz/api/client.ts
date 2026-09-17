@@ -1,4 +1,5 @@
 import type {
+  ConfirmParticipantQuizConfidenceInput,
   ParticipantQuizState,
   SubmitParticipantQuizAnswerInput,
   SubmitParticipantQuizAnswerResult,
@@ -12,7 +13,17 @@ export function fetchParticipantQuizState(): Promise<ParticipantQuizState> {
   return request<ParticipantQuizState>('/participant/quiz/state', { credentials, retry: 0 })
 }
 
-/** 公開中の問題へ解答を送信する(同一問題への再送は上書き)。 */
+/** 回答前に自信度を一度だけ確定する。Lv.1ではサーバーが3択を返す。 */
+export function confirmParticipantQuizConfidence(input: ConfirmParticipantQuizConfidenceInput): Promise<ParticipantQuizState> {
+  return request<ParticipantQuizState>('/participant/quiz/confidence-level', {
+    method: 'POST',
+    body: input,
+    credentials,
+    retry: 0,
+  })
+}
+
+/** 確定済みの自信度で公開中の問題へ解答を送信する。 */
 export function submitParticipantQuizAnswer(input: SubmitParticipantQuizAnswerInput): Promise<SubmitParticipantQuizAnswerResult> {
   return request<SubmitParticipantQuizAnswerResult>('/participant/quiz/answers', {
     method: 'POST',

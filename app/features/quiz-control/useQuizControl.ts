@@ -3,6 +3,7 @@ import type { OperatorQuizState } from './types'
 import { getNextQuizPosition, getQuizPhase, PHASE_LABELS } from './types'
 import {
   closeAnswers,
+  closeAnswersImmediately,
   fetchQuizState,
   finishQuiz,
   publishQuestion,
@@ -92,7 +93,8 @@ export function useQuizControl() {
     '問題公開',
   )
 
-  const close = () => act(closeAnswers, '解答の受付を締め切りました。', '解答締め切り')
+  const close = () => act(closeAnswers, '10秒後に解答受付を締め切ります。', '解答締め切りを開始')
+  const closeImmediately = () => act(closeAnswersImmediately, '解答の受付を締め切りました。', '時間切れで解答締め切り')
   const reveal = () => act(revealAnswer, '答えを表示しました。', '答え表示')
   const finish = () => act(finishQuiz, 'クイズ大会を終了しました。', 'クイズ終了')
 
@@ -125,6 +127,7 @@ export function useQuizControl() {
     start,
     publish,
     close,
+    closeImmediately,
     reveal,
     finish,
   }

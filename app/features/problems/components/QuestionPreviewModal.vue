@@ -10,24 +10,24 @@ import '~/assets/css/answer.css'
 const props = defineProps<{ question: Question }>()
 const emit = defineEmits<{ close: [] }>()
 
-type Confidence = 'あり' | '普通' | 'なし'
+type Confidence = 'Lv.1' | 'Lv.2' | 'Lv.3'
 interface ConfidenceOption {
   label: Confidence
   rate: string
 }
 
-// users/answer.vue（見た目確認用ダミー）と同じ自信度選択肢・倍率。プレビュー専用で送信は行わない。
+// 参加者画面のLv表記に合わせた見た目確認用の既定倍率。プレビュー専用で送信は行わない。
 const confidenceOptions: ConfidenceOption[] = [
-  { label: 'あり', rate: '×1.5' },
-  { label: '普通', rate: '×1.0' },
-  { label: 'なし', rate: '×0.5' },
+  { label: 'Lv.1', rate: '×0.5' },
+  { label: 'Lv.2', rate: '×1.0' },
+  { label: 'Lv.3', rate: '×2.0' },
 ]
 // 獲得予定ポイントの基礎点は、この問題に設定された配点（question.points）を使う。
-const CONFIDENCE_RATE: Record<Confidence, number> = { あり: 1.5, 普通: 1, なし: 0.5 }
+const CONFIDENCE_RATE: Record<Confidence, number> = { 'Lv.1': 0.5, 'Lv.2': 1, 'Lv.3': 2 }
 
 const imageUrl = resolveQuestionImageUrl(props.question.imageUrl)
 const selectedChoice = ref<Question['correctAnswer'] | null>(null)
-const confidence = ref<Confidence>('普通')
+const confidence = ref<Confidence>('Lv.2')
 const submitted = ref(false)
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()

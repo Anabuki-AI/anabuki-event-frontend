@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '~/lib/api/client'
 import {
   closeAnswers,
+  closeAnswersImmediately,
   fetchQuizState,
   finishQuiz,
   publishQuestion,
@@ -37,6 +38,7 @@ describe('運営クイズ進行 API client', () => {
     ['start', () => startQuiz(), '/operator/quiz/start', undefined],
     ['publish', () => publishQuestion(), '/operator/quiz/publish', undefined],
     ['close', () => closeAnswers(), '/operator/quiz/close', undefined],
+    ['immediate close after timer expiry', () => closeAnswersImmediately(), '/operator/quiz/close', { immediate: true }],
     ['reveal', () => revealAnswer(), '/operator/quiz/reveal', undefined],
     ['finish', () => finishQuiz(), '/operator/quiz/finish', undefined],
   ])('%sをCookie付きPOST・リトライなしで実行する', async (_name, action, path, body) => {

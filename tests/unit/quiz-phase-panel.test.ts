@@ -40,6 +40,12 @@ describe('QuizPhasePanel のAPI状態別描画', () => {
     expect(wrapper.find('.quiz-action-button').text()).toBe('解答締め切り')
   })
 
+  it('closing ではカウントダウン中の案内だけを表示する', () => {
+    const wrapper = mountPanel(makeState({ status: 'in_progress', phase: 'closing', current: currentQuestion }))
+    expect(wrapper.find('.quiz-action-button').exists()).toBe(false)
+    expect(wrapper.find('.quiz-phase-done').text()).toContain('カウントダウン中')
+  })
+
   it('closed では「答え表示」ボタンを表示する', () => {
     const wrapper = mountPanel(makeState({ status: 'in_progress', phase: 'closed', current: currentQuestion }))
     expect(wrapper.find('.quiz-action-button').text()).toBe('答え表示')
