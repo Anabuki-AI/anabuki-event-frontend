@@ -26,6 +26,11 @@ export interface Question {
   targetAudience: string | null
   /** 配点。この問題に正解した場合の基礎得点（自信度倍率を掛ける前の値）。 */
   points: number
+  /**
+   * 制限時間(秒)。null なら制限時間なし。
+   * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
+   */
+  timeLimitSeconds?: number | null
   createdAt: string
   updatedAt: string
 }

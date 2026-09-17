@@ -58,8 +58,9 @@ const action = computed(() => {
     case 'CLOSED':
       return { key: 'reveal', label: '答え表示', hint: '正解を参加者に表示します。' }
     case 'REVEALED':
+      // 次の問題の内容は QuizNextQuestionPreview に表示するため、ここでは番号を重複表示しない。
       return nextPosition.value !== null
-        ? { key: 'publish', label: '次の問題を公開', hint: `次は Q${nextPosition.value} です。` }
+        ? { key: 'publish', label: '次の問題を公開', hint: '下の「次の問題」を確認し、準備ができたら公開してください。' }
         : { key: 'finish', label: 'クイズを終了', hint: '全ての問題が終わりました。クイズ大会を終了します。' }
     default:
       return null

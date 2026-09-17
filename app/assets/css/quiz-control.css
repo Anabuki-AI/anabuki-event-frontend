@@ -1,0 +1,529 @@
+/**
+ * 出題進行管理画面（event_operator/quiz-control.vue とその配下コンポーネント）専用。
+ * .page-shell.admin-shell / .admin-card / .admin-sidebar* は main.css 側の共通レイアウトを
+ * そのまま使うため、ここでは画面固有のクイズ進行UIだけをスタイリングする。
+ * 対応端末: PC・タブレットのみ(event開催者ページ)。使用色は既存の main.css の配色に合わせる
+ * (メイン #1769c2 / 背景 #edeffa / 背景(問題) #ffffff / 文字 #132238 付近、
+ * ステータス色は status-message.error(#912018/#ffefed) と status-message.success(#14643b/#e9f8ef) を再利用)。
+ */
+
+.quiz-control-card {
+  gap: 24px;
+}
+
+.quiz-control-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.quiz-phase-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: #1769c2;
+  background: rgb(23 105 194 / 10%);
+  font-size: 14px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.quiz-control-note {
+  margin: 0;
+  color: #516176;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.quiz-refresh-button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid #c7d3e0;
+  border-radius: 10px;
+  color: #1769c2;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quiz-refresh-button:hover:not(:disabled) {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+/* ===== 全体レイアウト: 左に補助情報(時間系)、右に進行管理を主として並べる ===== */
+
+.quiz-control-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.quiz-control-aside,
+.quiz-control-main {
+  display: grid;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  /* タブレット縦持ちなど狭い場面では1カラムに落とす(スマホ最適化ではなくタブレット対応の範囲) */
+  .quiz-control-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ===== 進行ステップ(QuizPhasePanel) ===== */
+
+.quiz-phase-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.quiz-phase-steps {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-phase-step {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 999px;
+  color: #8290a3;
+  background: #edeffa;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quiz-phase-step.is-done {
+  color: #14643b;
+  background: #e9f8ef;
+  border-color: transparent;
+}
+
+.quiz-phase-step.is-current {
+  color: #fff;
+  background: #1769c2;
+  border-color: transparent;
+}
+
+.quiz-phase-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 35%);
+  font-size: 12px;
+}
+
+.quiz-phase-step.is-todo .quiz-phase-marker {
+  background: rgb(19 34 56 / 8%);
+}
+
+.quiz-phase-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.quiz-phase-hint {
+  margin: 0;
+  max-width: 52ch;
+  color: #516176;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.quiz-action-button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: #1769c2;
+  font-size: 16px;
+  font-weight: 750;
+  transition: transform 150ms ease;
+}
+
+.quiz-action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.quiz-phase-done {
+  margin: 0;
+  color: #516176;
+  font-size: 14px;
+}
+
+/* ===== 出題中問題カード(QuizCurrentQuestionCard, 情報の主) ===== */
+
+.quiz-question-card {
+  display: grid;
+  gap: 16px;
+  padding: 24px 28px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.quiz-question-card.is-empty {
+  justify-items: center;
+  padding: 40px 28px;
+  text-align: center;
+}
+
+.quiz-question-empty-icon {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.quiz-question-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quiz-question-id {
+  color: #1769c2;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.quiz-question-status {
+  color: #516176;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quiz-question-text {
+  margin: 0;
+  color: #132238;
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.6;
+}
+
+.quiz-question-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-question-choices li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 12px;
+  color: #132238;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.quiz-question-choices li.is-correct {
+  color: #14643b;
+  background: #e9f8ef;
+  border-color: transparent;
+  font-weight: 750;
+}
+
+.quiz-choice-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #516176;
+  background: #edeffa;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.quiz-answer-banner {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #14643b;
+  background: #e9f8ef;
+  font-size: 14px;
+}
+
+.quiz-answer-masked {
+  margin: 0;
+  color: #8290a3;
+  font-size: 13px;
+}
+
+/* ===== 時刻・履歴パネル(QuizClockPanel、補助情報) ===== */
+
+.quiz-clock-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.quiz-clock-block {
+  display: grid;
+  gap: 4px;
+}
+
+.quiz-clock-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #516176;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quiz-clock-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1769c2;
+}
+
+.quiz-clock-time {
+  margin: 0;
+  color: #132238;
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-clock-elapsed {
+  margin: 0;
+  color: #1769c2;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.quiz-clock-elapsed span {
+  color: #516176;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.quiz-clock-log {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgb(19 34 56 / 8%);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.quiz-clock-log-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quiz-clock-log-row dt {
+  color: #132238;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quiz-clock-log-row dd {
+  margin: 0;
+  color: #8290a3;
+  font-size: 12px;
+}
+
+/* ===== タイマー(QuizTimerPanel、補助情報) ===== */
+
+.quiz-timer-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgb(19 34 56 / 10%);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.quiz-timer-block {
+  display: grid;
+  gap: 4px;
+}
+
+.quiz-timer-label {
+  margin: 0;
+  color: #516176;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quiz-timer-elapsed {
+  margin: 0;
+  color: #132238;
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-timer-countdown {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #edeffa;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.quiz-timer-remaining {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-timer-no-limit {
+  margin: 0;
+  color: #8290a3;
+  font-size: 14px;
+}
+
+.quiz-timer-countdown.is-normal .quiz-timer-remaining {
+  color: #1769c2;
+}
+
+/* 残りわずか: 一般的な暖色(amber)で注意を促す。既存カラートークンに無いため最小限だけ追加する */
+.quiz-timer-countdown.is-warning {
+  background: #fff7ed;
+}
+
+.quiz-timer-countdown.is-warning .quiz-timer-remaining {
+  color: #9a3412;
+}
+
+/* 時間切れ: 既存の status-message.error と同じ配色を再利用する */
+.quiz-timer-countdown.is-expired {
+  background: #ffefed;
+}
+
+.quiz-timer-countdown.is-expired .quiz-timer-remaining {
+  color: #912018;
+}
+
+/* ===== 次の問題プレビュー(QuizNextQuestionPreview、補助情報・現在問題より控えめに) ===== */
+
+.quiz-next-preview {
+  display: grid;
+  gap: 10px;
+  padding: 16px 20px;
+  border: 1px dashed rgb(19 34 56 / 16%);
+  border-radius: 16px;
+  background: #edeffa;
+}
+
+.quiz-next-preview-title {
+  margin: 0;
+  color: #516176;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quiz-next-preview-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.quiz-next-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-next-preview-id {
+  color: #1769c2;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.quiz-next-preview-text {
+  margin: 0;
+  color: #132238;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.quiz-next-preview-image {
+  display: block;
+  width: 100%;
+  max-height: 120px;
+  border-radius: 10px;
+  background: #edeffa;
+  object-fit: contain;
+}
+
+.quiz-next-preview-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #516176;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.quiz-next-preview-choices li {
+  display: flex;
+  gap: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.quiz-next-preview-choice-key {
+  color: #8290a3;
+  font-weight: 750;
+}
+
+.quiz-next-preview-empty {
+  margin: 0;
+  color: #8290a3;
+  font-size: 13px;
+}

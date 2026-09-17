@@ -7,7 +7,7 @@ import {
 } from '~/features/problems/api/client'
 import { CHOICE_KEYS, CONFIDENCE_LEVEL_LABELS, CONFIDENCE_LEVELS, formatMultiplier } from '~/features/problems/constants'
 import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '~/features/problems/types'
-import { choiceText, correctChoiceText, formatCorrectBadge, formatQuestionPosition } from '~/features/problems/components/QuestionRow'
+import { choiceText, correctChoiceText, formatCorrectBadge, formatQuestionPosition, formatTimeLimit } from '~/features/problems/components/QuestionRow'
 import ConfidenceMultiplierModal from '~/features/problems/components/ConfidenceMultiplierModal.vue'
 import QuestionDeleteDialog from '~/features/problems/components/QuestionDeleteDialog.vue'
 import QuestionPreviewModal from '~/features/problems/components/QuestionPreviewModal.vue'
@@ -210,6 +210,9 @@ onMounted(() => {
             <div class="question-row-detail">
               <p v-if="question.targetAudience" class="question-target-audience">
                 出題対象: {{ question.targetAudience }}
+              </p>
+              <p class="question-time-limit">
+                制限時間: {{ formatTimeLimit(question) }}
               </p>
               <div class="question-choices-row">
                 <ul class="question-choices">
