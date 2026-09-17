@@ -18,6 +18,10 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
       // Enable only once the server implements docs/admin-monitoring-contract.md.
       adminMonitoringEnabled: false,
+      // Enable only after the audit-log backend (backend-rails PR #30) is merged
+      // and deployed; see docs/audit-log-contract.md. While false, the console
+      // makes no request and keeps the explicit unconnected state.
+      adminAuditLogEnabled: false,
     },
   },
   nitro: {
