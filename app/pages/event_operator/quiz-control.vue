@@ -132,6 +132,7 @@ const {
             <QuizTimerPanel
               :phase="phase"
               :phase-started-at="state.phase_started_at ?? null"
+              :finished-elapsed-seconds="state.finished_elapsed_seconds ?? null"
               :time-limit-seconds="state.current?.time_limit_seconds ?? null"
               :question-id="state.current?.question_id ?? null"
               :now="now"

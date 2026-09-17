@@ -20,16 +20,21 @@ export function useQuizClock(intervalMs = 1000) {
   return { now }
 }
 
+/** 経過秒数を MM:SS 形式で整形する */
+export function formatElapsedSeconds(value: number): string {
+  const elapsedSeconds = Math.max(0, Math.floor(value))
+  const minutes = Math.floor(elapsedSeconds / 60)
+  const seconds = elapsedSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
 /** ISO文字列 or Date から経過時間を MM:SS 形式で整形する */
 export function formatElapsed(from: string | Date | null, now: Date): string {
   if (from === null) {
     return '--:--'
   }
   const start = typeof from === 'string' ? new Date(from) : from
-  const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - start.getTime()) / 1000))
-  const minutes = Math.floor(elapsedSeconds / 60)
-  const seconds = elapsedSeconds % 60
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  return formatElapsedSeconds((now.getTime() - start.getTime()) / 1000)
 }
 
 /** Date を HH:MM:SS 形式で整形する */

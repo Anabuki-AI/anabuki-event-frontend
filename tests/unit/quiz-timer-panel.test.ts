@@ -5,6 +5,7 @@ import QuizTimerPanel from '../../app/features/quiz-control/components/QuizTimer
 function mountPanel(overrides: Partial<{
   phase: 'IDLE' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED' | null
   phaseStartedAt: string | null
+  finishedElapsedSeconds: number | null
   timeLimitSeconds: number | null
   questionId: number | null
   now: Date
@@ -14,6 +15,7 @@ function mountPanel(overrides: Partial<{
     props: {
       phase: 'PUBLISHED',
       phaseStartedAt: '2026-09-07T12:00:00Z',
+      finishedElapsedSeconds: null,
       timeLimitSeconds: 10,
       questionId: 1,
       now: new Date('2026-09-07T12:00:00Z'),
@@ -26,6 +28,26 @@ describe('QuizTimerPanel', () => {
   it('経過時間を常に表示する', () => {
     const wrapper = mountPanel({ now: new Date('2026-09-07T12:00:07Z') })
     expect(wrapper.find('.quiz-timer-elapsed').text()).toBe('00:07')
+  })
+
+  it('終了後はサーバーが固定した経過時間を時計更新後も表示する', async () => {
+    const wrapper = mountPanel({
+      phase: 'FINISHED',
+      phaseStartedAt: '2026-09-07T12:00:07Z',
+      finishedElapsedSeconds: 7,
+      timeLimitSeconds: null,
+      questionId: null,
+      now: new Date('2026-09-07T12:00:07Z'),
+    })
+    expect(wrapper.find('.quiz-timer-elapsed').text()).toBe('00:07')
+
+    await wrapper.setProps({ now: new Date('2026-09-07T12:10:00Z') })
+    expect(wrapper.find('.quiz-timer-elapsed').text()).toBe('00:07')
+  })
+
+  it('終了済みなのに固定値がない場合は 00:00 にリセットせず未取得表示にする', () => {
+    const wrapper = mountPanel({ phase: 'FINISHED', finishedElapsedSeconds: null })
+    expect(wrapper.find('.quiz-timer-elapsed').text()).toBe('--:--')
   })
 
   it('制限時間がある場合は残り時間をカウントダウン表示する', () => {
