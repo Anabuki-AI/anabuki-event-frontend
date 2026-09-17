@@ -35,6 +35,7 @@ const nextPosition = computed(() => getNextQuizPosition(props.state))
 const phaseIndex: Record<QuizPhase, number> = {
   IDLE: 0,
   PUBLISHED: 2,
+  CLOSING: 2,
   CLOSED: 3,
   REVEALED: 4,
   FINISHED: 5,
@@ -55,6 +56,8 @@ const action = computed(() => {
       return { key: 'start', label: 'イベント開始', hint: 'イベントを開始すると最初の問題が公開されます。' }
     case 'PUBLISHED':
       return { key: 'close', label: '解答締め切り', hint: '参加者の解答受付を締め切ります。' }
+    case 'CLOSING':
+      return null
     case 'CLOSED':
       return { key: 'reveal', label: '答え表示', hint: '正解を参加者に表示します。' }
     case 'REVEALED':
@@ -124,7 +127,7 @@ function handleAction() {
       </button>
     </div>
     <p v-else class="quiz-phase-done" role="status">
-      {{ phase === 'FINISHED' ? 'クイズ大会は終了しました。お疲れさまでした。' : '進行できる操作はありません。' }}
+      {{ phase === 'CLOSING' ? '解答締め切りのカウントダウン中です。' : phase === 'FINISHED' ? 'クイズ大会は終了しました。お疲れさまでした。' : '進行できる操作はありません。' }}
     </p>
   </section>
 </template>

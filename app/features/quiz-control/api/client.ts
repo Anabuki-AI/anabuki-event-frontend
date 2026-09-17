@@ -20,8 +20,14 @@ export function publishQuestion(): Promise<OperatorQuizState> {
   return act('/operator/quiz/publish')
 }
 
+/** Starts the participant-visible ten-second close countdown. */
 export function closeAnswers(): Promise<OperatorQuizState> {
   return act('/operator/quiz/close')
+}
+
+/** Used only for an elapsed per-question time limit, which is an immediate deadline. */
+export function closeAnswersImmediately(): Promise<OperatorQuizState> {
+  return act('/operator/quiz/close', { immediate: true })
 }
 
 export function revealAnswer(): Promise<OperatorQuizState> {

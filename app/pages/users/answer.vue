@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import QuizCloseCountdownBar from '~/components/QuizCloseCountdownBar.vue'
 import ParticipantQuizFinishedPanel from '~/features/participant-quiz/components/ParticipantQuizFinishedPanel.vue'
+import { useQuizClock } from '~/features/quiz-control/useQuizClock'
 import { useParticipantQuizAnswer } from '~/features/participant-quiz/composables/use-participant-quiz-answer'
 import { CONFIDENCE_LEVEL_LABELS } from '~/features/participant-quiz/types'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
@@ -15,6 +17,7 @@ useSeoMeta({
   description: 'クイズの解答を選択して送信する、一般ユーザー向けページです。',
 })
 
+const { now } = useQuizClock(1000)
 const participant = ref<Participant>()
 const participantError = ref('')
 const isRedirecting = ref(false)
@@ -32,6 +35,7 @@ function redirectToWaiting() {
 }
 
 const {
+  state,
   question,
   myAnswer,
   correctAnswer,
@@ -71,6 +75,11 @@ onMounted(async () => {
 
 <template>
   <div class="page-shell answer-shell">
+    <QuizCloseCountdownBar
+      :phase="state?.phase ?? null"
+      :phase-started-at="state?.phase_started_at ?? null"
+      :now="now"
+    />
     <header class="answer-header">
       <div class="answer-heading">
         <p class="eyebrow">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import QuizCloseCountdownBar from '~/components/QuizCloseCountdownBar.vue'
 import QuizClockPanel from '~/features/quiz-control/components/QuizClockPanel.vue'
 import QuizPhasePanel from '~/features/quiz-control/components/QuizPhasePanel.vue'
 import QuizCurrentQuestionCard from '~/features/quiz-control/components/QuizCurrentQuestionCard.vue'
@@ -28,6 +29,7 @@ const {
   start,
   publish,
   close,
+  closeImmediately,
   reveal,
   finish,
 } = useQuizControl()
@@ -69,6 +71,11 @@ const {
     </aside>
 
     <section class="admin-card quiz-control-card">
+      <QuizCloseCountdownBar
+        :phase="state?.phase ?? null"
+        :phase-started-at="state?.phase_started_at ?? null"
+        :now="now"
+      />
       <header class="quiz-control-header">
         <div>
           <p class="eyebrow">
@@ -129,7 +136,7 @@ const {
               :question-id="state.current?.question_id ?? null"
               :now="now"
               :is-acting="isActing"
-              @expire="close"
+              @expire="closeImmediately"
             />
           </div>
 
