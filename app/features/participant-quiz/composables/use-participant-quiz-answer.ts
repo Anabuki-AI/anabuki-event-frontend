@@ -105,6 +105,22 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     }
   }))
 
+  const displayConfidenceOptions = computed<ConfidenceOption[]>(() => confidenceOptions.value.map((option) => {
+    const key = ({ 3: 'high', 2: 'normal', 1: 'low' } as const)[option.value]
+    const multiplier = state.value?.confidence_multipliers?.[key]
+    return { ...option, multiplier: multiplier != null ? `×${multiplier.toFixed(2)}` : '—' }
+  }))
+
+  const displaySelectedMultiplier = computed(() => displayConfidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '—')
+
+  const fixedConfidenceOptions = computed<ConfidenceOption[]>(() => confidenceOptions.value.map((option) => {
+    const key = ({ 3: 'high', 2: 'normal', 1: 'low' } as const)[option.value]
+    const multiplier = state.value?.confidence_multipliers?.[key]
+    return { ...option, multiplier: multiplier != null ? `\u00d7${multiplier.toFixed(2)}` : '\u2014' }
+  }))
+
+  const fixedSelectedMultiplier = computed(() => fixedConfidenceOptions.value.find(option => option.value === confidenceLevel.value)?.multiplier ?? '\u2014')
+
   const selectedChoiceText = computed(() => {
     const selected = choices.value.find(choice => choice.key === selectedChoice.value)
     return selected ? `${selected.key}. ${selected.text}` : '未選択'
@@ -166,11 +182,11 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     loadError,
     screen,
     choices,
-    confidenceOptions,
+    confidenceOptions: fixedConfidenceOptions,
     selectedChoice,
     confidenceLevel,
     selectedChoiceText,
-    selectedMultiplier,
+    selectedMultiplier: fixedSelectedMultiplier,
     isSubmitting,
     canSubmit,
     submissionMessage,
