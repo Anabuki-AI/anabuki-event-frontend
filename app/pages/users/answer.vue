@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { useAnswer } from '~/features/answer/use-answer'
+import { computed, onMounted, ref } from 'vue'
+import ParticipantQuizFinishedPanel from '~/features/participant-quiz/components/ParticipantQuizFinishedPanel.vue'
+import { useParticipantQuizAnswer } from '~/features/participant-quiz/composables/use-participant-quiz-answer'
+import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
+import type { Participant } from '~/features/participants/types'
+import { ApiError } from '~/lib/api/error'
 
-// 解答画面専用CSS（main.cssから分離、ページ単位で読み込み）
 import '~/assets/css/answer.css'
 
 useSeoMeta({
@@ -9,21 +13,57 @@ useSeoMeta({
   description: 'クイズの解答を選択して送信する、一般ユーザー向けページです。',
 })
 
-// 状態・ロジックは features/answer/use-answer.ts に集約
+const participant = ref<Participant>()
+const participantError = ref('')
+const isRedirecting = ref(false)
+
+function redirectToRegistration() {
+  if (isRedirecting.value) return
+  isRedirecting.value = true
+  void navigateTo('/participants/new')
+}
+
+function redirectToWaiting() {
+  if (isRedirecting.value) return
+  isRedirecting.value = true
+  void navigateTo('/participants/waiting')
+}
+
 const {
-  userName,
   question,
+  myAnswer,
+  correctAnswer,
+  loadError,
+  screen,
   choices,
   confidenceOptions,
   selectedChoice,
-  confidence,
-  submitted,
+  confidenceLevel,
   selectedChoiceText,
-  expectedPoint,
-  selectChoice,
-  selectConfidence,
+  selectedMultiplier,
+  isSubmitting,
+  canSubmit,
+  submissionMessage,
   submitAnswer,
-} = useAnswer()
+} = useParticipantQuizAnswer({
+  onWaiting: redirectToWaiting,
+  onUnauthorized: redirectToRegistration,
+})
+
+const correctChoiceText = computed(() => choices.value.find(choice => choice.key === correctAnswer.value)?.text)
+
+onMounted(async () => {
+  try {
+    participant.value = await getCurrentParticipant()
+  }
+  catch (error) {
+    if (error instanceof ApiError && error.statusCode === 401) {
+      redirectToRegistration()
+      return
+    }
+    participantError.value = '参加情報を確認できませんでした。通信状況を確認して再読み込みしてください。'
+  }
+})
 </script>
 
 <template>
@@ -35,7 +75,7 @@ const {
         </p>
         <h1>解答画面</h1>
         <p class="answer-user-name">
-          {{ userName }} さん
+          {{ participant ? `${participant.displayName} さん` : '参加情報を確認しています…' }}
         </p>
       </div>
       <NuxtLink
@@ -47,31 +87,43 @@ const {
     </header>
 
     <main class="answer-main">
-      <section v-if="!submitted" class="answer-card">
+      <p v-if="participantError" class="status-message error" role="alert">
+        {{ participantError }}
+      </p>
+      <p v-if="loadError && !(loadError instanceof ApiError && loadError.statusCode === 401)" class="status-message error" role="alert">
+        クイズの最新状態を取得できませんでした。自動的に再試行します。
+      </p>
+
+      <section v-if="screen === 'loading'" class="answer-card" aria-live="polite">
+        <p class="muted-copy">
+          クイズの状態を確認しています…
+        </p>
+      </section>
+
+      <section v-else-if="screen === 'finished'" class="answer-card" aria-live="polite">
+        <ParticipantQuizFinishedPanel />
+      </section>
+
+      <section v-else-if="screen === 'answer' && question" class="answer-card">
         <div class="question-panel">
-          <div class="question-meta">
-            <p class="question-number">
-              {{ question.number }}
-            </p>
-            <p v-if="question.targetAudience" class="question-target-audience">
-              {{ question.targetAudience }}
-            </p>
-          </div>
-          <p class="question-text">
-            {{ question.text }}
+          <p class="question-number">
+            Q{{ question.position }}
           </p>
-          <img v-if="question.imageUrl" class="question-image" :src="question.imageUrl" alt="">
+          <p class="question-text">
+            {{ question.question_text }}
+          </p>
+          <img v-if="question.image_url" class="question-image" :src="question.image_url" alt="">
         </div>
 
         <div class="choice-list">
           <button
-            v-for="(choice, index) in choices"
+            v-for="choice in choices"
             :key="choice.key"
             type="button"
             class="choice-item"
-            :class="{ 'is-selected': selectedChoice === index }"
-            :aria-pressed="selectedChoice === index"
-            @click="selectChoice(index)"
+            :class="{ 'is-selected': selectedChoice === choice.key }"
+            :aria-pressed="selectedChoice === choice.key"
+            @click="selectedChoice = choice.key"
           >
             <span class="choice-key">
               {{ choice.key }}
@@ -90,18 +142,18 @@ const {
           <div class="confidence-list">
             <button
               v-for="option in confidenceOptions"
-              :key="option.label"
+              :key="option.value"
               type="button"
               class="confidence-item"
-              :class="{ 'is-selected': confidence === option.label }"
-              :aria-pressed="confidence === option.label"
-              @click="selectConfidence(option.label)"
+              :class="{ 'is-selected': confidenceLevel === option.value }"
+              :aria-pressed="confidenceLevel === option.value"
+              @click="confidenceLevel = option.value"
             >
               <span class="confidence-name">
                 {{ option.label }}
               </span>
               <span class="confidence-rate">
-                {{ option.rate }}
+                {{ option.multiplier }}
               </span>
             </button>
           </div>
@@ -109,16 +161,19 @@ const {
 
         <div class="point-panel">
           <p class="point-summary">
-            現在の選択：{{ selectedChoiceText }}／自信度：{{ confidence }}
+            現在の選択：{{ selectedChoiceText }}／自信度：{{ confidenceOptions.find(option => option.value === confidenceLevel)?.label }}
           </p>
           <p class="point-value">
-            {{ expectedPoint }}<span class="point-unit">pt</span>
+            {{ selectedMultiplier }}
           </p>
           <p class="point-caption">
-            この内容で送信すると獲得できる予定のポイント
+            選択中の自信度レベル
           </p>
         </div>
 
+        <p v-if="submissionMessage" class="status-message error" role="alert">
+          {{ submissionMessage }}
+        </p>
         <p class="answer-note">
           ※ 送信する前なら、選択肢と自信度は何度でも変更できます。
         </p>
@@ -126,22 +181,21 @@ const {
         <button
           type="button"
           class="answer-submit"
-          :disabled="selectedChoice === null"
+          :disabled="!canSubmit"
           @click="submitAnswer"
         >
-          この内容で解答する
+          {{ isSubmitting ? '解答を送信しています…' : 'この内容で解答する' }}
         </button>
       </section>
 
-      <section v-else class="answer-card">
+      <section v-else-if="screen === 'submitted'" class="answer-card" aria-live="polite">
         <p class="eyebrow">
           After submit
         </p>
         <h2>解答を送信しました</h2>
         <p class="muted-copy">
-          みんなの解答がそろったら、解説を公開します。
+          正答と得点の公開をお待ちください。
         </p>
-
         <div class="wait-state">
           <div class="wait-dots" aria-hidden="true">
             <span class="wait-dot" />
@@ -149,12 +203,50 @@ const {
             <span class="wait-dot" />
           </div>
           <p class="wait-text">
-            解説の公開を待っています…
+            正答発表を待っています…
           </p>
         </div>
+      </section>
 
+      <section v-else-if="screen === 'closed'" class="answer-card" aria-live="polite">
+        <h2>解答受付は終了しました</h2>
+        <p class="muted-copy">
+          正答と得点の公開をお待ちください。
+        </p>
+        <div class="wait-state">
+          <p class="wait-text">
+            正答発表を待っています…
+          </p>
+        </div>
+      </section>
+
+      <section v-else-if="screen === 'revealed' && question" class="answer-card result-card" aria-live="polite">
+        <p class="eyebrow">
+          Result
+        </p>
+        <h2>結果発表</h2>
+        <div class="result-panel">
+          <p class="result-label">
+            正解
+          </p>
+          <p class="result-value">
+            {{ correctAnswer }}{{ correctChoiceText ? `. ${correctChoiceText}` : '' }}
+          </p>
+          <p class="result-label">
+            あなたの解答
+          </p>
+          <p class="result-value">
+            {{ myAnswer ? `${myAnswer.choice}（自信度 ${myAnswer.confidence_level}）` : '解答なし' }}
+          </p>
+        </div>
         <p class="answer-note">
-          ※ この画面はダミーデータによる見た目確認用です（API未接続）。
+          次の問題が公開されると、画面が自動的に切り替わります。
+        </p>
+      </section>
+
+      <section v-else class="answer-card" aria-live="polite">
+        <p class="muted-copy">
+          次の問題を待っています…
         </p>
       </section>
     </main>

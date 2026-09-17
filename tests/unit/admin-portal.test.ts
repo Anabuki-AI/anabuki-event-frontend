@@ -10,7 +10,6 @@ vi.mock('~/admin/api/admin-auth', () => ({
   adminAuthApi: {
     configuration: vi.fn(), session: vi.fn(), ownRequest: vi.fn(), apply: vi.fn(),
     exchange: vi.fn(), logout: vi.fn(), pendingRequests: vi.fn(), decide: vi.fn(),
-    pendingOperatorRequests: vi.fn(), decideOperatorRequest: vi.fn(),
   },
 }))
 
@@ -45,7 +44,6 @@ beforeEach(() => {
   api.configuration.mockResolvedValue({ configured: true })
   api.ownRequest.mockResolvedValue(undefined)
   api.pendingRequests.mockResolvedValue([])
-  api.pendingOperatorRequests.mockResolvedValue([])
   api.apply.mockResolvedValue(pending)
   api.exchange.mockResolvedValue(undefined)
   api.logout.mockResolvedValue(undefined)
@@ -259,25 +257,6 @@ describe('admin portal authentication and application lifecycle', () => {
     await state.decide(42, 'approve')
     expect(state.pendingRequests.value).toHaveLength(1)
     expect(state.error.value).toContain('状態が変更')
-  })
-
-  it('loads and decides operator access requests separately from team requests', async () => {
-    api.session.mockResolvedValue(manager)
-    api.pendingOperatorRequests.mockResolvedValue([pending])
-    api.decideOperatorRequest.mockResolvedValue({ ...pending, status: 'APPROVED' })
-    const state = await start()
-    expect(state.pendingOperatorRequests.value).toEqual([pending])
-    await state.decideOperatorRequest(42, 'approve')
-    expect(api.decideOperatorRequest).toHaveBeenCalledWith(42, 'approve')
-    expect(api.decide).not.toHaveBeenCalled()
-    expect(state.pendingOperatorRequests.value).toEqual([])
-  })
-
-  it('skips the operator approval inbox without the approval permission', async () => {
-    api.session.mockResolvedValue({ ...manager, permissions: ['MANAGEMENT_PAGE_VIEW'] })
-    const state = await start()
-    expect(api.pendingOperatorRequests).not.toHaveBeenCalled()
-    expect(state.pendingOperatorRequests.value).toEqual([])
   })
 
   it('cleans up polling and listeners when the portal is unmounted', async () => {

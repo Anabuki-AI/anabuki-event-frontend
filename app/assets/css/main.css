@@ -688,6 +688,14 @@ h1 {
   min-width: 0;
 }
 
+/* ヘルプ・ログアウトを右端にまとめる */
+.waiting-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .eyebrow-main {
   margin: 0 0 6px;
   color: #1769c2; /* メインカラー */

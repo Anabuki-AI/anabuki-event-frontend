@@ -3,11 +3,9 @@ import { computed, nextTick, ref } from 'vue'
 import { buildGoogleStartUrl, isGoogleAuthError } from '~/lib/auth/google'
 import { formatJapanDateTime } from '~/lib/format/datetime'
 import { useOperatorPortal } from '../composables/useOperatorPortal'
-import { getAccessRequestStateCopy } from '../portal-presentation'
 
 const {
   session,
-  accessRequest,
   configured,
   busy,
   ready,
@@ -16,8 +14,6 @@ const {
   departing,
   isManager,
   refresh,
-  apply,
-  enter,
   logout,
 } = useOperatorPortal()
 const config = useRuntimeConfig()
@@ -28,9 +24,6 @@ const googleStartUrl = computed(
 )
 const logoutConfirmation = ref(false)
 const mainContent = ref<HTMLElement | null>(null)
-const requestStatus = computed(() => accessRequest.value?.status)
-const requestCopy = computed(() => getAccessRequestStateCopy(requestStatus.value))
-
 async function focusAfter(action: () => Promise<void>) {
   await action()
   await nextTick()
@@ -116,13 +109,13 @@ async function confirmLogout() {
 
           <div class="first-visit">
             <span class="small-icon"><PortalIcon name="info" /></span>
-            <div><h2>イベント開催者の方へ</h2><p>ログイン後、運営管理者への利用申請を送信できます。承認されるまで、運営機能は利用できません。参加者用のページではありません。</p></div>
+            <div><h2>イベント開催者の方へ</h2><p>Google ログイン後、管理者にオペレーター権限の付与を依頼してください。権限が付与されるまで、運営機能は利用できません。参加者用のページではありません。</p></div>
           </div>
           <details class="help-details">
             <summary>ログイン・申請について</summary>
             <div class="help-content">
               <p>すでに承認済みのアカウントは、ログイン後すぐにオペレーター画面へ進みます。</p>
-              <p>はじめて利用する場合は、ログイン後に運営管理者へ利用申請を送信してください。承認待ちの間は、この画面が自動で最新の状態を確認します。</p>
+              <p>はじめて利用する場合は、ログイン後に表示されるメールアドレスを管理者へ伝え、オペレーター権限の付与を依頼してください。</p>
               <p>Google 側でログインを中止した場合やエラーになった場合は、この画面に戻り、もう一度お試しください。</p>
               <p>このポータルは PC・タブレットでの利用を想定しています。</p>
             </div>
@@ -130,16 +123,12 @@ async function confirmLogout() {
         </section>
 
         <section v-else-if="!isManager" class="application-section" aria-labelledby="application-title" :aria-busy="busy">
-          <span class="state-badge" :class="{ approved: requestStatus === 'APPROVED', pending: requestStatus === 'PENDING' }"><PortalIcon :name="requestStatus === 'PENDING' ? 'clock' : 'info'" />{{ requestCopy.label }}</span>
-          <h1 id="application-title" class="state-title">{{ requestCopy.title }}</h1>
-          <p class="intro">{{ requestCopy.description }}</p>
-          <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">ログイン中のアカウント</span><strong>{{ session.email }}</strong></div></div>
-          <dl v-if="accessRequest" class="request-meta"><div><dt>申請番号</dt><dd>#{{ accessRequest.id }}</dd></div><div><dt>有効期限（日本時間）</dt><dd>{{ formatJapanDateTime(accessRequest.expiresAt) }}</dd></div></dl>
-          <button v-if="!accessRequest || requestStatus === 'REJECTED'" class="primary-button" :disabled="busy" @click="focusAfter(apply)">{{ busy ? '確認しています…' : requestStatus === 'REJECTED' ? 'もう一度利用を申請する' : '運営管理者へ利用を申請する' }} <PortalIcon name="arrow" /></button>
-          <button v-else-if="requestStatus === 'APPROVED'" class="primary-button" :disabled="busy" @click="focusAfter(enter)">{{ busy ? '運営セッションに切り替えています…' : '運営を開始' }} <PortalIcon name="arrow" /></button>
-          <button v-else-if="requestStatus === 'PENDING'" class="secondary-button" :disabled="busy" @click="refresh"><PortalIcon name="refresh" />{{ busy ? '確認しています…' : '承認状況を確認する' }}</button>
-          <p v-if="requestStatus === 'PENDING'" class="secure-note"><span class="live-dot" />10秒ごとに自動確認します。別のブラウザを開かずにお待ちください。</p>
-          <div class="device-note"><PortalIcon name="lock" /><p>申請はこの端末・ブラウザに紐づいています。承認後は、同じブラウザから「運営を開始」を押してください。</p></div>
+          <span class="state-badge"><PortalIcon name="info" />権限の付与待ち</span>
+          <h1 id="application-title" class="state-title">管理者に権限付与を依頼してください</h1>
+          <p class="intro">この Google アカウントは確認済みです。管理者が管理画面からオペレーター権限を直接付与すると、すぐにイベント運営を開始できます。</p>
+          <div class="account-card"><span class="account-avatar" aria-hidden="true">{{ session.email[0]?.toUpperCase() }}</span><div><span class="meta-label">管理者へ伝えるメールアドレス</span><strong>{{ session.email }}</strong></div></div>
+          <button class="secondary-button" :disabled="busy" @click="refresh"><PortalIcon name="refresh" />{{ busy ? '確認しています…' : '権限の状態を確認する' }}</button>
+          <div class="device-note"><PortalIcon name="lock" /><p>利用申請の承認は不要です。管理者による直接付与後、この画面を更新してください。</p></div>
         </section>
 
         <section v-else class="session-section" aria-labelledby="session-title" :aria-busy="busy">

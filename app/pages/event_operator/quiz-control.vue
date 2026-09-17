@@ -19,12 +19,14 @@ const {
   isActing,
   errorMessage,
   noticeMessage,
+  phase,
   phaseLabel,
   refresh,
   start,
   publish,
   close,
   reveal,
+  finish,
 } = useQuizControl()
 
 const {
@@ -77,14 +79,19 @@ const {
         <span
           v-if="state"
           class="quiz-phase-badge"
-          :data-phase="state.phase"
+          :data-phase="phase"
         >
           {{ phaseLabel }}
         </span>
       </header>
 
-      <p class="mock-notice">
-        現在は仮のデータで動作しています。実API連携は後ほど有効になります。
+
+      <p
+        v-if="errorMessage"
+        class="status-message error"
+        role="alert"
+      >
+        {{ errorMessage }}
       </p>
 
       <p
@@ -96,13 +103,6 @@ const {
       </p>
 
       <template v-else-if="state">
-        <p
-          v-if="errorMessage"
-          class="status-message error"
-          role="alert"
-        >
-          {{ errorMessage }}
-        </p>
         <p
           v-if="noticeMessage"
           class="status-message success"
@@ -128,6 +128,7 @@ const {
               @publish="publish"
               @close="close"
               @reveal="reveal"
+              @finish="finish"
             />
             <QuizCurrentQuestionCard :state="state" />
           </div>
@@ -139,7 +140,7 @@ const {
             type="button"
             class="quiz-refresh-button"
             :disabled="isActing"
-            @click="refresh"
+            @click="() => refresh()"
           >
             今すぐ更新
           </button>

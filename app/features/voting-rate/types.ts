@@ -3,18 +3,17 @@ export interface QuestionChoice {
   label: string
 }
 
-export interface VotingOption {
-  key: string
-  label: string
-  text: string
-  votes: number
-  rate: number
+/** GET /api/operator/voting-rate の問題ごとの解答状況。 */
+export interface VotingRateQuestion {
+  questionId: number
+  position: number
+  answeredCount: number
+  /** 0〜1 の小数。 */
+  answeredRate: number
 }
 
-export interface VotingRateQuestion {
-  value: string
-  number: string
-  text: string
-  participantCount: number
-  options: VotingOption[]
+/** 投票率APIのレスポンス(契約: docs/quiz-session-contract.md)。 */
+export interface VotingRateResponse {
+  questions: VotingRateQuestion[]
+  total_participants: number
 }

@@ -1,109 +1,117 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import type { QuizState } from './types'
-import { PHASE_LABELS } from './types'
+import type { OperatorQuizState } from './types'
+import { getNextQuizPosition, getQuizPhase, PHASE_LABELS } from './types'
 import {
   closeAnswers,
   fetchQuizState,
+  finishQuiz,
   publishQuestion,
   revealAnswer,
   startQuiz,
 } from './api/client'
-import { toApiError } from '~/lib/api/error'
+import { ApiError, toApiError } from '~/lib/api/error'
 
 export interface QuizHistoryEntry {
   time: string
   label: string
 }
 
+const INVALID_TRANSITION_MESSAGE = '現在の状態では実行できない操作です。最新の状態を確認してください。'
+
+/** 運営APIの状態を同期し、実際の進行操作を一度ずつ実行する。 */
 export function useQuizControl() {
-  const state = ref<QuizState | null>(null)
+  const state = ref<OperatorQuizState | null>(null)
   const isLoading = ref(true)
   const isActing = ref(false)
   const errorMessage = ref('')
   const noticeMessage = ref('')
-
-  // 各フェーズの時刻はQuizStateが現在の問題分しか持たない（次の問題で上書き/リセットされる）ため、
-  // 「問題ごとに何時何が起きたか」を追えるよう、変化を検知したら履歴として蓄積する
   const history = ref<QuizHistoryEntry[]>([])
-  let lastStartedAt: string | null = null
-  let lastPublishedAt: string | null = null
-  let lastClosedAt: string | null = null
-  let lastRevealedAt: string | null = null
+  let refreshPromise: Promise<boolean> | undefined
 
-  function recordHistory(next: QuizState) {
-    const questionLabel = next.currentQuestion ? `Q${next.currentQuestion.id}` : null
+  async function refresh(preserveError = false, force = false) {
+    if (refreshPromise) {
+      const completed = await refreshPromise
+      if (!force) return completed
+    }
 
-    if (next.startedAt && next.startedAt !== lastStartedAt) {
-      lastStartedAt = next.startedAt
-      history.value.push({ time: next.startedAt, label: 'イベント開始' })
-    }
-    if (next.publishedAt && next.publishedAt !== lastPublishedAt) {
-      lastPublishedAt = next.publishedAt
-      history.value.push({ time: next.publishedAt, label: questionLabel ? `${questionLabel} 問題公開` : '問題公開' })
-    }
-    if (next.closedAt && next.closedAt !== lastClosedAt) {
-      lastClosedAt = next.closedAt
-      history.value.push({ time: next.closedAt, label: questionLabel ? `${questionLabel} 解答締め切り` : '解答締め切り' })
-    }
-    if (next.revealedAt && next.revealedAt !== lastRevealedAt) {
-      lastRevealedAt = next.revealedAt
-      history.value.push({ time: next.revealedAt, label: questionLabel ? `${questionLabel} 答え表示` : '答え表示' })
-    }
-  }
+    const load = (async () => {
+      try {
+        state.value = await fetchQuizState()
+        if (!preserveError) errorMessage.value = ''
+        return true
+      }
+      catch (error) {
+        errorMessage.value = toApiError(error).message
+        return false
+      }
+      finally {
+        isLoading.value = false
+      }
+    })()
+    refreshPromise = load
 
-  async function refresh() {
     try {
-      const next = await fetchQuizState()
-      state.value = next
-      recordHistory(next)
-    }
-    catch (error) {
-      errorMessage.value = toApiError(error).message
+      return await load
     }
     finally {
-      isLoading.value = false
+      if (refreshPromise === load) refreshPromise = undefined
     }
   }
 
-  async function act(action: () => Promise<QuizState>, successNotice: string) {
+  async function act(action: () => Promise<OperatorQuizState>, successNotice: string, historyLabel: string) {
+    if (isActing.value) return
+
     errorMessage.value = ''
     noticeMessage.value = ''
     isActing.value = true
     try {
-      const next = await action()
-      state.value = next
-      recordHistory(next)
+      await action()
+      // 操作レスポンスを表示用の唯一の状態にせず、必ず最新stateを取り直す。
+      if (!await refresh(false, true)) return
+
+      history.value.push({ time: new Date().toISOString(), label: historyLabel })
       noticeMessage.value = successNotice
     }
     catch (error) {
-      errorMessage.value = toApiError(error).message
-      // 失敗時も最新状態に同期して画面と実態のずれを防ぐ
-      await refresh()
+      // 422 は不正な遷移(二重start、締切前の公開など)。状態のずれを案内して実態を取り直す。
+      errorMessage.value = error instanceof ApiError && error.statusCode === 422
+        ? INVALID_TRANSITION_MESSAGE
+        : toApiError(error).message
+      await refresh(true, true)
     }
     finally {
       isActing.value = false
     }
   }
 
-  const start = () => act(startQuiz, 'イベントを開始しました。')
-  const publish = () => act(publishQuestion, '問題を公開しました。参加者は解答できます。')
-  const close = () => act(closeAnswers, '解答の受付を締め切りました。')
-  const reveal = () => act(revealAnswer, '答えを表示しました。')
+  const start = () => act(startQuiz, 'イベントを開始しました。', 'イベント開始')
 
-  // 5秒ごとに状態を同期（他管理者の操作を反映。モック時は再取得されるだけ）
+  const publish = () => {
+    // 契約どおり publish は position を必須で送る。未公開問題のうち先頭の位置を指定する。
+    const position = state.value
+      ? (state.value.current?.position ?? 0) + 1
+      : 1
+    return act(() => publishQuestion(position), `Q${position} を公開しました。参加者は解答できます。`, '問題公開')
+  }
+
+  const close = () => act(closeAnswers, '解答の受付を締め切りました。', '解答締め切り')
+  const reveal = () => act(revealAnswer, '答えを表示しました。', '答え表示')
+  const finish = () => act(finishQuiz, 'クイズ大会を終了しました。', 'クイズ終了')
+
   let pollTimer: ReturnType<typeof setInterval> | null = null
   onMounted(() => {
-    refresh()
-    pollTimer = setInterval(refresh, 5000)
+    void refresh()
+    pollTimer = setInterval(() => {
+      void refresh()
+    }, 5_000)
   })
   onUnmounted(() => {
-    if (pollTimer !== null) {
-      clearInterval(pollTimer)
-      pollTimer = null
-    }
+    if (pollTimer !== null) clearInterval(pollTimer)
   })
 
-  const phaseLabel = computed(() => state.value ? PHASE_LABELS[state.value.phase] : '')
+  const phase = computed(() => state.value && getQuizPhase(state.value))
+  const phaseLabel = computed(() => phase.value ? PHASE_LABELS[phase.value] : '')
+  const nextQuestionPosition = computed(() => state.value && getNextQuizPosition(state.value))
 
   return {
     state,
@@ -112,11 +120,14 @@ export function useQuizControl() {
     isActing,
     errorMessage,
     noticeMessage,
+    phase,
     phaseLabel,
+    nextQuestionPosition,
     refresh,
     start,
     publish,
     close,
     reveal,
+    finish,
   }
 }

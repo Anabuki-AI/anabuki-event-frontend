@@ -23,6 +23,7 @@ export function myRankingViewState(
   return 'entry'
 }
 
+/** API契約では得点を返さないため、順位と参加者名で構成する。 */
 export function formatMyRankingLine(entry: RankingEntry): string {
-  return `${entry.rank}位 あなたは ${entry.points.toLocaleString('ja-JP')}ポイント`
+  return `${entry.rank}位 あなた（${entry.displayName} さん）`
 }

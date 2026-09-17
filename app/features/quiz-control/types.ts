@@ -1,44 +1,57 @@
-export type QuizPhase = 'IDLE' | 'PUBLISHING' | 'CLOSED' | 'REVEALED' | 'ENDED'
-
+export type QuizSessionStatus = 'waiting' | 'in_progress' | 'finished'
+export type QuizSessionPhase = 'answering' | 'closed' | 'revealed'
+export type QuizPhase = 'IDLE' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED'
 export type ChoiceKey = 'A' | 'B' | 'C' | 'D'
 
-export interface QuizQuestion {
-  id: number
-  questionText: string
+/** GET /api/operator/quiz/state の current。phase が進むと correct_answer も開示される。 */
+export interface OperatorQuizCurrentQuestion {
+  question_id: number
+  position: number
+  question_text: string
   choices: Record<ChoiceKey, string>
-  correctAnswer: ChoiceKey
-  /** 自信度倍率。文字列で受け取り表示時に整形する（例: "1.00"） */
-  confidenceMultiplier: string
+  image_url: string | null
+  correct_answer: ChoiceKey
+  answered_count: number
+  /** 0〜1 の小数。 */
+  answered_rate: number
 }
 
-export interface QuizState {
-  phase: QuizPhase
-  currentQuestion: QuizQuestion | null
-  nextQuestion: QuizQuestion | null
-  totalQuestions: number
-  /** ISO 8601 文字列 or null */
-  startedAt: string | null
-  publishedAt: string | null
-  closedAt: string | null
-  revealedAt: string | null
+/** クイズ本番セッションAPI契約(Phase 0)どおりの運営者向けレスポンス。 */
+export interface OperatorQuizState {
+  status: QuizSessionStatus
+  phase: QuizSessionPhase | null
+  current: OperatorQuizCurrentQuestion | null
+  question_count: number
+  total_participants: number
 }
 
-/** 画面表示用のフェーズラベル */
 export const PHASE_LABELS: Record<QuizPhase, string> = {
   IDLE: 'イベント開始前',
-  PUBLISHING: '解答受付中',
+  PUBLISHED: '解答受付中',
   CLOSED: '解答締め切り',
   REVEALED: '答え表示中',
-  ENDED: 'イベント終了',
+  FINISHED: 'イベント終了',
 }
 
 export const CHOICE_KEYS = ['A', 'B', 'C', 'D'] as const satisfies readonly ChoiceKey[]
 
-/** 自信度倍率を小数2桁の文字列に整形する（"1.5" → "1.50"） */
-export function formatMultiplier(value: string | number): string {
-  const numeric = typeof value === 'number' ? value : Number(value)
-  if (Number.isNaN(numeric)) {
-    return String(value)
+/** APIのstatus/phaseを画面の進行フェーズへ変換する。 */
+export function getQuizPhase(state: OperatorQuizState): QuizPhase {
+  if (state.status === 'waiting') return 'IDLE'
+  if (state.status === 'finished') return 'FINISHED'
+  switch (state.phase) {
+    case 'closed':
+      return 'CLOSED'
+    case 'revealed':
+      return 'REVEALED'
+    default:
+      return 'PUBLISHED'
   }
-  return numeric.toFixed(2)
+}
+
+/** まだ公開されていない次の問題の位置。終了済み・最終問なら null。 */
+export function getNextQuizPosition(state: OperatorQuizState): number | null {
+  if (state.status !== 'in_progress' || state.current === null) return null
+  const next = state.current.position + 1
+  return next <= state.question_count ? next : null
 }

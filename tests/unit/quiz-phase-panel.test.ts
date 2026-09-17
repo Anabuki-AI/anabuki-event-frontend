@@ -1,107 +1,89 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import QuizPhasePanel from '../../app/features/quiz-control/components/QuizPhasePanel.vue'
-import type { QuizState } from '../../app/features/quiz-control/types'
+import type { OperatorQuizState } from '../../app/features/quiz-control/types'
 
-function makeState(overrides: Partial<QuizState>): QuizState {
+const currentQuestion = {
+  question_id: 12,
+  position: 2,
+  question_text: 'Q2',
+  choices: { A: 'a', B: 'b', C: 'c', D: 'd' },
+  image_url: null,
+  correct_answer: 'B' as const,
+  answered_count: 0,
+  answered_rate: 0,
+}
+
+function makeState(overrides: Partial<OperatorQuizState>): OperatorQuizState {
   return {
-    phase: 'IDLE',
-    currentQuestion: null,
-    nextQuestion: null,
-    totalQuestions: 3,
-    startedAt: null,
-    publishedAt: null,
-    closedAt: null,
-    revealedAt: null,
+    status: 'waiting',
+    phase: null,
+    current: null,
+    question_count: 3,
+    total_participants: 60,
     ...overrides,
   }
 }
 
-function mountPanel(state: QuizState) {
-  return mount(QuizPhasePanel, {
-    props: { state, isActing: false },
-  })
+function mountPanel(state: OperatorQuizState) {
+  return mount(QuizPhasePanel, { props: { state, isActing: false } })
 }
 
-describe('QuizPhasePanel のフェーズ別描画', () => {
-  it('IDLE では「イベント開始」ボタンを表示する', () => {
-    const wrapper = mountPanel(makeState({}))
-
-    const button = wrapper.find('.quiz-action-button')
-    expect(button.text()).toBe('イベント開始')
+describe('QuizPhasePanel のAPI状態別描画', () => {
+  it('waiting では「イベント開始」ボタンを表示する', () => {
+    expect(mountPanel(makeState({})).find('.quiz-action-button').text()).toBe('イベント開始')
   })
 
-  it('IDLE で開始済み（startedAtあり）では「問題公開」ボタンに切り替わる', async () => {
-    const wrapper = mountPanel(makeState({ startedAt: '2026-09-07T12:00:00Z' }))
-
-    expect(wrapper.find('.quiz-action-button').text()).toBe('問題公開')
-  })
-
-  it('PUBLISHING では「解答締め切り」ボタンを表示する', () => {
-    const wrapper = mountPanel(makeState({
-      phase: 'PUBLISHING',
-      currentQuestion: {
-        id: 1,
-        questionText: 'Q1',
-        choices: { A: 'a', B: 'b', C: 'c', D: 'd' },
-        correctAnswer: 'A',
-        confidenceMultiplier: '1.00',
-      },
-      startedAt: '2026-09-07T12:00:00Z',
-      publishedAt: '2026-09-07T12:01:00Z',
-    }))
-
+  it('in_progress/answering では「解答締め切り」ボタンを表示する', () => {
+    const wrapper = mountPanel(makeState({ status: 'in_progress', phase: 'answering', current: currentQuestion }))
     expect(wrapper.find('.quiz-action-button').text()).toBe('解答締め切り')
   })
 
-  it('CLOSED では「答え表示」ボタンを表示する', () => {
-    const wrapper = mountPanel(makeState({
-      phase: 'CLOSED',
-      startedAt: '2026-09-07T12:00:00Z',
-      publishedAt: '2026-09-07T12:01:00Z',
-      closedAt: '2026-09-07T12:03:00Z',
-    }))
-
+  it('closed では「答え表示」ボタンを表示する', () => {
+    const wrapper = mountPanel(makeState({ status: 'in_progress', phase: 'closed', current: currentQuestion }))
     expect(wrapper.find('.quiz-action-button').text()).toBe('答え表示')
   })
 
-  it('REVEALED で次問題があれば「次の問題を公開」を表示する', () => {
+  it('revealed で次問があれば「次の問題を公開」を表示する', () => {
     const wrapper = mountPanel(makeState({
-      phase: 'REVEALED',
-      nextQuestion: {
-        id: 2,
-        questionText: 'Q2',
-        choices: { A: 'a', B: 'b', C: 'c', D: 'd' },
-        correctAnswer: 'B',
-        confidenceMultiplier: '1.00',
-      },
+      status: 'in_progress',
+      phase: 'revealed',
+      current: { ...currentQuestion, position: 1 },
+      question_count: 3,
     }))
-
     expect(wrapper.find('.quiz-action-button').text()).toBe('次の問題を公開')
   })
 
-  it('ENDED ではアクションボタンを消し完了メッセージを出す', () => {
-    const wrapper = mountPanel(makeState({ phase: 'ENDED' }))
+  it('revealed で最終問なら「クイズを終了」を表示する', () => {
+    const wrapper = mountPanel(makeState({
+      status: 'in_progress',
+      phase: 'revealed',
+      current: { ...currentQuestion, position: 3 },
+      question_count: 3,
+    }))
+    expect(wrapper.find('.quiz-action-button').text()).toBe('クイズを終了')
+  })
 
+  it('finished では操作を表示せず終了を案内する', () => {
+    const wrapper = mountPanel(makeState({ status: 'finished', current: null }))
     expect(wrapper.find('.quiz-action-button').exists()).toBe(false)
-    expect(wrapper.find('.quiz-phase-done').text()).toContain('お疲れさまでした')
+    expect(wrapper.find('.quiz-phase-done').text()).toContain('クイズ大会は終了しました')
   })
 
-  it('現在フェーズのステップを強調し、完了ステップに ✓ を付ける', () => {
-    const wrapper = mountPanel(makeState({ phase: 'CLOSED' }))
-
-    const stepClasses = wrapper.findAll('.quiz-phase-step').map(step => step.classes())
-    expect(stepClasses[0]).toContain('is-done')
-    expect(stepClasses[1]).toContain('is-done')
-    expect(stepClasses[2]).toContain('is-current')
-    expect(stepClasses[3]).toContain('is-todo')
-    expect(wrapper.find('.quiz-phase-step.is-done .quiz-phase-marker').text()).toBe('✓')
-  })
-
-  it('ボタン押下で対応する emit が発火する', async () => {
-    const wrapper = mountPanel(makeState({ phase: 'PUBLISHING' }))
-
+  it('ボタン押下で対応するemitが発火する', async () => {
+    const wrapper = mountPanel(makeState({ status: 'in_progress', phase: 'closed', current: currentQuestion }))
     await wrapper.find('.quiz-action-button').trigger('click')
-    expect(wrapper.emitted('close')).toHaveLength(1)
+    expect(wrapper.emitted('reveal')).toHaveLength(1)
+  })
+
+  it('終了ボタン押下でfinishイベントが発火する', async () => {
+    const wrapper = mountPanel(makeState({
+      status: 'in_progress',
+      phase: 'revealed',
+      current: { ...currentQuestion, position: 3 },
+      question_count: 3,
+    }))
+    await wrapper.find('.quiz-action-button').trigger('click')
+    expect(wrapper.emitted('finish')).toHaveLength(1)
   })
 })
