@@ -1,5 +1,6 @@
 import { onUnmounted, ref } from 'vue'
 import { adminConsoleApi, type ManagementAccount, type OperatorAccount } from '../api/admin-console'
+import { parseApiStatusSnapshot, unconfiguredApiStatus } from '../api-status-contract'
 import { parseMonitoringSnapshot, unconfiguredMonitoring } from '../monitoring-contract'
 import { ApiError } from '~/lib/api/error'
 
@@ -11,7 +12,10 @@ export interface HealthObservation {
 
 // Independent resources: a failed probe must never hide an otherwise valid session.
 // No timers or fabricated metrics; every observation comes from a deliberate fetch.
-export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitoringEnabled = false) {
+export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitoringEnabled = false, apiStatusEnabled = false) {
+  const apiStatus = ref(unconfiguredApiStatus())
+  const apiStatusLoading = ref(false)
+  const apiStatusError = ref('')
   const monitoring = ref(unconfiguredMonitoring())
   const monitoringLoading = ref(false)
   const monitoringError = ref('')
@@ -139,6 +143,32 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
     }
   }
 
+  async function loadApiStatus() {
+    if (!apiStatusEnabled || apiStatusLoading.value || disposed) return
+    apiStatusLoading.value = true
+    apiStatusError.value = ''
+    // Never present a previous successful observation as current while refreshing.
+    apiStatus.value = unconfiguredApiStatus()
+    try {
+      const result = parseApiStatusSnapshot(await adminConsoleApi.apiStatus())
+      if (!disposed) apiStatus.value = result
+    }
+    catch (cause) {
+      if (disposed) return
+      if (cause instanceof ApiError && cause.statusCode === 401) {
+        apiStatusError.value = 'ログインの有効期限を確認できません。再ログインしてください。'
+        await onAccessLost()
+      }
+      else if (cause instanceof ApiError && cause.statusCode === 403) {
+        apiStatusError.value = 'API稼働情報を表示する権限がありません。管理担当者へ確認してください。'
+      }
+      else apiStatusError.value = 'API稼働情報を取得できませんでした。サービスの稼働状況は判断できません。'
+    }
+    finally {
+      if (!disposed) apiStatusLoading.value = false
+    }
+  }
+
   async function loadMonitoring() {
     if (!monitoringEnabled || monitoringLoading.value || disposed) return
     monitoringLoading.value = true
@@ -165,5 +195,5 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
     }
   }
 
-  return { accounts, accountsLoading, accountsLoaded, accountsError, accountRemoving, operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError, health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError, loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadMonitoring }
+  return { accounts, accountsLoading, accountsLoaded, accountsError, accountRemoving, operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError, health, healthLoading, healthError, apiStatus, apiStatusLoading, apiStatusError, monitoring, monitoringLoading, monitoringError, loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadApiStatus, loadMonitoring }
 }

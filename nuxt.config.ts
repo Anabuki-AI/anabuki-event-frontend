@@ -19,6 +19,9 @@ export default defineNuxtConfig({
       // Enabled now that the backend implements docs/admin-monitoring-contract.md.
       // See frontend PR: requires backend PR #29 to be merged & deployed first.
       adminMonitoringEnabled: true,
+      // Rails GET /api/admin/api-status is already implemented (AdminApiStatus),
+      // so this panel is on by default; the flag remains as a kill switch.
+      adminApiStatusEnabled: true,
     },
   },
   nitro: {
