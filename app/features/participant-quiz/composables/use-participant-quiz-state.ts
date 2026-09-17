@@ -94,15 +94,17 @@ export function useParticipantQuizState(options: UseParticipantQuizStateOptions 
   const isLoading = ref(true)
   const loadError = ref<unknown>()
 
+  function applyState(nextState: ParticipantQuizState) {
+    state.value = nextState
+    loadError.value = undefined
+    isLoading.value = false
+    options.onState?.(nextState)
+  }
+
   const poller = createParticipantQuizPoller({
     loadState: fetchParticipantQuizState,
     document: import.meta.client ? document : undefined,
-    onState: (nextState) => {
-      state.value = nextState
-      loadError.value = undefined
-      isLoading.value = false
-      options.onState?.(nextState)
-    },
+    onState: applyState,
     onError: (error) => {
       loadError.value = error
       isLoading.value = false
@@ -117,6 +119,7 @@ export function useParticipantQuizState(options: UseParticipantQuizStateOptions 
     state,
     isLoading,
     loadError,
+    applyState,
     refresh: poller.refresh,
   }
 }
