@@ -47,6 +47,14 @@ const lowLockedState: ParticipantQuizState = {
   confidence_locked: true,
 }
 
+const submittedState: ParticipantQuizState = {
+  ...unlockedState,
+  answered: true,
+  my_answer: { choice: 'B', confidence_level: 'normal' },
+  confidence_level: 'normal',
+  confidence_locked: true,
+}
+
 const Harness = defineComponent({
   setup: () => useParticipantQuizAnswer({ onWaiting: vi.fn(), onUnauthorized: vi.fn() }),
   template: '<div />',
@@ -113,6 +121,46 @@ describe('参加者クイズのレベル確定', () => {
     await (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
 
     expect(mockedSubmitAnswer).toHaveBeenCalledWith({ question_id: 12, choice: 'B' })
+    wrapper.unmount()
+  })
+
+  it('送信後は受付済み回答とdraftを分離し、タップだけでは再送しない', async () => {
+    mockedFetchState.mockResolvedValue(submittedState)
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { beginAnswerEditing: () => void }).beginAnswerEditing()
+    expect((vm as unknown as { isEditingAnswer: boolean }).isEditingAnswer).toBe(true)
+    expect((vm as unknown as { selectedChoice: string }).selectedChoice).toBe('B')
+
+    ;(vm as unknown as { selectedChoice: 'C' }).selectedChoice = 'C'
+    expect((vm as unknown as { hasDraftChange: boolean }).hasDraftChange).toBe(true)
+    expect((vm as unknown as { canSubmit: boolean }).canSubmit).toBe(true)
+    expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
+    expect(mockedSubmitAnswer).not.toHaveBeenCalled()
+
+    ;(vm as unknown as { cancelAnswerEditing: () => void }).cancelAnswerEditing()
+    expect((vm as unknown as { isEditingAnswer: boolean }).isEditingAnswer).toBe(false)
+    expect((vm as unknown as { selectedChoice: string | undefined }).selectedChoice).toBeUndefined()
+    expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
+    wrapper.unmount()
+  })
+
+  it('変更送信の通信失敗では元の受付済み回答を保持する', async () => {
+    mockedFetchState.mockResolvedValue(submittedState)
+    mockedSubmitAnswer.mockRejectedValueOnce(new Error('offline'))
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { beginAnswerEditing: () => void }).beginAnswerEditing()
+    ;(vm as unknown as { selectedChoice: 'C' }).selectedChoice = 'C'
+    await (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
+
+    expect((vm as unknown as { isEditingAnswer: boolean }).isEditingAnswer).toBe(true)
+    expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
+    expect((vm as unknown as { selectedChoice: string }).selectedChoice).toBe('C')
     wrapper.unmount()
   })
 })

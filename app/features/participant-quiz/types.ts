@@ -46,7 +46,7 @@ export interface SubmitParticipantQuizAnswerInput {
   choice: AnswerChoice
 }
 
-/** POST /api/participant/quiz/answers のレスポンス(更新後の my_answer)。 */
+/** POST /api/participant/quiz/answers のレスポンス(初回受付・再送後の my_answer)。 */
 export interface SubmitParticipantQuizAnswerResult {
   my_answer: ParticipantQuizMyAnswer
 }

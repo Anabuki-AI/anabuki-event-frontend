@@ -475,6 +475,62 @@
   font-size: 0.8125rem;
 }
 
+.answer-shell .answer-edit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.answer-shell .answer-edit-actions .button-cancel,
+.answer-shell .answer-edit-button {
+  min-height: 52px;
+  border: 1px solid #c7d3e0;
+  border-radius: 12px;
+  color: #132238;
+  background: #ffffff;
+  font-weight: 750;
+}
+
+.answer-shell .answer-edit-button {
+  width: 100%;
+  border-color: #1769c2;
+  color: #1769c2;
+}
+
+.answer-shell .answer-edit-actions .button-cancel:hover:not(:disabled),
+.answer-shell .answer-edit-button:hover:not(:disabled) {
+  border-color: #1769c2;
+  background: rgb(23 105 194 / 6%);
+}
+
+.answer-shell .answer-edit-actions .button-cancel:focus,
+.answer-shell .answer-edit-button:focus {
+  border-color: #1769c2;
+  box-shadow: 0 0 0 4px rgb(23 105 194 / 12%);
+  outline: none;
+}
+
+.answer-shell .answer-review {
+  display: grid;
+  gap: 12px;
+}
+
+.answer-shell .answer-review-choices {
+  gap: 6px;
+}
+
+.answer-shell .answer-review-choices .choice-item {
+  min-height: 44px;
+  cursor: default;
+}
+
+.answer-shell .answer-diff {
+  margin: 4px 0 0;
+  color: #1769c2;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
 /* 送信後の待機画面 */
 .answer-shell .wait-state {
   display: grid;

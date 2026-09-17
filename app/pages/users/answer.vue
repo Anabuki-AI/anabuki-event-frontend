@@ -48,6 +48,12 @@ const {
   selectedChoice,
   selectedChoiceText,
   selectedMultiplier,
+  savedChoice,
+  hasDraftChange,
+  isEditingAnswer,
+  isAnswerWindowOpen,
+  beginAnswerEditing,
+  cancelAnswerEditing,
   isConfidenceConfirmOpen,
   isConfirmingConfidence,
   confidenceMessage,
@@ -65,6 +71,10 @@ const {
 
 const correctChoiceText = computed(() => choices.value.find(choice => choice.key === correctAnswer.value)?.text)
 const myAnswerConfidenceLabel = computed(() => myAnswer.value && CONFIDENCE_LEVEL_LABELS[myAnswer.value.confidence_level])
+const savedChoiceText = computed(() => {
+  const saved = choices.value.find(choice => choice.key === savedChoice.value)
+  return saved ? `${saved.key}. ${saved.text}` : '未選択'
+})
 
 onMounted(async () => {
   try {
@@ -123,7 +133,7 @@ onMounted(async () => {
         <ParticipantQuizFinishedPanel />
       </section>
 
-      <section v-else-if="screen === 'answer' && question" class="answer-card">
+      <section v-else-if="(screen === 'answer' || isEditingAnswer) && question" class="answer-card">
         <div class="question-panel">
           <p class="question-number">
             Q{{ question.position }}
@@ -136,7 +146,7 @@ onMounted(async () => {
 
         <div class="confidence-field">
           <p class="confidence-label">
-            レベルを先に確定してください
+            自信度
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
             一度確定すると変更できません。Lv.1は不正解の選択肢を1つ減らします。
@@ -197,7 +207,13 @@ onMounted(async () => {
 
           <div class="point-panel">
             <p class="point-summary">
-              現在の選択：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}
+              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}
+            </p>
+            <p v-if="isEditingAnswer" class="point-caption">
+              受付済み：{{ savedChoiceText }}
+            </p>
+            <p v-if="isEditingAnswer && hasDraftChange" class="answer-diff" role="status">
+              この変更内容を明示的に送信するまで、受付済み回答は変わりません。
             </p>
             <p class="point-value">
               {{ selectedMultiplier }}
@@ -211,10 +227,29 @@ onMounted(async () => {
             {{ submissionMessage }}
           </p>
           <p class="answer-note">
-            レベルは変更できません。回答は送信すると変更できません。
+            レベルは変更できません。{{ isEditingAnswer ? '選択肢を変更したあと、変更を送信してください。' : '選択肢を選んで送信してください。' }}
           </p>
 
+          <div v-if="isEditingAnswer" class="answer-edit-actions">
+            <button
+              type="button"
+              class="button-cancel"
+              :disabled="isSubmitting"
+              @click="cancelAnswerEditing"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              class="answer-submit"
+              :disabled="!canSubmit"
+              @click="submitAnswer"
+            >
+              {{ isSubmitting ? '変更を送信しています…' : '変更を送信する' }}
+            </button>
+          </div>
           <button
+            v-else
             type="button"
             class="answer-submit"
             :disabled="!canSubmit"
@@ -240,11 +275,51 @@ onMounted(async () => {
 
       <section v-else-if="screen === 'submitted'" class="answer-card" aria-live="polite">
         <p class="eyebrow">
-          After submit
+          Answer saved
         </p>
-        <h2>解答を送信しました</h2>
+        <h2>解答を受け付けました</h2>
+        <div v-if="question" class="answer-review">
+          <div class="question-panel">
+            <p class="question-number">
+              Q{{ question.position }}
+            </p>
+            <p class="question-text">
+              {{ question.question_text }}
+            </p>
+            <img v-if="question.image_url" class="question-image" :src="resolveApiImageUrl(question.image_url) ?? undefined" alt="">
+          </div>
+          <div class="choice-list answer-review-choices">
+            <button
+              v-for="choice in choices"
+              :key="choice.key"
+              type="button"
+              class="choice-item"
+              :class="{ 'is-selected': savedChoice === choice.key }"
+              disabled
+            >
+              <span class="choice-key">{{ choice.key }}</span>
+              <span class="choice-text">{{ choice.text }}</span>
+              <span v-if="savedChoice === choice.key" class="choice-check" aria-hidden="true">✓</span>
+            </button>
+          </div>
+          <div class="point-panel">
+            <p class="point-summary">現在の受付済み回答：{{ savedChoiceText }}</p>
+            <p class="point-caption">自信度：{{ myAnswerConfidenceLabel }}</p>
+          </div>
+        </div>
         <p class="muted-copy">
           正答と得点の公開をお待ちください。
+        </p>
+        <button
+          v-if="myAnswer && isAnswerWindowOpen"
+          type="button"
+          class="answer-edit-button"
+          @click="beginAnswerEditing"
+        >
+          回答を選び直す
+        </button>
+        <p v-if="myAnswer && isAnswerWindowOpen" class="answer-note">
+          選択肢をタップしただけでは変更されません。変更内容を確認して送信してください。
         </p>
         <div class="wait-state">
           <div class="wait-dots" aria-hidden="true">
@@ -260,8 +335,22 @@ onMounted(async () => {
 
       <section v-else-if="screen === 'closed'" class="answer-card" aria-live="polite">
         <h2>解答受付は終了しました</h2>
+        <div v-if="question && myAnswer" class="answer-review">
+          <div class="question-panel">
+            <p class="question-number">
+              Q{{ question.position }}
+            </p>
+            <p class="question-text">
+              {{ question.question_text }}
+            </p>
+          </div>
+          <div class="point-panel">
+            <p class="point-summary">最終回答：{{ savedChoiceText }}</p>
+            <p class="point-caption">自信度：{{ myAnswerConfidenceLabel }}</p>
+          </div>
+        </div>
         <p class="muted-copy">
-          正答と得点の公開をお待ちください。
+          正答と得点の公開をお待ちください。締切後は回答を変更できません。
         </p>
         <div class="wait-state">
           <p class="wait-text">
@@ -286,7 +375,7 @@ onMounted(async () => {
             あなたの解答
           </p>
           <p class="result-value">
-            {{ myAnswer ? `${myAnswer.choice}（自信度 ${myAnswerConfidenceLabel}）` : '解答なし' }}
+            {{ myAnswer ? `${savedChoiceText}（自信度 ${myAnswerConfidenceLabel}）` : '解答なし' }}
           </p>
         </div>
         <p class="answer-note">
