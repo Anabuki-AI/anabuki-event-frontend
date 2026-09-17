@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { getNextQuizQuestion, getQuizPhase } from '../types'
-import type { QuizPhase, QuizState } from '../types'
+import { getNextQuizPosition, getQuizPhase } from '../types'
+import type { QuizPhase, OperatorQuizState } from '../types'
 
 const props = defineProps<{
-  state: QuizState
+  state: OperatorQuizState
   isActing: boolean
 }>()
 
@@ -13,6 +13,7 @@ const emit = defineEmits<{
   publish: []
   close: []
   reveal: []
+  finish: []
 }>()
 
 const STEPS = [
@@ -20,6 +21,7 @@ const STEPS = [
   { key: 'publish', label: '問題公開' },
   { key: 'close', label: '解答締め切り' },
   { key: 'reveal', label: '答え表示' },
+  { key: 'finish', label: 'クイズ終了' },
 ] as const
 
 interface StepView {
@@ -29,14 +31,13 @@ interface StepView {
 }
 
 const phase = computed(() => getQuizPhase(props.state))
-const nextQuestion = computed(() => getNextQuizQuestion(props.state))
+const nextPosition = computed(() => getNextQuizPosition(props.state))
 const phaseIndex: Record<QuizPhase, number> = {
   IDLE: 0,
-  READY: 1,
   PUBLISHED: 2,
   CLOSED: 3,
   REVEALED: 4,
-  FINISHED: 4,
+  FINISHED: 5,
 }
 
 const steps = computed<StepView[]>(() => {
@@ -51,15 +52,15 @@ const steps = computed<StepView[]>(() => {
 const action = computed(() => {
   switch (phase.value) {
     case 'IDLE':
-      return { key: 'start', label: 'イベント開始', hint: 'イベントを開始すると問題を公開できるようになります。' }
-    case 'READY':
-      return nextQuestion.value ? { key: 'publish', label: '問題公開', hint: `Q${nextQuestion.value.position} を公開して解答を受け付けます。` } : null
+      return { key: 'start', label: 'イベント開始', hint: 'イベントを開始すると最初の問題が公開されます。' }
     case 'PUBLISHED':
       return { key: 'close', label: '解答締め切り', hint: '参加者の解答受付を締め切ります。' }
     case 'CLOSED':
-      return { key: 'reveal', label: '答え表示', hint: '正解と得点を参加者に表示します。' }
+      return { key: 'reveal', label: '答え表示', hint: '正解を参加者に表示します。' }
     case 'REVEALED':
-      return nextQuestion.value ? { key: 'publish', label: '次の問題を公開', hint: `次は Q${nextQuestion.value.position} です。` } : null
+      return nextPosition.value !== null
+        ? { key: 'publish', label: '次の問題を公開', hint: `次は Q${nextPosition.value} です。` }
+        : { key: 'finish', label: 'クイズを終了', hint: '全ての問題が終わりました。クイズ大会を終了します。' }
     default:
       return null
   }
@@ -87,6 +88,9 @@ function handleAction() {
       break
     case 'reveal':
       emit('reveal')
+      break
+    case 'finish':
+      emit('finish')
   }
 }
 </script>
@@ -119,7 +123,7 @@ function handleAction() {
       </button>
     </div>
     <p v-else class="quiz-phase-done" role="status">
-      {{ phase === 'FINISHED' ? 'クイズ大会は終了しました。お疲れさまでした。' : '進行できる問題はありません。' }}
+      {{ phase === 'FINISHED' ? 'クイズ大会は終了しました。お疲れさまでした。' : '進行できる操作はありません。' }}
     </p>
   </section>
 </template>

@@ -1,25 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatClock, formatElapsed } from '../useQuizClock'
-import type { QuizState } from '../types'
+import { formatClock } from '../useQuizClock'
+import type { OperatorQuizState } from '../types'
 import type { QuizHistoryEntry } from '../useQuizControl'
 
 const props = defineProps<{
-  state: QuizState
+  state: OperatorQuizState
   now: Date
   history: QuizHistoryEntry[]
 }>()
 
 const recentHistory = computed(() => [...props.history].reverse())
 const clock = computed(() => formatClock(props.now))
-const primaryElapsed = computed(() => {
-  const event = props.state.event
-  if (!event) return { label: 'イベント開始からの経過', value: null }
-  if (event.finishedAt) {
-    return { label: '大会時間', value: formatElapsed(event.startedAt, new Date(event.finishedAt)) }
-  }
-  return { label: 'イベント開始からの経過', value: formatElapsed(event.startedAt, props.now) }
-})
 </script>
 
 <template>
@@ -36,10 +28,10 @@ const primaryElapsed = computed(() => {
 
     <div class="quiz-clock-block quiz-clock-block--elapsed">
       <p class="quiz-clock-label">
-        {{ primaryElapsed.label }}
+        参加者数
       </p>
-      <p class="quiz-clock-elapsed" :class="{ 'is-pending': primaryElapsed.value === null }">
-        {{ primaryElapsed.value ?? '未開始' }}
+      <p class="quiz-clock-elapsed">
+        {{ state.total_participants }}<span> 人</span>
       </p>
     </div>
 

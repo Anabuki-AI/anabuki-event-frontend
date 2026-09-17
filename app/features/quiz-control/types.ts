@@ -1,48 +1,32 @@
-export type QuizEventStatus = 'ACTIVE' | 'FINISHED'
-export type QuizQuestionStatus = 'PENDING' | 'PUBLISHED' | 'CLOSED' | 'REVEALED'
-export type QuizPhase = 'IDLE' | 'READY' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED'
+export type QuizSessionStatus = 'waiting' | 'in_progress' | 'finished'
+export type QuizSessionPhase = 'answering' | 'closed' | 'revealed'
+export type QuizPhase = 'IDLE' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED'
 export type ChoiceKey = 'A' | 'B' | 'C' | 'D'
 
-export interface ConfidenceMultipliers {
-  high: string
-  normal: string
-  low: string
-}
-
-/** GET /api/operator/quiz/state と進行操作が返すイベント。 */
-export interface QuizEvent {
-  id: number
-  status: QuizEventStatus
-  startedAt: string
-  finishedAt: string | null
-  confidenceMultipliers: ConfidenceMultipliers
-}
-
-/** イベント開始時に固定された、運営者向けの問題スナップショット。 */
-export interface QuizQuestion {
-  id: number
-  sourceQuestionId: number
+/** GET /api/operator/quiz/state の current。phase が進むと correct_answer も開示される。 */
+export interface OperatorQuizCurrentQuestion {
+  question_id: number
   position: number
-  status: QuizQuestionStatus
-  questionText: string
-  choiceA: string
-  choiceB: string
-  choiceC: string
-  choiceD: string
-  correctAnswer: ChoiceKey
-  imageUrl: string | null
-  basePoints: number
+  question_text: string
+  choices: Record<ChoiceKey, string>
+  image_url: string | null
+  correct_answer: ChoiceKey
+  answered_count: number
+  /** 0〜1 の小数。 */
+  answered_rate: number
 }
 
-/** 運営APIのレスポンスそのもの。画面フェーズは questions から導出する。 */
-export interface QuizState {
-  event: QuizEvent | null
-  questions: QuizQuestion[]
+/** クイズ本番セッションAPI契約(Phase 0)どおりの運営者向けレスポンス。 */
+export interface OperatorQuizState {
+  status: QuizSessionStatus
+  phase: QuizSessionPhase | null
+  current: OperatorQuizCurrentQuestion | null
+  question_count: number
+  total_participants: number
 }
 
 export const PHASE_LABELS: Record<QuizPhase, string> = {
   IDLE: 'イベント開始前',
-  READY: '問題公開待ち',
   PUBLISHED: '解答受付中',
   CLOSED: '解答締め切り',
   REVEALED: '答え表示中',
@@ -51,24 +35,23 @@ export const PHASE_LABELS: Record<QuizPhase, string> = {
 
 export const CHOICE_KEYS = ['A', 'B', 'C', 'D'] as const satisfies readonly ChoiceKey[]
 
-export function getQuizPhase(state: QuizState): QuizPhase {
-  if (!state.event) return 'IDLE'
-  if (state.event.status === 'FINISHED') return 'FINISHED'
-
-  const currentQuestion = getCurrentQuizQuestion(state)
-  if (currentQuestion && currentQuestion.status !== 'PENDING') return currentQuestion.status
-  return 'READY'
+/** APIのstatus/phaseを画面の進行フェーズへ変換する。 */
+export function getQuizPhase(state: OperatorQuizState): QuizPhase {
+  if (state.status === 'waiting') return 'IDLE'
+  if (state.status === 'finished') return 'FINISHED'
+  switch (state.phase) {
+    case 'closed':
+      return 'CLOSED'
+    case 'revealed':
+      return 'REVEALED'
+    default:
+      return 'PUBLISHED'
+  }
 }
 
-/** PUBLISHED/CLOSED/REVEALED のうち、最も後ろの問題を現在問として扱う。 */
-export function getCurrentQuizQuestion(state: QuizState): QuizQuestion | null {
-  return [...state.questions]
-    .filter(question => question.status !== 'PENDING')
-    .sort((left, right) => right.position - left.position)[0] ?? null
-}
-
-export function getNextQuizQuestion(state: QuizState): QuizQuestion | null {
-  return [...state.questions]
-    .filter(question => question.status === 'PENDING')
-    .sort((left, right) => left.position - right.position)[0] ?? null
+/** まだ公開されていない次の問題の位置。終了済み・最終問なら null。 */
+export function getNextQuizPosition(state: OperatorQuizState): number | null {
+  if (state.status !== 'in_progress' || state.current === null) return null
+  const next = state.current.position + 1
+  return next <= state.question_count ? next : null
 }

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CHOICE_KEYS, getCurrentQuizQuestion, getQuizPhase } from '../types'
-import type { QuizState } from '../types'
+import { CHOICE_KEYS, getQuizPhase } from '../types'
+import type { OperatorQuizState } from '../types'
 
 const props = defineProps<{
-  state: QuizState
+  state: OperatorQuizState
 }>()
 
 const phase = computed(() => getQuizPhase(props.state))
-const currentQuestion = computed(() => getCurrentQuizQuestion(props.state))
+const currentQuestion = computed(() => props.state.current)
 const isAnswerVisible = computed(() => phase.value === 'REVEALED' || phase.value === 'FINISHED')
 const statusLabel = computed(() => {
   switch (phase.value) {
@@ -22,6 +22,9 @@ const statusLabel = computed(() => {
       return ''
   }
 })
+const answeredRatePercent = computed(() =>
+  currentQuestion.value ? Math.round(currentQuestion.value.answered_rate * 100) : 0,
+)
 </script>
 
 <template>
@@ -31,27 +34,29 @@ const statusLabel = computed(() => {
       <span class="quiz-question-status">
         {{ statusLabel }}
       </span>
+      <span class="quiz-question-status">
+        解答 {{ currentQuestion.answered_count }} / {{ state.total_participants }}人（{{ answeredRatePercent }}%）
+      </span>
     </div>
 
     <p class="quiz-question-text">
-      {{ currentQuestion.questionText }}
+      {{ currentQuestion.question_text }}
     </p>
 
     <ul class="quiz-question-choices">
       <li
         v-for="key in CHOICE_KEYS"
         :key="key"
-        :class="{ 'is-correct': isAnswerVisible && key === currentQuestion.correctAnswer }"
+        :class="{ 'is-correct': isAnswerVisible && key === currentQuestion.correct_answer }"
       >
         <span class="quiz-choice-key">{{ key }}</span>
-        {{ currentQuestion[`choice${key}`] }}
+        {{ currentQuestion.choices[key] }}
       </li>
     </ul>
 
     <p v-if="isAnswerVisible" class="quiz-answer-banner" role="status">
-      正解は <strong>{{ currentQuestion.correctAnswer }}</strong>：
-      {{ currentQuestion[`choice${currentQuestion.correctAnswer}`] }}
-      （基本点 {{ currentQuestion.basePoints }} pt）
+      正解は <strong>{{ currentQuestion.correct_answer }}</strong>：
+      {{ currentQuestion.choices[currentQuestion.correct_answer] }}
     </p>
     <p v-else class="quiz-answer-masked">
       正解は締め切り後に表示されます
@@ -66,7 +71,7 @@ const statusLabel = computed(() => {
       公開中の問題はありません。
     </p>
     <p class="quiz-answer-masked">
-      登録済み {{ state.questions.length }} 問。「問題公開」を押すと次の問題の受付が始まります。
+      登録済み {{ state.question_count }} 問。イベント開始後、「問題公開」を押すと問題の受付が始まります。
     </p>
   </article>
 </template>
