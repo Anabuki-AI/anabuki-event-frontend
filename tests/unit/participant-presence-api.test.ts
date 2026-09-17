@@ -12,6 +12,7 @@ describe('reportParticipantPresence', () => {
   it('posts presence with the participant session cookie and returns the API response', async () => {
     const presence = {
       activeParticipantCount: 24,
+      totalParticipantCount: 60,
       observedAt: '2026-09-28T01:00:00Z',
       activeWindowSeconds: 60,
     }

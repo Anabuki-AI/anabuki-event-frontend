@@ -68,7 +68,7 @@ const waitingMessage = computed(() => {
   return 'クイズ大会の開始をお待ちください。'
 })
 
-const { participantCount } = useParticipantPresence()
+const { participantCount, totalParticipantCount } = useParticipantPresence()
 const { isCountUpdated, lastReactedEmoji, handleReact } = setupWaitingRoom(participantCount)
 
 onMounted(async () => {
@@ -146,7 +146,7 @@ onMounted(async () => {
           参加人数
         </p>
         <p class="participant-count" :class="{ 'is-updated': isCountUpdated }">
-          {{ participantCount ?? '—' }}
+          {{ participantCount ?? '—' }} / {{ totalParticipantCount ?? '—' }}
           <span class="participant-unit">人</span>
         </p>
       </div>
