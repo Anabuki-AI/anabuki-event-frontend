@@ -15,6 +15,7 @@ const ranking: RankingEntry = {
   rank: 1,
   participantId: 'participant-1',
   displayName: '参加者',
+  totalPoints: 100,
 }
 
 let data: Ref<typeof emptyResponse>

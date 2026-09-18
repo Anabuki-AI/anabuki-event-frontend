@@ -23,7 +23,7 @@ export function myRankingViewState(
   return 'entry'
 }
 
-/** API契約では得点を返さないため、順位と参加者名で構成する。 */
+/** 自分の順位と累計点を画面表示用に整形する。 */
 export function formatMyRankingLine(entry: RankingEntry): string {
-  return `${entry.rank}位 あなた（${entry.displayName} さん）`
+  return `${entry.rank}位 あなた（${entry.displayName} さん）・${entry.totalPoints}点`
 }

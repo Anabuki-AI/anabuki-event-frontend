@@ -3,6 +3,7 @@ export interface RankingEntryWire {
   rank: number
   participant_id: string
   display_name: string
+  total_points: number
 }
 
 /** Ranking data used by the frontend after the API boundary conversion. */
@@ -10,6 +11,7 @@ export interface RankingEntry {
   rank: number
   participantId: string
   displayName: string
+  totalPoints: number
 }
 
 export interface RankingsResponseWire {
