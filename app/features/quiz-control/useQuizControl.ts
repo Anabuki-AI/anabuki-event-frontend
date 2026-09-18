@@ -1,5 +1,5 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import type { OperatorQuizState } from './types'
+import type { ChoiceKey, OperatorQuizResetOperation, OperatorQuizState } from './types'
 import { getNextQuizPosition, getQuizPhase, PHASE_LABELS } from './types'
 import {
   closeAnswers,
@@ -8,7 +8,9 @@ import {
   finishQuiz,
   publishQuestion,
   revealAnswer,
+  resetQuiz,
   startQuiz,
+  updateCorrectAnswer,
 } from './api/client'
 import { ApiError, toApiError } from '~/lib/api/error'
 
@@ -27,9 +29,10 @@ export function useQuizControl() {
   const errorMessage = ref('')
   const noticeMessage = ref('')
   const history = ref<QuizHistoryEntry[]>([])
+  const resetOperation = ref<OperatorQuizResetOperation | null>(null)
   let refreshPromise: Promise<boolean> | undefined
 
-  async function refresh(preserveError = false, force = false) {
+  async function refresh(preserveError = false, force = false, preserveResetOperation = false) {
     if (refreshPromise) {
       const completed = await refreshPromise
       if (!force) return completed
@@ -42,6 +45,7 @@ export function useQuizControl() {
         return true
       }
       catch (error) {
+        if (!preserveResetOperation) resetOperation.value = null
         errorMessage.value = toApiError(error).message
         return false
       }
@@ -59,8 +63,13 @@ export function useQuizControl() {
     }
   }
 
-  async function act(action: () => Promise<OperatorQuizState>, successNotice: string, historyLabel: string) {
-    if (isActing.value) return
+  async function act(
+    action: () => Promise<OperatorQuizState>,
+    successNotice: string,
+    historyLabel: string,
+    useInvalidTransitionMessage = true,
+  ): Promise<boolean> {
+    if (isActing.value) return false
 
     errorMessage.value = ''
     noticeMessage.value = ''
@@ -68,17 +77,21 @@ export function useQuizControl() {
     try {
       await action()
       // 操作レスポンスを表示用の唯一の状態にせず、必ず最新stateを取り直す。
-      if (!await refresh(false, true)) return
+      if (!await refresh(false, true)) return false
 
       history.value.push({ time: new Date().toISOString(), label: historyLabel })
       noticeMessage.value = successNotice
+      return true
     }
     catch (error) {
-      // 422 は不正な遷移(二重start、締切前の公開など)。状態のずれを案内して実態を取り直す。
-      errorMessage.value = error instanceof ApiError && error.statusCode === 422
+      // 通常の422は不正な遷移として案内するが、resetの確認エラーは
+      // バックエンドのメッセージをそのまま表示して契約を隠さない。
+      resetOperation.value = null
+      errorMessage.value = error instanceof ApiError && error.statusCode === 422 && useInvalidTransitionMessage
         ? INVALID_TRANSITION_MESSAGE
         : toApiError(error).message
       await refresh(true, true)
+      return false
     }
     finally {
       isActing.value = false
@@ -93,10 +106,43 @@ export function useQuizControl() {
     '問題公開',
   )
 
+  const setCorrectAnswer = (choice: ChoiceKey) => act(
+    () => updateCorrectAnswer(choice),
+    `正解を${choice}に設定しました。`,
+    `正解を${choice}に設定`,
+  )
+
   const close = () => act(closeAnswers, '10秒後に解答受付を締め切ります。', '解答締め切りを開始')
   const closeImmediately = () => act(closeAnswersImmediately, '解答の受付を締め切りました。', '時間切れで解答締め切り')
   const reveal = () => act(revealAnswer, '答えを表示しました。', '答え表示')
   const finish = () => act(finishQuiz, 'クイズ大会を終了しました。', 'クイズ終了')
+  const reset = async (confirmation: string) => {
+    if (isActing.value) return false
+
+    resetOperation.value = null
+    errorMessage.value = ''
+    noticeMessage.value = ''
+    isActing.value = true
+    try {
+      // A 200 receipt proves the destructive operation committed.  Do not
+      // reinterpret a later GET failure as a failed reset or invite a retry.
+      const response = await resetQuiz(confirmation)
+      resetOperation.value = response.reset_operation
+      history.value.push({ time: new Date().toISOString(), label: 'クイズ大会をリセット' })
+      noticeMessage.value = 'クイズ大会を開始前の状態に戻しました。'
+      await refresh(false, true, true)
+      return true
+    }
+    catch (error) {
+      resetOperation.value = null
+      errorMessage.value = toApiError(error).message
+      await refresh(true, true)
+      return false
+    }
+    finally {
+      isActing.value = false
+    }
+  }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
   onMounted(() => {
@@ -120,15 +166,18 @@ export function useQuizControl() {
     isActing,
     errorMessage,
     noticeMessage,
+    resetOperation,
     phase,
     phaseLabel,
     nextQuestionPosition,
     refresh,
     start,
     publish,
+    setCorrectAnswer,
     close,
     closeImmediately,
     reveal,
     finish,
+    reset,
   }
 }

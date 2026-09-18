@@ -11,6 +11,7 @@ import MonitoringPanel from './MonitoringPanel.vue'
 const props = defineProps<{
   session: AdminSession
   pendingRequests: AccessRequest[]
+  decidingRequestId: number | null
   busy: boolean
   canApprove: boolean
   error: string
@@ -27,6 +28,7 @@ const page = computed(() => getConsolePage(route.path))
 const heading = ref<HTMLElement | null>(null)
 const dialog = ref<HTMLDialogElement | null>(null)
 const decision = ref<{ request: AccessRequest, action: 'approve' | 'reject' } | null>(null)
+const decidingAction = ref<'approve' | 'reject' | null>(null)
 const operatorChange = ref<OperatorAccount | null>(null)
 const emailDelete = ref<ManagementAccount | null>(null)
 const permissionTab = ref<'admin' | 'operator'>('admin')
@@ -34,8 +36,8 @@ const pendingRequestCount = computed(() => props.pendingRequests.length)
 const permissionTabs = [ 'admin', 'operator' ] as const
 onMounted(() => heading.value?.focus({ preventScroll: true }))
 const {
-  accounts, accountsLoading, accountsLoaded, accountsError, accountRemoving,
-  operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError,
+  accounts, accountsLoading, accountsRefreshing, accountsLoaded, accountsError, accountRemoving,
+  operatorAccounts, operatorAccountsLoading, changingOperatorId, operatorAccountsLoaded, operatorAccountsError,
   health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError,
   loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadMonitoring,
 } = useAdminConsoleData(props.refresh, monitoringEnabled)
@@ -110,17 +112,23 @@ function keepDialogFocus(event: KeyboardEvent) {
   }
 }
 async function confirmDecision() {
-  if (!decision.value || props.busy) return
+  if (!decision.value || props.decidingRequestId !== null) return
   const { request, action } = decision.value
   dialog.value?.close()
   decision.value = null
-  await props.decide(request.id, action)
-  await loadAccounts()
+  decidingAction.value = action
+  try {
+    await props.decide(request.id, action)
+    await loadAccounts(true)
+  }
+  finally {
+    decidingAction.value = null
+  }
   await nextTick()
   heading.value?.focus({ preventScroll: true })
 }
 async function confirmOperatorAccessRemoval() {
-  if (!operatorChange.value || operatorAccountsLoading.value) return
+  if (!operatorChange.value || changingOperatorId.value !== null) return
   const account = operatorChange.value
   dialog.value?.close()
   operatorChange.value = null
@@ -179,7 +187,7 @@ async function refreshTeam() {
 
         <template v-else-if="page.key === 'status'">
           <MonitoringPanel :snapshot="monitoring" :loading="monitoringLoading" :error="monitoringError" :enabled="monitoringEnabled" @refresh="loadMonitoring" />
-          <section class="surface probe-section" aria-labelledby="probe-title" :aria-busy="healthLoading"><div class="section-heading"><div><p class="kicker">LOCAL CONNECTIVITY</p><h2 id="probe-title">このブラウザからの疎通確認</h2></div><button class="button secondary" :disabled="healthLoading" @click="checkHealth"><PortalIcon name="refresh" />{{ healthLoading ? '確認中…' : '疎通を確認' }}</button></div><p class="section-description">フロントエンドのプロキシを経由し、Rails の /health に接続します。</p><div v-if="healthError" class="feedback error" role="alert">{{ healthError }}</div><div class="probe-grid" aria-live="polite"><div><span>今回の確認結果</span><strong>{{ healthLoading ? '確認中' : health ? health.available ? '疎通成功' : '応答内容を確認できません' : healthError ? '確認できません' : '未確認' }}</strong></div><div><span>ブラウザ往復時間</span><strong>{{ health ? `${health.elapsedMs} ms` : '未計測' }}</strong></div><div><span>確認時刻（日本時間）</span><strong>{{ health ? formatConsoleDate(health.checkedAt) : '未確認' }}</strong></div></div><p class="footnote">単発の疎通結果です。DB・外部サービスの正常性、全APIの稼働率、サーバー処理時間を示すものではありません。</p></section>
+          <section class="surface probe-section" aria-labelledby="probe-title" :aria-busy="healthLoading"><div class="section-heading"><div><p class="kicker">LOCAL CONNECTIVITY</p><h2 id="probe-title">このブラウザからの疎通確認</h2></div><button class="button secondary" :disabled="healthLoading" @click="checkHealth"><PortalIcon name="refresh" />{{ healthLoading ? '確認中…' : '疎通を確認' }}</button></div><p class="section-description">フロントエンドのプロキシを経由し、Rails の /api/health に接続します。</p><div v-if="healthError" class="feedback error" role="alert">{{ healthError }}</div><div class="probe-grid" aria-live="polite"><div><span>今回の確認結果</span><strong>{{ healthLoading ? '確認中' : health ? health.available ? '疎通成功' : '応答内容を確認できません' : healthError ? '確認できません' : '未確認' }}</strong></div><div><span>ブラウザ往復時間</span><strong>{{ health ? `${health.elapsedMs} ms` : '未計測' }}</strong></div><div><span>確認時刻（日本時間）</span><strong>{{ health ? formatConsoleDate(health.checkedAt) : '未確認' }}</strong></div></div><p class="footnote">単発の疎通結果です。DB・外部サービスの正常性、全APIの稼働率、サーバー処理時間を示すものではありません。</p></section>
         </template>
 
         <template v-else-if="page.key === 'permissions'">
@@ -189,21 +197,21 @@ async function refreshTeam() {
           </div>
 
           <div v-if="permissionTab === 'admin'" id="permission-panel-admin" role="tabpanel" aria-labelledby="permission-tab-admin" tabindex="0">
-            <section class="surface" aria-labelledby="accounts-title" :aria-busy="accountsLoading">
-              <div class="section-heading"><div><p class="kicker">ADMINISTRATOR ACCESS</p><h2 id="accounts-title">管理者一覧</h2></div><button class="button secondary" :disabled="accountsLoading || busy" @click="refreshTeam"><PortalIcon name="refresh" />{{ accountsLoading ? '更新中…' : '一覧を更新' }}</button></div>
+            <section class="surface" aria-labelledby="accounts-title" :aria-busy="accountsLoading || accountsRefreshing">
+              <div class="section-heading"><div><p class="kicker">ADMINISTRATOR ACCESS</p><h2 id="accounts-title">管理者一覧</h2></div><button class="button secondary" :disabled="accountsLoading || accountsRefreshing || busy" @click="refreshTeam"><PortalIcon name="refresh" />{{ accountsLoading || accountsRefreshing ? '更新中…' : '一覧を更新' }}</button></div>
               <p class="section-description">管理アクセスが付与された、または取り消されたアカウントです。</p>
-              <div v-if="accountsError" class="feedback error" role="alert">{{ accountsError }}</div><p v-else-if="accountsLoading" class="empty-inline" role="status">管理者一覧を取得しています…</p>
-              <div v-else-if="accountsLoaded" class="table-scroll" role="region" aria-labelledby="accounts-title" tabindex="0"><table><caption class="sr-only">管理アクセスを持つアカウント</caption><thead><tr><th scope="col">ユーザー</th><th scope="col">アクセス</th><th scope="col">付与方法</th><th scope="col">操作</th></tr></thead><tbody><tr v-for="account in accounts" :key="account.id ?? account.email"><td><span class="table-email">{{ account.email }}</span><small v-if="account.email === session.email" class="self-label">あなた</small></td><td><span class="badge" :class="account.active ? 'positive' : 'neutral'">{{ account.active ? '有効' : '取消済み' }}</span></td><td>{{ accessSourceLabel(account.source) }}</td><td><button class="button secondary" :disabled="accountRemoving || account.id === null" :aria-label="`${account.email} の許可メールを削除`" @click="openEmailDeletionConfirmation(account)">削除</button></td></tr><tr v-if="!accounts.length"><td colspan="4" class="empty-inline">表示できる管理アクセスはありません。</td></tr></tbody></table></div>
+              <div v-if="accountsError" class="feedback error" role="alert">{{ accountsError }}</div><p v-if="accountsLoading && !accountsLoaded" class="empty-inline" role="status">管理者一覧を取得しています…</p>
+              <div v-if="accountsLoaded" class="table-scroll" role="region" aria-labelledby="accounts-title" tabindex="0"><table><caption class="sr-only">管理アクセスを持つアカウント</caption><thead><tr><th scope="col">ユーザー</th><th scope="col">アクセス</th><th scope="col">付与方法</th><th scope="col">操作</th></tr></thead><tbody><tr v-for="account in accounts" :key="account.id ?? account.email"><td><span class="table-email">{{ account.email }}</span><small v-if="account.email === session.email" class="self-label">あなた</small></td><td><span class="badge" :class="account.active ? 'positive' : 'neutral'">{{ account.active ? '有効' : '取消済み' }}</span></td><td>{{ accessSourceLabel(account.source) }}</td><td><button class="button secondary" :disabled="accountRemoving || account.id === null" :aria-label="`${account.email} の許可メールを削除`" @click="openEmailDeletionConfirmation(account)">削除</button></td></tr><tr v-if="!accounts.length"><td colspan="4" class="empty-inline">表示できる管理アクセスはありません。</td></tr></tbody></table></div>
             </section>
-            <section class="surface approval-section" aria-labelledby="requests-title" :aria-busy="busy"><div class="section-heading"><div><p class="kicker">ADMIN ACCESS REQUESTS</p><h2 id="requests-title">管理者の利用申請 <span v-if="canApprove" class="inline-count">{{ pendingRequests.length }}</span></h2></div></div><p class="section-description">申請者本人と確認してから承認してください。承認すると管理アクセスが付与されます。</p><p v-if="!canApprove" class="empty-inline">申請を承認・却下する権限がありません。</p><div v-else-if="!pendingRequests.length" class="empty-state compact"><span class="empty-illustration"><PortalIcon name="check" /></span><h3>承認待ちの申請はありません</h3><p>新しい申請は「一覧を更新」から確認できます。</p></div><ul v-else class="approval-list"><li v-for="request in pendingRequests" :key="request.id"><div class="identity-row"><span class="avatar" aria-hidden="true">{{ request.email[0]?.toUpperCase() }}</span><div><strong>{{ request.email }}</strong><p>申請 #{{ request.id }} · {{ formatConsoleDate(request.expiresAt) }} まで（日本時間）</p></div></div><div class="approval-actions"><button class="button secondary" :disabled="busy" :aria-label="`${request.email} の申請を却下`" @click="openDecision(request, 'reject')">却下</button><button class="button primary" :disabled="busy" :aria-label="`${request.email} の申請を承認`" @click="openDecision(request, 'approve')">承認する</button></div></li></ul></section>
+            <section class="surface approval-section" aria-labelledby="requests-title" :aria-busy="decidingRequestId !== null"><div class="section-heading"><div><p class="kicker">ADMIN ACCESS REQUESTS</p><h2 id="requests-title">管理者の利用申請 <span v-if="canApprove" class="inline-count">{{ pendingRequests.length }}</span></h2></div></div><p class="section-description">申請者本人と確認してから承認してください。承認すると管理アクセスが付与されます。</p><p v-if="!canApprove" class="empty-inline">申請を承認・却下する権限がありません。</p><div v-else-if="!pendingRequests.length" class="empty-state compact"><span class="empty-illustration"><PortalIcon name="check" /></span><h3>承認待ちの申請はありません</h3><p>新しい申請は「一覧を更新」から確認できます。</p></div><ul v-else class="approval-list"><li v-for="request in pendingRequests" :key="request.id" :class="{ 'row-pending': decidingRequestId === request.id }" :aria-busy="decidingRequestId === request.id"><div class="identity-row"><span class="avatar" aria-hidden="true">{{ request.email[0]?.toUpperCase() }}</span><div><strong>{{ request.email }}</strong><p>申請 #{{ request.id }} · {{ formatConsoleDate(request.expiresAt) }} まで（日本時間）</p></div></div><div class="approval-actions"><span v-if="decidingRequestId === request.id" class="pending-label" role="status">{{ decidingAction === 'reject' ? '却下中…' : '承認中…' }}</span><button class="button secondary" :disabled="decidingRequestId === request.id" :aria-label="`${request.email} の申請を却下`" @click="openDecision(request, 'reject')">却下</button><button class="button primary" :disabled="decidingRequestId === request.id" :aria-label="`${request.email} の申請を承認`" @click="openDecision(request, 'approve')">承認する</button></div></li></ul></section>
           </div>
 
           <div v-else id="permission-panel-operator" role="tabpanel" aria-labelledby="permission-tab-operator" tabindex="0">
-            <section class="surface" aria-labelledby="operator-accounts-title" :aria-busy="operatorAccountsLoading">
-              <div class="section-heading"><div><p class="kicker">OPERATOR ACCESS</p><h2 id="operator-accounts-title">オペレーター一覧</h2></div><button class="button secondary" :disabled="operatorAccountsLoading || busy" @click="loadOperatorAccounts"><PortalIcon name="refresh" />{{ operatorAccountsLoading ? '更新中…' : '一覧を更新' }}</button></div>
+            <section class="surface" aria-labelledby="operator-accounts-title" :aria-busy="operatorAccountsLoading || changingOperatorId !== null">
+              <div class="section-heading"><div><p class="kicker">OPERATOR ACCESS</p><h2 id="operator-accounts-title">オペレーター一覧</h2></div><button class="button secondary" :disabled="operatorAccountsLoading || changingOperatorId !== null || busy" @click="loadOperatorAccounts"><PortalIcon name="refresh" />{{ operatorAccountsLoading ? '更新中…' : '一覧を更新' }}</button></div>
               <p class="section-description">Google ログイン済みのユーザーを選び、オペレーター権限を直接付与・解除できます。</p>
               <div v-if="operatorAccountsError" class="feedback error" role="alert">{{ operatorAccountsError }}</div><p v-else-if="operatorAccountsLoading && !operatorAccountsLoaded" class="empty-inline" role="status">オペレーター一覧を取得しています…</p>
-              <div v-else-if="operatorAccountsLoaded" class="table-scroll" role="region" aria-labelledby="operator-accounts-title" tabindex="0"><table><caption class="sr-only">Google ログイン済みオペレーターの権限一覧</caption><thead><tr><th scope="col">ユーザー</th><th scope="col">オペレーター権限</th><th scope="col">付与方法</th><th scope="col">操作</th></tr></thead><tbody><tr v-for="account in operatorAccounts" :key="account.id"><td><span class="table-email">{{ account.email }}</span></td><td><span class="badge" :class="account.active ? 'positive' : 'neutral'">{{ account.active ? '有効' : '未付与' }}</span></td><td>{{ accessSourceLabel(account.source) }}</td><td><button class="button secondary" :disabled="operatorAccountsLoading || account.source === 'ENVIRONMENT_ACCESS'" :aria-label="`${account.email} のオペレーター権限を${account.managerEnabled ? '解除' : '付与'}`" @click="account.managerEnabled ? openOperatorAccessConfirmation(account) : setOperatorAccess(account.id, true)">{{ account.managerEnabled ? '解除する' : '付与する' }}</button></td></tr><tr v-if="!operatorAccounts.length"><td colspan="4" class="empty-inline">Google ログイン済みのオペレーターはいません。</td></tr></tbody></table></div>
+              <div v-else-if="operatorAccountsLoaded" class="table-scroll" role="region" aria-labelledby="operator-accounts-title" tabindex="0"><table><caption class="sr-only">Google ログイン済みオペレーターの権限一覧</caption><thead><tr><th scope="col">ユーザー</th><th scope="col">オペレーター権限</th><th scope="col">付与方法</th><th scope="col">操作</th></tr></thead><tbody><tr v-for="account in operatorAccounts" :key="account.id" :class="{ 'row-pending': changingOperatorId === account.id }" :aria-busy="changingOperatorId === account.id"><td><span class="table-email">{{ account.email }}</span></td><td><span class="badge" :class="account.active ? 'positive' : 'neutral'">{{ account.active ? '有効' : '未付与' }}</span></td><td>{{ accessSourceLabel(account.source) }}</td><td><button class="button secondary" :disabled="changingOperatorId === account.id || account.source === 'ENVIRONMENT_ACCESS'" :aria-label="`${account.email} のオペレーター権限を${account.managerEnabled ? '解除' : '付与'}`" @click="account.managerEnabled ? openOperatorAccessConfirmation(account) : setOperatorAccess(account.id, true)">{{ changingOperatorId === account.id ? account.managerEnabled ? '解除中…' : '付与中…' : account.managerEnabled ? '解除する' : '付与する' }}</button></td></tr><tr v-if="!operatorAccounts.length"><td colspan="4" class="empty-inline">Google ログイン済みのオペレーターはいません。</td></tr></tbody></table></div>
             </section>
             <section class="integration-note"><PortalIcon name="info" /><div><h2>オペレーター権限について</h2><p>対象者は先にオペレーターポータルで Google ログインを完了している必要があります。申請の承認は不要です。解除すると、環境設定による権限を除き、対象者のオペレーターセッションは終了します。</p></div></section>
           </div>
@@ -215,8 +223,8 @@ async function refreshTeam() {
     </div>
 
     <dialog ref="dialog" class="console-dialog" aria-labelledby="console-decision-title" @close="decision = null; operatorChange = null; emailDelete = null" @keydown="keepDialogFocus">
-      <template v-if="decision"><p class="kicker">CONFIRM ACCESS</p><h2 id="console-decision-title">この申請を{{ decision.action === 'approve' ? '承認' : '却下' }}しますか？</h2><p class="dialog-account">{{ decision.request.email }}</p><p>{{ decision.action === 'approve' ? '承認すると、申請者は同じブラウザから管理画面へ進めます。' : '却下後も、申請者は必要に応じて再申請できます。' }}</p><div class="logout-actions"><button class="button secondary" autofocus @click="dialog?.close()">戻る</button><button class="button primary" :disabled="busy" @click="confirmDecision">{{ decision.action === 'approve' ? '承認する' : '却下する' }}</button></div></template>
-      <template v-else-if="operatorChange"><p class="kicker">CONFIRM OPERATOR ACCESS</p><h2 id="console-decision-title">オペレーター権限を解除しますか？</h2><p class="dialog-account">{{ operatorChange.email }}</p><p>解除すると、環境設定による権限を除き、このユーザーのオペレーターセッションは終了します。</p><div class="logout-actions"><button class="button secondary" autofocus @click="dialog?.close()">戻る</button><button class="button primary" :disabled="operatorAccountsLoading" @click="confirmOperatorAccessRemoval">解除する</button></div></template>
+      <template v-if="decision"><p class="kicker">CONFIRM ACCESS</p><h2 id="console-decision-title">この申請を{{ decision.action === 'approve' ? '承認' : '却下' }}しますか？</h2><p class="dialog-account">{{ decision.request.email }}</p><p>{{ decision.action === 'approve' ? '承認すると、申請者は同じブラウザから管理画面へ進めます。' : '却下後も、申請者は必要に応じて再申請できます。' }}</p><div class="logout-actions"><button class="button secondary" autofocus @click="dialog?.close()">戻る</button><button class="button primary" :disabled="decidingRequestId !== null" @click="confirmDecision">{{ decision.action === 'approve' ? '承認する' : '却下する' }}</button></div></template>
+      <template v-else-if="operatorChange"><p class="kicker">CONFIRM OPERATOR ACCESS</p><h2 id="console-decision-title">オペレーター権限を解除しますか？</h2><p class="dialog-account">{{ operatorChange.email }}</p><p>解除すると、環境設定による権限を除き、このユーザーのオペレーターセッションは終了します。</p><div class="logout-actions"><button class="button secondary" autofocus @click="dialog?.close()">戻る</button><button class="button primary" :disabled="changingOperatorId !== null" @click="confirmOperatorAccessRemoval">解除する</button></div></template>
       <template v-else-if="emailDelete"><p class="kicker">CONFIRM EMAIL REMOVAL</p><h2 id="console-decision-title">許可メールを削除しますか？</h2><p class="dialog-account">{{ emailDelete.email }}</p><p>削除すると、このメールアドレスは管理画面へアクセスできなくなります。対象者がログイン中の場合、セッションは無効になります。</p><div class="logout-actions"><button class="button secondary" autofocus @click="dialog?.close()">戻る</button><button class="button primary" :disabled="accountRemoving" @click="confirmEmailDeletion">{{ accountRemoving ? '削除中…' : '削除する' }}</button></div></template>
     </dialog>
   </div>

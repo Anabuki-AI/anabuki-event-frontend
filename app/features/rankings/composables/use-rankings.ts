@@ -1,11 +1,11 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { fetchRankings } from '../api/get-rankings'
 import type { RankingEntry } from '../types'
 import { toApiError } from '~/lib/api/error'
 
 const POLL_INTERVAL_MS = 15_000
 
-export async function useRankings() {
+export function useRankings() {
   const ranking = ref<RankingEntry[]>([])
   const myRanking = ref<RankingEntry | null>(null)
   const rankingError = ref('')
@@ -21,8 +21,13 @@ export async function useRankings() {
       : '',
   )
 
-  // useAsyncData は setup の同期実行中に呼び出し、サーバー側で onServerPrefetch を登録させる
-  const rankingsData = useAsyncData('rankings', () => fetchRankings(), { default: () => ({ rankings: [], me: null }) })
+  // ランキングは初期HTMLを止めない。空の初期値を先に描画し、マウント後に取得する。
+  // lazy は server:false と併用しないとSSRのonServerPrefetchが登録されるため、必ず両方を指定する。
+  const rankingsData = useAsyncData('rankings', () => fetchRankings(), {
+    server: false,
+    lazy: true,
+    default: () => ({ rankings: [], me: null }),
+  })
 
   let pollTimer: ReturnType<typeof setInterval> | undefined
 
@@ -85,9 +90,9 @@ export async function useRankings() {
     document.removeEventListener('visibilitychange', handleVisibilityChange)
   })
 
-  // 初回フェッチの完了を待ってから状態へ反映する(SSR では描画の前に完了する)
-  await rankingsData
-  applyResponse()
+  // client-onlyの初回取得と15秒更新のどちらも、data/errorの変更をreactiveに反映する。
+  // ここでawaitしないことがSSRのランキングAPI待ちを解消する。
+  watch([rankingsData.data, rankingsData.error], applyResponse, { immediate: true })
 
   return {
     ranking,

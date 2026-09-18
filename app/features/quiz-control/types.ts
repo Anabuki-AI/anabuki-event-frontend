@@ -10,6 +10,17 @@ export interface OperatorQuizCurrentQuestion {
   question_text: string
   choices: Record<ChoiceKey, string>
   image_url: string | null
+  /** True when the current live question is a relay question. */
+  is_relay_question?: boolean
+  /** True when this relay question is the one the operator picked to ask now. */
+  is_selected_relay_question?: boolean
+  /** ISO8601。答えが参加者に公開済みなら値が入る。 */
+  revealed_at?: string | null
+  /**
+   * 中継問題について、運営がライブ中に明示的に正解を確定させたかどうか。
+   * false のままだと correct_answer は作成/編集時点の暫定値の可能性がある。
+   */
+  live_correct_answer_confirmed?: boolean
   correct_answer: ChoiceKey
   answered_count: number
   /** 0〜1 の小数。 */
@@ -28,6 +39,22 @@ export interface OperatorNextQuestion {
   question_text: string
   choices: Record<ChoiceKey, string>
   image_url: string | null
+}
+
+/** POST /api/operator/quiz/reset が返す完了済みリセットの受付票。 */
+export interface OperatorQuizResetOperation {
+  operation_id: string
+  started_at: string
+  completed_at: string
+  affected_rows: {
+    participant_reactions: number
+    participant_answers: number
+    confidence_selections: number
+    participant_sessions: number
+    participants: number
+    question_reveals: number
+    quiz_sessions: number
+  }
 }
 
 /** クイズ本番セッションAPI契約(Phase 0)どおりの運営者向けレスポンス。 */
@@ -52,6 +79,11 @@ export interface OperatorQuizState {
    * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
    */
   next_question?: OperatorNextQuestion | null
+}
+
+/** Reset の成功レスポンスは通常の state に、必須の reset_operation を加える。 */
+export interface OperatorQuizResetResponse extends OperatorQuizState {
+  reset_operation: OperatorQuizResetOperation
 }
 
 export const PHASE_LABELS: Record<QuizPhase, string> = {

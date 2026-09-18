@@ -239,6 +239,23 @@ describe('admin portal authentication and application lifecycle', () => {
     expect(state.notice.value).toBe('ログアウトしました。')
   })
 
+  it('marks only the deciding request pending and keeps it until the backend accepts it', async () => {
+    const other = { ...pending, id: 43, email: 'other@example.com' }
+    api.session.mockResolvedValue(manager)
+    api.pendingRequests.mockResolvedValue([pending, other])
+    let resolve!: (value: AccessRequest) => void
+    api.decide.mockImplementation(() => new Promise(done => { resolve = done }))
+    const state = await start()
+    const decision = state.decide(42, 'approve')
+    expect(state.decidingRequestId.value).toBe(42)
+    expect(state.pendingRequests.value).toEqual([pending, other])
+    expect(state.busy.value).toBe(false)
+    resolve({ ...pending, status: 'APPROVED' })
+    await decision
+    expect(state.decidingRequestId.value).toBeNull()
+    expect(state.pendingRequests.value).toEqual([other])
+  })
+
   it('removes a decided request only after the backend accepts it', async () => {
     api.session.mockResolvedValue(manager)
     api.pendingRequests.mockResolvedValue([pending])

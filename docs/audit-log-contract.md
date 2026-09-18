@@ -1,16 +1,16 @@
-# Admin console: audit log contract (frontend proposal)
+# Admin console: audit log contract
 
-Status: **contract proposal only**. No Rails files and no frontend API wiring are changed by this PR. The backend implementation (C2) must confirm this contract before the frontend connects (C3). Until then, the console keeps showing its explicit "データ未連携" empty state and makes **no call** to a nonexistent endpoint.
+Status: **implemented contract**. The Rails backend exposes this schema from `GET /api/admin/audit-logs`; the frontend validates it at runtime and renders the reset receipt when `TOURNAMENT_RESET` entries are returned. The feature flag remains the presentation switch for enabling the existing admin log page.
 
-## Existing logging foundation (investigation result)
+## Backend logging foundation
 
-The backend currently has **no dedicated audit-log infrastructure**: no audit model or table, no application-level logger utility, and no ActiveRecord history/callback-log tables. The only actor-attribution mechanisms today are the `granted_by` / `granted_at` / `revoked_at` columns on admin and operator access records (an "audit trail" of grants, not a queryable operation log), plus Rails' standard `log/` output and Sentry for error monitoring — neither of which is suitable as a console-searchable audit trail. This contract therefore **proposes a new simple schema** rather than adapting an existing one.
+The backend stores audit entries in the append-only `audit_logs` table and writes the reset receipt in the same transaction as the destructive operation. The frontend never fabricates, caches, or appends to the trail client-side.
 
 ## Boundary and activation
 
-- Proposed endpoint: `GET /api/admin/audit-logs`, through the existing same-origin Nuxt API proxy.
-- Browser sends its existing HttpOnly admin-session cookies (`admin_session` / `admin_applicant_session`). The backend must guard the endpoint with the existing `management_session!` flow.
-- Read permission: reuse the existing `MANAGEMENT_PAGE_VIEW` permission. This contract intentionally does **not** introduce a new permission value; if the backend wants a dedicated `AUDIT_LOG_READ`, that is a C2 decision to confirm before C3.
+- Endpoint: `GET /api/admin/audit-logs`, through the existing same-origin Nuxt API proxy.
+- Browser sends its existing HttpOnly admin-session cookies (`admin_session` / `admin_applicant_session`). The backend guards the endpoint with the existing admin authorization flow.
+- Read permission: `MANAGEMENT_PAGE_VIEW`.
 - Only the backend writes, stores, redacts, and retains audit entries. The frontend never fabricates, caches, or appends to the trail client-side.
 - Response must use `Cache-Control: no-store` (the existing Nuxt proxy also applies this).
 - After deploying the backend, set the frontend runtime variable `NUXT_PUBLIC_ADMIN_AUDIT_LOG_ENABLED=true`. The default is `false`; when disabled, the UI makes **no request** and shows the current unconnected state. This switch is presentation configuration, **not authorization**. Backend authorization is mandatory regardless of the switch.
@@ -30,7 +30,7 @@ The backend currently has **no dedicated audit-log infrastructure**: no audit mo
 
 ## Response JSON schema
 
-The canonical frontend types and runtime validation will live in `app/features/admin/audit-log-contract.ts` (C3).
+The canonical frontend types and runtime validation live in `app/features/admin/audit-log-contract.ts`.
 
 ```ts
 interface AuditLogPage {
@@ -45,8 +45,11 @@ interface AuditLogEntry {
   type: AuditLogType // explicit enum, see below
   actorEmail: string | null // null only for system-generated entries; the UI column 実行ユーザー
   actorGoogleSub: string | null
-  targetType: string | null // e.g. "QUESTION", "ADMIN_ACCESS_REQUEST", null for session events
+  targetType: string | null // e.g. "QUESTION", "TOURNAMENT", null for session events
   targetId: string | null // string form of the affected record id
+  operationId: string | null // reset operation UUID; null for other events
+  operationStartedAt: string | null // RFC3339; non-null for TOURNAMENT_RESET
+  operationCompletedAt: string | null // RFC3339; non-null for TOURNAMENT_RESET
   detail: Record<string, string | number | boolean | null> // presentation-safe, redacted; never credentials, cookies, session keys, or raw OAuth responses
   occurredAt: string // RFC3339 with offset; the UI renders it as 日本時間
 }
@@ -64,6 +67,7 @@ type AuditLogType =
   | 'MANAGEMENT_ACCESS_REVOKED'
   | 'OPERATOR_ACCESS_GRANTED'
   | 'OPERATOR_ACCESS_REVOKED'
+  | 'TOURNAMENT_RESET'
 ```
 
 Rules:
@@ -103,12 +107,13 @@ Derived from the current admin-facing routes and flows. Each entry is written by
 | `MANAGEMENT_ACCESS_REVOKED` | `DELETE /api/admin/allowed-emails/:id` |
 | `OPERATOR_ACCESS_GRANTED` | `PATCH /api/admin/operator-identities/:id` with manager access enabled |
 | `OPERATOR_ACCESS_REVOKED` | `PATCH /api/admin/operator-identities/:id` with manager access revoked |
+| `TOURNAMENT_RESET` | `POST /api/operator/quiz/reset` succeeds with exact confirmation `RESET` |
 
 Deliberately out of scope for phase 1 (candidates for a later contract, listed so C2 can leave room):
 
 - `GET`-only reads (question list/detail, allowed-email list, access-request list). Logging every read would drown the trail; if read auditing is ever required, add a separate opt-in type (e.g. `AUDIT_LOG_VIEWED`) with its own retention discussion.
-- Operator quiz lifecycle actions (`/api/operator/quiz/*`) and participant activity: these run under operator/participant sessions with a different actor model; they need their own actor field semantics before entering the same table.
+- Other operator quiz lifecycle actions (`/api/operator/quiz/start`, `publish`, `close`, `reveal`, `finish`) and participant activity remain out of scope; the destructive reset is included because it writes a durable operator-attributed receipt.
 
-## Proposed backend schema (for C2 to confirm)
+## Backend storage notes
 
-A single append-only table, e.g. `audit_logs`: monotonic `id` (bigint), `type` (string), `actor_identity_id` (nullable FK to `admin_identities`), `actor_email`, `actor_google_sub`, `target_type`, `target_id`, `detail` (jsonb), `occurred_at` (timestamp with time zone), written in the same transaction as the action where practical. Retention, index design (at minimum `(occurred_at)` and `(type, occurred_at)`), and whether writes wrap in a transaction are backend decisions; this contract only requires that an accepted write corresponds to a succeeded action and that reads never expose the table's raw internals beyond the schema above.
+The `audit_logs` table contains monotonic `id`, the closed `event_type` enum, actor snapshots, `target_type`, `target_id`, scalar-only `detail`, `occurred_at`, and reset-only `operation_id`, `operation_started_at`, and `operation_completed_at` fields. Reset operation IDs are unique, reset operation metadata is non-null and ordered, and the reset audit row is inserted in the same PostgreSQL transaction as the purge. The admin serializer exposes these fields as `operationId`, `operationStartedAt`, and `operationCompletedAt`; the UI displays them as the reset receipt.

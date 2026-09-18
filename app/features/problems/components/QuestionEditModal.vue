@@ -12,7 +12,7 @@ import '~/assets/css/questionedit2.css'
 const props = defineProps<{ question: Question }>()
 const emit = defineEmits<{
   close: []
-  saved: []
+  saved: [question: Question]
 }>()
 
 type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
@@ -30,11 +30,55 @@ const form = reactive({
 })
 const correctChoice = ref<ChoiceLabel>(props.question.correctAnswer)
 const isSaving = ref(false)
-// 中継問題は、問題管理の一覧で「今回の出題」として選択されるまで正解を変更できない
-// (バックエンドAPIも同じ制約を強制する)。通常の問題には影響しない。
-const isCorrectAnswerLocked = computed<boolean>(
-  () => props.question.isRelayQuestion === true && props.question.isSelectedRelayQuestion !== true,
-)
+// バックエンドの correct_answer_locked_for_unselected_relay_question バリデーション
+// が返すエラーを、汎用メッセージではなくこの案内文で表示するために使う。
+const RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
+  = 'この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。'
+// backend/app/models/question.rb の protect_live_question が返すエラー。
+// 中継問題が「選択済み」かつ「出題・正解公開済み」であっても、ライブ進行画面で
+// まだ「次の問題」に進んでいない間(quiz_sessions.current_question_id が
+// このIDを指したまま)は correct_answer を含む LIVE_FIELDS の変更を拒否する。
+// これは中継問題の選択ロックとは別の理由であり、上の案内文をそのまま出すと
+// 「選択したのに保存できない」という誤解を招く(選択状態は無関係なため)。
+const LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE
+  = 'この問題は現在ライブ進行画面で出題中(または直前に出題済み)のため、正解を変更できません。「出題管理」で次の問題に進んでから変更してください。'
+// fieldErrors.correctAnswer に入りうる、バックエンドの生バリデーションメッセージ
+// (backend/app/models/question.rb) からユーザー向け文言へのマッピング。
+// 両方とも同じ HTTP 422 + fieldErrors.correctAnswer で返ってくるため、
+// メッセージ本文で原因を区別する必要がある。
+const CORRECT_ANSWER_LOCK_MESSAGES: Record<string, string> = {
+  'cannot be changed for a relay question that is not selected': RELAY_CORRECT_ANSWER_LOCKED_MESSAGE,
+  'cannot be changed while this question is live': LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE,
+}
+// 正解ロックの理由。2つは完全に独立した状態(isSelectedRelayQuestion と
+// isLiveQuestion)から生じるため、どちらか一方だけを見て判定すると
+// 「選択済みなのにロックされて見える/選択されていないだけだと誤案内する」
+// といった食い違いが起きる。'live' を 'unselected' より優先するのは、
+// 選択状態に関わらずライブ中は保存できない(バックエンドの優先順位と一致)ため。
+type CorrectAnswerLockReason = 'live' | 'unselected' | null
+const correctAnswerLockReason = computed<CorrectAnswerLockReason>(() => {
+  // ライブ進行画面で quiz_sessions.current_question として出題中(または
+  // 正解公開直後でまだ次の問題に進んでいない)間は、選択状態やrevealedAtに
+  // 関わらず常にロックする(backendのprotect_live_questionと同じ優先順位)。
+  if (props.question.isLiveQuestion === true) return 'live'
+  // 中継問題は、問題管理の一覧で「今回の出題」として選択されるまで正解を
+  // 変更できない(バックエンドAPIも同じ制約を強制する)。通常の問題には影響
+  // しない。ただし、一度ライブ進行で出題・正解公開済み(revealedAt設定済み)の
+  // 中継問題は、その後の出題で別の中継問題が選択されて選択が外れても、
+  // 正解を変更できる。
+  if (
+    props.question.isRelayQuestion === true
+    && props.question.isSelectedRelayQuestion !== true
+    && !props.question.revealedAt
+  ) return 'unselected'
+  return null
+})
+const isCorrectAnswerLocked = computed<boolean>(() => correctAnswerLockReason.value !== null)
+const correctAnswerLockNote = computed<string>(() => {
+  if (correctAnswerLockReason.value === 'live') return LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE
+  if (correctAnswerLockReason.value === 'unselected') return RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
+  return ''
+})
 const submitErrorMessage = ref('')
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
@@ -161,12 +205,21 @@ async function save() {
   }
 
   try {
-    await updateQuestion(props.question.id, payload)
-    emit('saved')
+    const question = await updateQuestion(props.question.id, payload)
+    emit('saved', question)
   }
   catch (error) {
     const apiError = toApiError(error)
-    submitErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
+    // 422 の汎用メッセージは、正解ロック違反という具体的な原因を隠してしまう
+    // (問題テキスト長超過などの他の入力エラーと同じ「入力内容を確認してください」
+    // になり、運営者にはなぜ保存できないか伝わらない)。fieldErrors.correctAnswer
+    // がある場合は、原因(中継問題の選択ロック/ライブ出題中ロック)に応じた案内文を
+    // 表示する。どちらでもない未知の correctAnswer エラーは汎用メッセージにフォールバックする。
+    const correctAnswerError = apiError.fieldErrors?.correctAnswer
+    const correctAnswerErrorMessage = Array.isArray(correctAnswerError) ? correctAnswerError[0] : correctAnswerError
+    submitErrorMessage.value = correctAnswerErrorMessage
+      ? (CORRECT_ANSWER_LOCK_MESSAGES[correctAnswerErrorMessage] ?? problemErrorMessage(apiError.statusCode, apiError.message))
+      : problemErrorMessage(apiError.statusCode, apiError.message)
   }
   finally {
     isSaving.value = false
@@ -305,7 +358,7 @@ onUnmounted(() => {
         <fieldset class="question-add-field question-add-choices">
           <legend class="question-add-label">選択肢（正解にチェックを付けてください）</legend>
           <p v-if="isCorrectAnswerLocked" class="question-add-hint question-add-relay-lock-note" role="status">
-            この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。
+            {{ correctAnswerLockNote }}
           </p>
 
           <div

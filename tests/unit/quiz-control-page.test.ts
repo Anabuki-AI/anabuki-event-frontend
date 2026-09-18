@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import QuizControlPage from '../../app/pages/event_operator/quiz-control.vue'
 import QuizTimerPanel from '../../app/features/quiz-control/components/QuizTimerPanel.vue'
+import QuizPhasePanel from '../../app/features/quiz-control/components/QuizPhasePanel.vue'
 import { useQuizClock } from '~/features/quiz-control/useQuizClock'
 import { useQuizControl } from '~/features/quiz-control/useQuizControl'
+import type { OperatorQuizCurrentQuestion } from '~/features/quiz-control/types'
 
 vi.mock('~/features/quiz-control/useQuizClock', () => ({
   useQuizClock: vi.fn(),
@@ -22,9 +24,16 @@ const NuxtLinkStub = {
   template: '<a :href="to"><slot /></a>',
 }
 
-function mountQuizControlPage(timeLimitSeconds: number | null | undefined, phase: 'PUBLISHED' | 'CLOSING' = 'PUBLISHED') {
+function mountQuizControlPage(
+  timeLimitSeconds: number | null | undefined,
+  phase: 'PUBLISHED' | 'CLOSING' = 'PUBLISHED',
+  acting = false,
+  resetOperation: Record<string, unknown> | null = null,
+  currentOverrides: Partial<OperatorQuizCurrentQuestion> = {},
+) {
   vi.mocked(useQuizClock).mockReturnValue({ now: ref(new Date('2026-09-18T10:00:00Z')) })
   const closeImmediately = vi.fn()
+  const reset = vi.fn().mockResolvedValue(true)
   vi.mocked(useQuizControl).mockReturnValue({
     state: ref({
       status: 'in_progress',
@@ -39,6 +48,7 @@ function mountQuizControlPage(timeLimitSeconds: number | null | undefined, phase
         answered_count: 0,
         answered_rate: 0,
         time_limit_seconds: timeLimitSeconds,
+        ...currentOverrides,
       },
       question_count: 1,
       total_participants: 0,
@@ -48,9 +58,10 @@ function mountQuizControlPage(timeLimitSeconds: number | null | undefined, phase
     }),
     history: ref([]),
     isLoading: ref(false),
-    isActing: ref(false),
+    isActing: ref(acting),
     errorMessage: ref(''),
     noticeMessage: ref(''),
+    resetOperation: ref(resetOperation),
     phase: ref(phase),
     phaseLabel: ref('解答受付中'),
     refresh: vi.fn(),
@@ -60,6 +71,8 @@ function mountQuizControlPage(timeLimitSeconds: number | null | undefined, phase
     closeImmediately,
     reveal: vi.fn(),
     finish: vi.fn(),
+    setCorrectAnswer: vi.fn(),
+    reset,
   } as never)
 
   const wrapper = shallowMount(QuizControlPage, {
@@ -70,7 +83,7 @@ function mountQuizControlPage(timeLimitSeconds: number | null | undefined, phase
     },
   })
 
-  return { wrapper, closeImmediately }
+  return { wrapper, closeImmediately, reset }
 }
 
 describe('クイズ出題管理画面の問題別制限時間', () => {
@@ -91,5 +104,95 @@ describe('クイズ出題管理画面の問題別制限時間', () => {
     closing.wrapper.findComponent(QuizTimerPanel).vm.$emit('expire')
     expect(closing.closeImmediately).not.toHaveBeenCalled()
     closing.wrapper.unmount()
+  })
+
+  it('すべての確認画面で参加者データが永久削除されることを明示し、RESET不一致ではAPIを呼ばない', async () => {
+    const { wrapper, reset } = mountQuizControlPage(60)
+    const deletionWarning = '参加者登録情報（プロフィール）、参加者セッション、リアクション、回答、自信度選択、問題の公開履歴は永久に削除され、元に戻せません。'
+
+    await wrapper.find('.quiz-reset-button').trigger('click')
+    expect(wrapper.find('[role="dialog"]').text()).toContain(deletionWarning)
+    await wrapper.find('.quiz-reset-cancel-button').trigger('click')
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+
+    await wrapper.find('.quiz-reset-button').trigger('click')
+    await wrapper.get('.quiz-reset-danger-button').trigger('click')
+    expect(wrapper.find('[role="dialog"]').text()).toContain(deletionWarning)
+    const input = wrapper.get('#quiz-reset-confirmation')
+    await input.setValue('reset')
+    const submit = wrapper.get('button[type="submit"]')
+    expect(submit.attributes('disabled')).toBeDefined()
+    await submit.trigger('click')
+    expect(reset).not.toHaveBeenCalled()
+
+    await input.setValue('RESET')
+    expect(submit.attributes('disabled')).toBeUndefined()
+    await wrapper.get('form').trigger('submit')
+    expect(reset).toHaveBeenCalledWith('RESET')
+    wrapper.unmount()
+  })
+
+  it('成功したリセットの受付票を操作IDと件数付きで表示する', () => {
+    const { wrapper } = mountQuizControlPage(60, 'PUBLISHED', false, {
+      operation_id: 'operation-1',
+      affected_rows: {
+        participants: 50,
+        participant_sessions: 50,
+        participant_reactions: 45,
+        participant_answers: 300,
+        confidence_selections: 300,
+        question_reveals: 12,
+        quiz_sessions: 1,
+      },
+    })
+
+    const receipt = wrapper.find('.quiz-reset-receipt')
+    expect(receipt.text()).toContain('操作ID: operation-1')
+    expect(receipt.text()).toContain('参加者登録情報（プロフィール）50件')
+    expect(receipt.text()).toContain('参加者セッション50件')
+    expect(receipt.text()).toContain('リアクション45件')
+    expect(receipt.text()).toContain('回答300件')
+    expect(receipt.text()).toContain('自信度選択300件')
+    wrapper.unmount()
+  })
+
+  it('選択済み中継問題の正解が未確定な間はrevealBlockedReasonをQuizPhasePanelへ渡す', () => {
+    const { wrapper } = mountQuizControlPage(60, 'PUBLISHED', false, null, {
+      is_relay_question: true,
+      is_selected_relay_question: true,
+      live_correct_answer_confirmed: false,
+    })
+
+    expect(wrapper.findComponent(QuizPhasePanel).props('revealBlockedReason')).not.toBeNull()
+    wrapper.unmount()
+  })
+
+  it('正解確定済みの中継問題ではrevealBlockedReasonをnullにする', () => {
+    const { wrapper } = mountQuizControlPage(60, 'PUBLISHED', false, null, {
+      is_relay_question: true,
+      is_selected_relay_question: true,
+      live_correct_answer_confirmed: true,
+    })
+
+    expect(wrapper.findComponent(QuizPhasePanel).props('revealBlockedReason')).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('通常問題ではrevealBlockedReasonをnullにする', () => {
+    const { wrapper } = mountQuizControlPage(60, 'PUBLISHED')
+
+    expect(wrapper.findComponent(QuizPhasePanel).props('revealBlockedReason')).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('進行操作中はリセット開始ボタンと確認操作を無効化する', async () => {
+    const { wrapper, reset } = mountQuizControlPage(60, 'PUBLISHED', true)
+
+    const resetButton = wrapper.get('.quiz-reset-button')
+    expect(resetButton.attributes('disabled')).toBeDefined()
+    await resetButton.trigger('click')
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(reset).not.toHaveBeenCalled()
+    wrapper.unmount()
   })
 })

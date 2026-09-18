@@ -60,6 +60,34 @@
   line-height: 1.6;
 }
 
+.voting-rate-shell .voting-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.voting-rate-shell .voting-retry {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #912018;
+  border-radius: 10px;
+  color: #912018;
+  background: #ffffff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.voting-rate-shell .voting-updated {
+  margin: 0;
+  color: #516176;
+  font-size: 0.75rem;
+}
+
+.voting-rate-shell .voting-updated.is-stale {
+  color: #912018;
+}
+
 .voting-rate-shell .voting-refresh {
   min-height: 44px;
   padding: 0 22px;
@@ -82,6 +110,60 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.voting-rate-shell .voting-loading {
+  display: grid;
+  gap: 10px;
+  min-height: 320px;
+}
+
+.voting-rate-shell .voting-skeleton-summary .summary-item {
+  min-height: 70px;
+}
+
+.voting-rate-shell .voting-skeleton-summary-label {
+  width: 72px;
+  height: 16px;
+}
+
+.voting-rate-shell .voting-skeleton-summary-value {
+  width: 100px;
+  height: 26px;
+}
+
+.voting-rate-shell .voting-skeleton-question {
+  min-height: 136px;
+}
+
+.voting-rate-shell .voting-skeleton-select {
+  width: min(340px, 60%);
+  height: 44px;
+}
+
+.voting-rate-shell .voting-skeleton-question-number {
+  width: 44px;
+  height: 16px;
+}
+
+.voting-rate-shell .voting-skeleton-question-text {
+  width: min(420px, 70%);
+  height: 20px;
+}
+
+.voting-rate-shell .voting-skeleton-option {
+  min-height: 74px;
+}
+
+.voting-rate-shell .voting-skeleton-option-label {
+  width: 72px;
+  height: 18px;
+}
+
+.voting-rate-shell .voting-skeleton-option-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
 }
 
 .voting-rate-shell .summary-item {

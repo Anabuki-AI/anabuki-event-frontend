@@ -1,5 +1,5 @@
 import { createError, getRequestURL, proxyRequest, sendRedirect, setResponseHeader } from 'h3'
-import { createBackendRequest, isCloudflareRuntime, sanitizeBackendResponse } from '../utils/cloudflare-backend'
+import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime, sanitizeBackendResponse } from '../utils/cloudflare-backend'
 
 // One same-origin API in development and production. Forward HttpOnly session
 // cookies and Set-Cookie headers, but leave OAuth redirects to the browser.
@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
   const backendBaseUrl = String(config.backendBaseUrl).replace(/\/$/, '')
   const target = `${backendBaseUrl}${url.pathname}${url.search}`
   const cloudflareRuntime = isCloudflareRuntime(event)
+  const cloudflareBackend = getCloudflareBackend(event)
   const isOAuthNavigation = event.method === 'GET' && OAUTH_NAVIGATION_PATHS.has(url.pathname)
   const returnToLogin = () => {
     setResponseHeader(event, 'Content-Type', 'text/html; charset=utf-8')
@@ -36,21 +37,34 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'no-store')
   try {
     if (cloudflareRuntime) {
-      let upstream: URL
-      try {
-        upstream = new URL(target)
-      }
-      catch {
-        throw createError({ statusCode: 503, statusMessage: 'Backend upstream is not configured' })
-      }
-      if (!['http:', 'https:'].includes(upstream.protocol)) {
-        throw createError({ statusCode: 503, statusMessage: 'Backend upstream protocol is invalid' })
+      const remoteOrigin = getRemoteBackendOrigin(event)
+      if (remoteOrigin) {
+        // Cloudflare Tunnel origin: the Worker fetches the Rails API over its
+        // public https hostname. The browser's Origin must still be forwarded
+        // unchanged for Rails' same-origin guard, and the Host header must
+        // reflect the tunnel hostname, so it is dropped from the copy.
+        const remoteTarget = new URL(`${url.pathname}${url.search}`, remoteOrigin)
+        const remoteRequest = createBackendRequest(event, remoteTarget, {
+          forwardRequestHeaders: true,
+          forwardedProto: url.protocol.replace(':', ''),
+          excludeHostHeader: true,
+        })
+        const response = await fetch(remoteRequest)
+        if (isOAuthNavigation && response.status >= 400) {
+          await response.body?.cancel()
+          return returnToLogin()
+        }
+        return sanitizeBackendResponse(response)
       }
 
-      // Production uses the Cloudflare Tunnel hostname. The browser still
-      // calls this same-origin /api route, so cookies and OAuth redirects stay
-      // on anabuki-event.com; only this server-side fetch crosses the tunnel.
-      const response = await fetch(createBackendRequest(event, upstream, {
+      if (!cloudflareBackend) {
+        throw createError({ statusCode: 503, statusMessage: 'Backend service binding is not configured' })
+      }
+
+      // Service bindings use an internal placeholder only to construct a valid
+      // Request. The actual destination is selected by the binding itself.
+      const serviceTarget = new URL(`${url.pathname}${url.search}`, 'https://anabuki-event-backend.internal')
+      const response = await cloudflareBackend.fetch(createBackendRequest(event, serviceTarget, {
         forwardRequestHeaders: true,
         forwardedProto: url.protocol.replace(':', ''),
       }))

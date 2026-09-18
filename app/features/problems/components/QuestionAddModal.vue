@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useId } from 'vue'
 import { createQuestion } from '~/features/problems/api/client'
 import type { QuestionPayload } from '~/features/problems/api/client'
+import type { Question } from '~/features/problems/types'
 import { QUESTION_POINTS_DEFAULT, QUESTION_POINTS_MAX, QUESTION_POINTS_MIN } from '~/features/problems/constants'
 import { problemErrorMessage, validateImageFile, validatePointsInput } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
@@ -9,7 +10,7 @@ import '~/assets/css/question-add.css'
 
 const emit = defineEmits<{
   close: []
-  saved: []
+  saved: [question: Question]
 }>()
 
 type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
@@ -141,8 +142,8 @@ async function save() {
   }
 
   try {
-    await createQuestion(payload)
-    emit('saved')
+    const question = await createQuestion(payload)
+    emit('saved', question)
   }
   catch (error) {
     const apiError = toApiError(error)

@@ -99,6 +99,64 @@
   line-height: 1.25;
 }
 
+.answer-shell .answer-loading-card {
+  min-height: 430px;
+  grid-template-rows: 18px 24px 18px auto auto 52px 52px;
+  gap: 12px;
+}
+
+.answer-shell .answer-skeleton-question-number {
+  width: 54px;
+  height: 18px;
+}
+
+.answer-shell .answer-skeleton-question-line--long {
+  width: 92%;
+  height: 24px;
+}
+
+.answer-shell .answer-skeleton-question-line--short {
+  width: 62%;
+  height: 18px;
+}
+
+.answer-shell .answer-skeleton-confidence,
+.answer-shell .answer-skeleton-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.answer-shell .answer-skeleton-label {
+  width: 72px;
+  height: 18px;
+}
+
+.answer-shell .answer-skeleton-confidence-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.answer-shell .answer-skeleton-confidence-item {
+  height: 50px;
+  border-radius: 12px;
+}
+
+.answer-shell .answer-skeleton-choice {
+  height: 50px;
+  border-radius: 12px;
+}
+
+.answer-shell .answer-skeleton-point {
+  height: 66px;
+  border-radius: 12px;
+}
+
+.answer-shell .answer-skeleton-submit {
+  height: 52px;
+  border-radius: 12px;
+}
+
 .answer-shell .answer-card .muted-copy {
   margin: 0;
 }
@@ -231,6 +289,18 @@
   opacity: 1;
 }
 
+/* Lv.1で除外された不正解の選択肢（グレーアウト表示） */
+.answer-shell .choice-item.is-eliminated {
+  opacity: 0.45;
+  border-style: dashed;
+  background: #edeffa;
+  text-decoration: line-through;
+}
+
+.answer-shell .choice-item.is-eliminated .choice-check {
+  display: none;
+}
+
 /* 自信度（1つだけ選択可能） */
 .answer-shell .confidence-field {
   display: grid;
@@ -294,6 +364,16 @@
 
 .answer-shell .confidence-item.is-selected .confidence-rate {
   color: rgb(255 255 255 / 78%);
+}
+
+.answer-shell .confidence-item.is-pending {
+  border-color: #1769c2;
+  color: #1769c2;
+  background: #e6f0fb;
+}
+
+.answer-shell .confidence-item.is-pending .confidence-rate {
+  color: #1769c2;
 }
 
 /* 現在の選択 + 予定獲得ポイント */
@@ -366,6 +446,13 @@
   margin: 0;
   color: #516176;
   font-size: 0.8125rem;
+}
+
+.answer-shell .confidence-pending-message {
+  margin: 0;
+  color: #1769c2;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .answer-shell .confidence-item:disabled,

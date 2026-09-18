@@ -1,4 +1,4 @@
-import type { OperatorQuizState } from '../types'
+import type { ChoiceKey, OperatorQuizResetResponse, OperatorQuizState } from '../types'
 import { request } from '~/lib/api/client'
 
 const credentials = 'include' as const
@@ -18,6 +18,11 @@ export function startQuiz(): Promise<OperatorQuizState> {
 
 export function publishQuestion(): Promise<OperatorQuizState> {
   return act('/operator/quiz/publish')
+}
+
+/** Sets the answer for the relay question that is currently live. */
+export function updateCorrectAnswer(correctAnswer: ChoiceKey): Promise<OperatorQuizState> {
+  return act('/operator/quiz/correct-answer', { correct_answer: correctAnswer })
 }
 
 /** Starts the participant-visible ten-second close countdown. */
@@ -41,4 +46,18 @@ export function revealAnswer(): Promise<OperatorQuizState> {
 
 export function finishQuiz(): Promise<OperatorQuizState> {
   return act('/operator/quiz/finish')
+}
+
+/**
+ * Resets the tournament session. The server requires the exact confirmation
+ * value `RESET` and returns its completed reset_operation receipt; a rejected
+ * confirmation is a 422 `{ error: "confirmation must exactly equal RESET" }`.
+ */
+export function resetQuiz(confirmation: string): Promise<OperatorQuizResetResponse> {
+  return request<OperatorQuizResetResponse>('/operator/quiz/reset', {
+    method: 'POST',
+    body: { confirmation },
+    credentials,
+    retry: 0,
+  })
 }

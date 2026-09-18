@@ -1,7 +1,7 @@
 // @vitest-environment node
 
-import { describe, expect, it } from 'vitest'
-import { createBackendRequest, isCloudflareRuntime, sanitizeBackendResponse } from '../../server/utils/cloudflare-backend'
+import { describe, expect, it, vi } from 'vitest'
+import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime, sanitizeBackendResponse } from '../../server/utils/cloudflare-backend'
 
 describe('Cloudflare backend tunnel proxy', () => {
   it('detects the Nitro Cloudflare runtime without requiring a service binding', () => {
@@ -11,6 +11,17 @@ describe('Cloudflare backend tunnel proxy', () => {
     }
 
     expect(isCloudflareRuntime(event)).toBe(true)
+    expect(getCloudflareBackend(event)).toBeUndefined()
+  })
+
+  it('reads a configured service binding from Nitro cloudflare event context', () => {
+    const backend = { fetch: vi.fn() }
+    const event = {
+      context: { cloudflare: { env: { BACKEND: backend } } },
+      req: new Request('https://event.example/api/questions'),
+    }
+
+    expect(getCloudflareBackend(event)).toBe(backend)
   })
 
   it.each([
@@ -91,5 +102,33 @@ describe('Cloudflare backend tunnel proxy', () => {
     expect(request.headers.get('x-test')).toBe('one, two')
     expect(request.headers.get('x-forwarded-proto')).toBe('https')
     expect(request.headers.has('content-length')).toBe(false)
+  })
+
+  it('exposes the tunnel origin only for https and drops the Host header for remote fetches', () => {
+    const incomingOrigin = 'https://event.example'
+    const tunnelEvent = {
+      context: { cloudflare: { env: { NUXT_BACKEND_ORIGIN: 'https://api.anabuki-event.com' } } },
+      req: new Request(`${incomingOrigin}/api/health`, {
+        headers: { Origin: incomingOrigin, Host: 'event.example' },
+      }),
+    }
+    expect(getRemoteBackendOrigin(tunnelEvent)).toBe('https://api.anabuki-event.com')
+
+    const insecureEvent = {
+      context: { cloudflare: { env: { NUXT_BACKEND_ORIGIN: 'http://api.anabuki-event.com' } } },
+      req: new Request('https://event.example/api/health'),
+    }
+    expect(getRemoteBackendOrigin(insecureEvent)).toBeUndefined()
+
+    const unboundEvent = { context: {}, req: new Request('https://event.example/api/health') }
+    expect(getRemoteBackendOrigin(unboundEvent)).toBeUndefined()
+
+    const request = createBackendRequest(
+      tunnelEvent,
+      new URL('https://api.anabuki-event.com/api/health'),
+      { forwardRequestHeaders: true, forwardedProto: 'https', excludeHostHeader: true },
+    )
+    expect(request.headers.has('host')).toBe(false)
+    expect(request.headers.get('origin')).toBe(incomingOrigin)
   })
 })

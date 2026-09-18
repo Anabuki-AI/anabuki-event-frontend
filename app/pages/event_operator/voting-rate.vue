@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import { useVotingRate } from '~/features/voting-rate/use-voting-rate'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/voting-rate.css'
@@ -11,6 +12,7 @@ useSeoMeta({
 const {
   isLoading,
   errorMessage,
+  lastUpdatedAt,
   questionChoices,
   selectedQuestionValue,
   currentQuestion,
@@ -20,6 +22,10 @@ const {
   answeredRatePercent,
   refresh,
 } = useVotingRate()
+
+function formatUpdatedAt(value: string | null) {
+  return value ? new Date(value).toLocaleString('ja-JP') : ''
+}
 
 const {
   isSidebarExpanded,
@@ -69,20 +75,42 @@ const {
         </div>
       </header>
 
-      <p
+      <div
         v-if="errorMessage"
-        class="status-message error"
+        class="status-message error voting-error"
         role="alert"
       >
-        {{ errorMessage }}
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="voting-retry" :disabled="isLoading" @click="refresh()">{{ isLoading ? '再試行中…' : '再試行' }}</button>
+      </div>
+      <p v-if="lastUpdatedAt" class="voting-updated" :class="{ 'is-stale': !!errorMessage }" role="status">
+        最終更新: {{ formatUpdatedAt(lastUpdatedAt) }}<span v-if="errorMessage">（保存済みの値を表示中）</span>
       </p>
-      <p
-        v-else-if="isLoading && !currentQuestion"
-        class="status-message"
+      <div
+        v-if="isLoading && !currentQuestion"
+        class="voting-loading"
         role="status"
+        aria-busy="true"
       >
-        読み込み中…
-      </p>
+        <span class="visually-hidden">投票率を読み込み中…</span>
+        <ul class="voting-summary voting-skeleton-summary">
+          <li v-for="index in 3" :key="index" class="summary-item">
+            <LoadingSkeleton class="voting-skeleton-summary-label" />
+            <LoadingSkeleton class="voting-skeleton-summary-value" />
+          </li>
+        </ul>
+        <div class="question-panel voting-skeleton-question">
+          <LoadingSkeleton class="voting-skeleton-select" />
+          <LoadingSkeleton class="voting-skeleton-question-number" />
+          <LoadingSkeleton class="voting-skeleton-question-text" />
+        </div>
+        <div class="option-list">
+          <div class="option-item voting-skeleton-option">
+            <LoadingSkeleton class="voting-skeleton-option-label" />
+            <LoadingSkeleton class="voting-skeleton-option-bar" />
+          </div>
+        </div>
+      </div>
 
       <template v-else-if="currentQuestion">
         <ul class="voting-summary">

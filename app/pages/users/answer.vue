@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import QuizCloseCountdownBar from '~/components/QuizCloseCountdownBar.vue'
 import ParticipantQuizFinishedPanel from '~/features/participant-quiz/components/ParticipantQuizFinishedPanel.vue'
 import { useQuizClock } from '~/features/quiz-control/useQuizClock'
@@ -45,6 +46,7 @@ const {
   confidenceOptions,
   lockedConfidenceLevel,
   isConfidenceLocked,
+  eliminatedChoice,
   selectedChoice,
   selectedChoiceText,
   selectedMultiplier,
@@ -56,6 +58,7 @@ const {
   cancelAnswerEditing,
   isConfidenceConfirmOpen,
   isConfirmingConfidence,
+  pendingConfidenceLevel,
   confidenceMessage,
   isSubmitting,
   canSubmit,
@@ -104,8 +107,11 @@ onMounted(async () => {
         </p>
         <h1>解答画面</h1>
         <p class="answer-user-name">
-          {{ participant ? `${participant.displayName} さん` : '参加情報を確認しています…' }}
+          {{ participant ? `${participant.displayName} さん` : '参加者 さん' }}
         </p>
+        <span v-if="!participant && !participantError" class="visually-hidden" role="status">
+          参加情報を確認しています…
+        </span>
       </div>
       <NuxtLink
         class="help-button"
@@ -123,10 +129,28 @@ onMounted(async () => {
         クイズの最新状態を取得できませんでした。自動的に再試行します。
       </p>
 
-      <section v-if="screen === 'loading'" class="answer-card" aria-live="polite">
-        <p class="muted-copy">
-          クイズの状態を確認しています…
-        </p>
+      <section
+        v-if="screen === 'loading'"
+        class="answer-card answer-loading-card"
+        aria-live="polite"
+        aria-busy="true"
+        role="status"
+      >
+        <span class="visually-hidden">クイズの状態を確認しています…</span>
+        <LoadingSkeleton class="answer-skeleton-question-number" />
+        <LoadingSkeleton class="answer-skeleton-question-line answer-skeleton-question-line--long" />
+        <LoadingSkeleton class="answer-skeleton-question-line answer-skeleton-question-line--short" />
+        <div class="answer-skeleton-confidence">
+          <LoadingSkeleton class="answer-skeleton-label" />
+          <div class="answer-skeleton-confidence-list">
+            <LoadingSkeleton v-for="index in 3" :key="index" class="answer-skeleton-confidence-item" />
+          </div>
+        </div>
+        <div class="answer-skeleton-choices">
+          <LoadingSkeleton v-for="index in 4" :key="index" class="answer-skeleton-choice" />
+        </div>
+        <LoadingSkeleton class="answer-skeleton-point" />
+        <LoadingSkeleton class="answer-skeleton-submit" />
       </section>
 
       <section v-else-if="screen === 'finished'" class="answer-card" aria-live="polite">
@@ -144,12 +168,36 @@ onMounted(async () => {
           <img v-if="question.image_url" class="question-image" :src="resolveApiImageUrl(question.image_url) ?? undefined" alt="">
         </div>
 
+        <div class="choice-list">
+          <button
+            v-for="choice in choices"
+            :key="choice.key"
+            type="button"
+            class="choice-item"
+            :class="{ 'is-selected': selectedChoice === choice.key, 'is-eliminated': choice.eliminated }"
+            :aria-pressed="selectedChoice === choice.key"
+            :disabled="isSubmitting || choice.eliminated"
+            @click="selectedChoice = choice.key"
+          >
+            <span class="choice-key">
+              {{ choice.key }}
+            </span>
+            <span class="choice-text">
+              {{ choice.text }}
+            </span>
+            <span class="choice-check" aria-hidden="true">✓</span>
+          </button>
+        </div>
+        <p v-if="eliminatedChoice" class="answer-note" role="status">
+          グレーアウトされた選択肢は不正解です。選択できません。
+        </p>
+
         <div class="confidence-field">
           <p class="confidence-label">
             自信度
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
-            一度確定すると変更できません。Lv.1は不正解の選択肢を1つ減らします。
+            Lv.2とLv.3は送信まで自由に変更できます。Lv.1は1度だけ選べて、不正解の選択肢を1つグレーアウトします。確定後は変更できません。
           </p>
           <p v-else class="confidence-help">
             {{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}を確定済みです。レベルは変更できません。
@@ -160,8 +208,8 @@ onMounted(async () => {
               :key="option.value"
               type="button"
               class="confidence-item"
-              :class="{ 'is-selected': lockedConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
-              :aria-pressed="lockedConfidenceLevel === option.value"
+              :class="{ 'is-selected': lockedConfidenceLevel === option.value, 'is-pending': pendingConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
+              :aria-pressed="lockedConfidenceLevel === option.value || pendingConfidenceLevel === option.value"
               :disabled="isConfidenceLocked || isConfirmingConfidence"
               @click="selectConfidenceLevel(option.value)"
             >
@@ -173,41 +221,14 @@ onMounted(async () => {
               </span>
             </button>
           </div>
+          <p v-if="isConfirmingConfidence && pendingConfidenceLevel" class="confidence-pending-message" role="status">
+            {{ confidenceOptions.find(option => option.value === pendingConfidenceLevel)?.label }}を確定しています…
+          </p>
         </div>
 
-        <p v-if="confidenceMessage" class="status-message error" role="alert">
-          {{ confidenceMessage }}
-        </p>
-
-        <p v-if="!isConfidenceLocked" class="answer-note">
-          レベルを確定すると、回答の選択肢を表示します。
-        </p>
-
-        <template v-else>
-          <div class="choice-list">
-            <button
-              v-for="choice in choices"
-              :key="choice.key"
-              type="button"
-              class="choice-item"
-              :class="{ 'is-selected': selectedChoice === choice.key }"
-              :aria-pressed="selectedChoice === choice.key"
-              :disabled="isSubmitting"
-              @click="selectedChoice = choice.key"
-            >
-              <span class="choice-key">
-                {{ choice.key }}
-              </span>
-              <span class="choice-text">
-                {{ choice.text }}
-              </span>
-              <span class="choice-check" aria-hidden="true">✓</span>
-            </button>
-          </div>
-
-          <div class="point-panel">
+        <div class="point-panel">
             <p class="point-summary">
-              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}
+              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label ?? '未選択' }}
             </p>
             <p v-if="isEditingAnswer" class="point-caption">
               受付済み：{{ savedChoiceText }}
@@ -226,8 +247,11 @@ onMounted(async () => {
           <p v-if="submissionMessage" class="status-message error" role="alert">
             {{ submissionMessage }}
           </p>
+          <p v-if="confidenceMessage" class="status-message error" role="alert">
+            {{ confidenceMessage }}
+          </p>
           <p class="answer-note">
-            レベルは変更できません。{{ isEditingAnswer ? '選択肢を変更したあと、変更を送信してください。' : '選択肢を選んで送信してください。' }}
+            {{ isEditingAnswer ? '選択肢を変更したあと、変更を送信してください。' : '選択肢を選んで送信してください。レベルはLv.1確定後・解答後は変更できません。' }}
           </p>
 
           <div v-if="isEditingAnswer" class="answer-edit-actions">
@@ -257,12 +281,16 @@ onMounted(async () => {
           >
             {{ isSubmitting ? '解答を送信しています…' : 'この内容で解答する' }}
           </button>
-        </template>
 
         <div v-if="isConfidenceConfirmOpen" class="confidence-confirmation-backdrop" @click.self="cancelConfidenceSelection">
           <section class="confidence-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="lv1-confirm-title">
             <h2 id="lv1-confirm-title">Lv.1を確定しますか？</h2>
-            <p>確定するとレベルは変更できません。不正解の選択肢を1つ減らしてから回答します。</p>
+            <p v-if="selectedChoice">
+              選択中の{{ selectedChoiceText }}を残して、他の不正解の選択肢を1つグレーアウトします。
+            </p>
+            <p v-else>
+              不正解の選択肢を1つグレーアウトします。確定するとレベルは変更できません。
+            </p>
             <div class="confidence-confirmation-actions">
               <button type="button" class="button-cancel" :disabled="isConfirmingConfidence" @click="cancelConfidenceSelection">いいえ</button>
               <button type="button" class="answer-submit" :disabled="isConfirmingConfidence" @click="confirmPendingConfidenceSelection">

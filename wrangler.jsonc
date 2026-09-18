@@ -7,5 +7,8 @@
   "assets": {
     "binding": "ASSETS",
     "directory": "./.output/public"
+  },
+  "vars": {
+    "NUXT_BACKEND_ORIGIN": "https://api.anabuki-event.com"
   }
 }

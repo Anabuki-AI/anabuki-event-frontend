@@ -16,12 +16,14 @@ export type AuditLogType =
   | 'MANAGEMENT_ACCESS_REVOKED'
   | 'OPERATOR_ACCESS_GRANTED'
   | 'OPERATOR_ACCESS_REVOKED'
+  | 'TOURNAMENT_RESET'
 
 const AUDIT_LOG_TYPES = [
   'ADMIN_LOGIN_SUCCEEDED', 'ADMIN_LOGGED_OUT', 'ADMIN_ACCESS_EXCHANGED',
   'QUESTION_CREATED', 'QUESTION_UPDATED', 'QUESTION_DELETED',
   'CONFIDENCE_MULTIPLIER_UPDATED', 'ACCESS_REQUEST_APPROVED', 'ACCESS_REQUEST_REJECTED',
   'MANAGEMENT_ACCESS_REVOKED', 'OPERATOR_ACCESS_GRANTED', 'OPERATOR_ACCESS_REVOKED',
+  'TOURNAMENT_RESET',
 ] as const satisfies readonly AuditLogType[]
 
 export interface AuditLogEntry {
@@ -31,6 +33,9 @@ export interface AuditLogEntry {
   actorGoogleSub: string | null
   targetType: string | null
   targetId: string | null
+  operationId: string | null
+  operationStartedAt: string | null
+  operationCompletedAt: string | null
   detail: Record<string, string | number | boolean | null>
   occurredAt: string
 }
@@ -55,6 +60,7 @@ export const auditLogTypeLabels: Record<AuditLogType, string> = {
   MANAGEMENT_ACCESS_REVOKED: '管理アクセスの取消',
   OPERATOR_ACCESS_GRANTED: 'オペレーター権限の付与',
   OPERATOR_ACCESS_REVOKED: 'オペレーター権限の取消',
+  TOURNAMENT_RESET: 'クイズ大会のリセット',
 }
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -73,6 +79,10 @@ function rfc3339(value: unknown): value is string {
   return typeof value === 'string' && Number.isFinite(Date.parse(value))
 }
 
+function optionalRfc3339(value: unknown): value is string | null {
+  return value === null || rfc3339(value)
+}
+
 // Fail closed on a malformed or extended contract. An unknown type or a missing
 // field renders the fetch-failed state; nothing is coerced or dropped silently.
 export function parseAuditLogPage(value: unknown): AuditLogPage {
@@ -81,10 +91,29 @@ export function parseAuditLogPage(value: unknown): AuditLogPage {
     if (!record(entry) || typeof entry.id !== 'string' || !AUDIT_LOG_TYPES.includes(entry.type as AuditLogType)
       || !optionalString(entry.actorEmail) || !optionalString(entry.actorGoogleSub)
       || !optionalString(entry.targetType) || !optionalString(entry.targetId)
+      || !optionalString(entry.operationId) || !optionalRfc3339(entry.operationStartedAt)
+      || !optionalRfc3339(entry.operationCompletedAt)
       || !scalarDetail(entry.detail) || !rfc3339(entry.occurredAt)) {
       throw new Error('Invalid audit log entry')
     }
-    return { id: entry.id, type: entry.type as AuditLogType, actorEmail: entry.actorEmail, actorGoogleSub: entry.actorGoogleSub, targetType: entry.targetType, targetId: entry.targetId, detail: entry.detail, occurredAt: entry.occurredAt }
+    if (entry.type === 'TOURNAMENT_RESET'
+      && (entry.operationId === null || entry.operationStartedAt === null || entry.operationCompletedAt === null
+        || Date.parse(entry.operationCompletedAt) < Date.parse(entry.operationStartedAt))) {
+      throw new Error('Invalid tournament reset audit entry')
+    }
+    return {
+      id: entry.id,
+      type: entry.type as AuditLogType,
+      actorEmail: entry.actorEmail,
+      actorGoogleSub: entry.actorGoogleSub,
+      targetType: entry.targetType,
+      targetId: entry.targetId,
+      operationId: entry.operationId,
+      operationStartedAt: entry.operationStartedAt,
+      operationCompletedAt: entry.operationCompletedAt,
+      detail: entry.detail,
+      occurredAt: entry.occurredAt,
+    }
   })
   if (!Number.isInteger(value.page) || (value.page as number) < 1
     || !Number.isInteger(value.perPage) || (value.perPage as number) < 1

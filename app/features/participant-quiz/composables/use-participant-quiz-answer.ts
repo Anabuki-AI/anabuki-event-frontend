@@ -3,6 +3,7 @@ import { confirmParticipantQuizConfidence, submitParticipantQuizAnswer } from '.
 import type {
   AnswerChoice,
   ConfidenceLevel,
+  ConfirmParticipantQuizConfidenceInput,
   ParticipantQuizState,
 } from '../types'
 import { CONFIDENCE_LEVEL_LABELS } from '../types'
@@ -61,7 +62,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const isConfirmingConfidence = ref(false)
   const confidenceMessage = ref('')
 
-  const { state, isLoading, loadError, applyState, refresh } = useParticipantQuizState({
+  const { state, isLoading, loadError, applyState, beginMutation, endMutation, refresh } = useParticipantQuizState({
     onState: (nextState) => {
       if (isParticipantQuizWaitingState(nextState)) options.onWaiting()
     },
@@ -74,7 +75,8 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const myAnswer = computed(() => state.value?.my_answer ?? null)
   const correctAnswer = computed(() => state.value?.correct_answer ?? null)
   const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
-  const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked || lockedConfidenceLevel.value))
+  const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked))
+  const eliminatedChoice = computed(() => state.value?.question?.eliminated_choice ?? null)
 
   watch(() => question.value?.question_id, (questionId, previousQuestionId) => {
     if (!questionId || questionId === previousQuestionId) return
@@ -109,7 +111,11 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     return (['A', 'B', 'C', 'D'] as const)
       .filter(key => currentQuestion.choices[key] != null)
-      .map(key => ({ key, text: currentQuestion.choices[key]! }))
+      .map(key => ({
+        key,
+        text: currentQuestion.choices[key]!,
+        eliminated: key === eliminatedChoice.value,
+      }))
   })
 
   const confidenceOptions = computed<ConfidenceOption[]>(() => CONFIDENCE_LEVELS.map(level => {
@@ -136,8 +142,9 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const hasDraftChange = computed(() => Boolean(isEditingAnswer.value && selectedChoice.value && selectedChoice.value !== savedChoice.value))
 
   const canSubmit = computed(() => (screen.value === 'answer' || isEditingAnswer.value)
-    && isConfidenceLocked.value
+    && Boolean(lockedConfidenceLevel.value)
     && Boolean(selectedChoice.value)
+    && selectedChoice.value !== eliminatedChoice.value
     && (!isEditingAnswer.value || hasDraftChange.value)
     && !isSubmitting.value
     && !isOperationBlocked.value)
@@ -162,8 +169,9 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (isConfidenceLocked.value || isConfirmingConfidence.value) return
 
     confidenceMessage.value = ''
+    pendingConfidenceLevel.value = level
+    // Lv.1 は一方通行なので確認ダイアログを挟む。Lv.2/3 は送信まで自由に変更できる。
     if (level === 'low') {
-      pendingConfidenceLevel.value = level
       isConfidenceConfirmOpen.value = true
       return
     }
@@ -190,16 +198,22 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (!currentQuestion || isConfidenceLocked.value || isConfirmingConfidence.value) return
 
     isConfirmingConfidence.value = true
+    pendingConfidenceLevel.value = level
     confidenceMessage.value = ''
+    beginMutation()
     try {
-      applyState(await confirmParticipantQuizConfidence({
+      const input: ConfirmParticipantQuizConfidenceInput = {
         question_id: currentQuestion.question_id,
         confidence_level: level,
-      }))
+      }
+      if (selectedChoice.value) input.choice = selectedChoice.value
+      applyState(await confirmParticipantQuizConfidence(input))
       pendingConfidenceLevel.value = undefined
       isConfidenceConfirmOpen.value = false
     }
     catch (error) {
+      pendingConfidenceLevel.value = undefined
+      isConfidenceConfirmOpen.value = false
       if (error instanceof ApiError) {
         if (error.statusCode === 401) {
           options.onUnauthorized()
@@ -214,6 +228,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       confidenceMessage.value = '自信度を確定できませんでした。通信状況を確認して、もう一度お試しください。'
     }
     finally {
+      endMutation()
       isConfirmingConfidence.value = false
     }
   }
@@ -224,6 +239,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     isSubmitting.value = true
     submissionMessage.value = ''
+    beginMutation()
     try {
       const result = await submitParticipantQuizAnswer({
         question_id: currentQuestion.question_id,
@@ -259,6 +275,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       submissionMessage.value = '解答を送信できませんでした。通信状況を確認して、しばらくしてからお試しください。'
     }
     finally {
+      endMutation()
       isSubmitting.value = false
     }
   }
@@ -275,6 +292,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     confidenceOptions,
     lockedConfidenceLevel,
     isConfidenceLocked,
+    eliminatedChoice,
     selectedChoice,
     selectedChoiceText,
     selectedMultiplier,
@@ -286,6 +304,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     cancelAnswerEditing,
     isConfidenceConfirmOpen,
     isConfirmingConfidence,
+    pendingConfidenceLevel,
     confidenceMessage,
     isSubmitting,
     canSubmit,
