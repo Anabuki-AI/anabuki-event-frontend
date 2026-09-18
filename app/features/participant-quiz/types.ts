@@ -9,8 +9,10 @@ export interface ParticipantQuizQuestion {
   question_id: number
   position: number
   question_text: string
-  /** Lv.1確定後は、サーバーが不正解の選択肢を1つ除外して3択を返す。 */
-  choices: Partial<Record<AnswerChoice, string>>
+  /** 常に4択すべて。Lv.1で除外された選択肢は eliminated_choice で示され、グレーアウト表示する。 */
+  choices: Record<AnswerChoice, string>
+  /** Lv.1（low）確定時にサーバーが選んだ不正解の選択肢。未確定/他レベルでは null。 */
+  eliminated_choice: AnswerChoice | null
   image_url: string | null
 }
 
@@ -31,14 +33,17 @@ export interface ParticipantQuizState {
   /** phase=revealed のときだけ文字列で返る。 */
   correct_answer: AnswerChoice | null
   confidence_multipliers?: { high: number; normal: number; low: number }
-  /** 回答前に一度だけサーバーへ確定した自信度。 */
+  /** 現在選択中の自信度。未選択なら null。 */
   confidence_level?: ConfidenceLevel | null
+  /** Lv.1を選んだ後、または解答受付後に true になり、レベル変更はできなくなる。 */
   confidence_locked?: boolean
 }
 
 export interface ConfirmParticipantQuizConfidenceInput {
   question_id: number
   confidence_level: ConfidenceLevel
+  /** 現在押している選択肢。Lv.1確定時にその選択肢を除外対象から外すために使う。 */
+  choice?: AnswerChoice
 }
 
 export interface SubmitParticipantQuizAnswerInput {

@@ -27,6 +27,7 @@ const unlockedState: ParticipantQuizState = {
     position: 2,
     question_text: '問題文',
     choices: { A: 'A', B: 'B', C: 'C', D: 'D' },
+    eliminated_choice: null,
     image_url: null,
   },
   answered: false,
@@ -41,7 +42,7 @@ const lowLockedState: ParticipantQuizState = {
   ...unlockedState,
   question: {
     ...unlockedState.question!,
-    choices: { A: 'A', B: 'B', D: 'D' },
+    eliminated_choice: 'C',
   },
   confidence_level: 'low',
   confidence_locked: true,
@@ -101,7 +102,7 @@ describe('参加者クイズのレベル確定', () => {
     wrapper.unmount()
   })
 
-  it('Lv.1は確認後だけサーバーへ確定し、返却された3択を使う', async () => {
+  it('Lv.1は確認後だけサーバーへ確定し、除外された選択肢をグレーアウトする', async () => {
     mockedConfirmConfidence.mockResolvedValueOnce(lowLockedState)
     const wrapper = mount(Harness)
     await flushPromises()
@@ -117,7 +118,65 @@ describe('参加者クイズのレベル確定', () => {
     expect(mockedConfirmConfidence).toHaveBeenCalledWith({ question_id: 12, confidence_level: 'low' })
     expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(true)
     expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('low')
-    expect((vm as unknown as { choices: { key: string }[] }).choices.map(choice => choice.key)).toEqual(['A', 'B', 'D'])
+    expect((vm as unknown as { eliminatedChoice: string | null }).eliminatedChoice).toBe('C')
+    expect((vm as unknown as { choices: { key: string, eliminated: boolean }[] }).choices.map(choice => choice.eliminated)).toEqual([false, false, true, false])
+    wrapper.unmount()
+  })
+
+  it('Lv.1確定時に選択中の選択肢は除外対象から外してサーバーへ渡す', async () => {
+    mockedConfirmConfidence.mockResolvedValueOnce(lowLockedState)
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
+    ;(vm as unknown as { selectConfidenceLevel: (level: 'low') => void }).selectConfidenceLevel('low')
+    await (vm as unknown as { confirmPendingConfidenceSelection: () => Promise<void> }).confirmPendingConfidenceSelection()
+    await flushPromises()
+
+    expect(mockedConfirmConfidence).toHaveBeenCalledWith({ question_id: 12, confidence_level: 'low', choice: 'B' })
+    wrapper.unmount()
+  })
+
+  it('Lv.2とLv.3は何度でも変更でき、選択中のレベルで解答する', async () => {
+    const highState: ParticipantQuizState = {
+      ...unlockedState,
+      confidence_level: 'high',
+      confidence_locked: false,
+    }
+    mockedConfirmConfidence.mockResolvedValue(highState)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: { choice: 'B', confidence_level: 'high' } })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectConfidenceLevel: (level: 'normal') => void }).selectConfidenceLevel('normal')
+    await flushPromises()
+    expect(mockedConfirmConfidence).toHaveBeenCalledTimes(1)
+    expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(false)
+
+    ;(vm as unknown as { selectConfidenceLevel: (level: 'high') => void }).selectConfidenceLevel('high')
+    await flushPromises()
+    expect(mockedConfirmConfidence).toHaveBeenCalledTimes(2)
+    expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('high')
+
+    ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
+    await (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
+    expect(mockedSubmitAnswer).toHaveBeenCalledWith({ question_id: 12, choice: 'B' })
+    wrapper.unmount()
+  })
+
+  it('Lv.1で除外された選択肢を選んだままでは解答を送れない', async () => {
+    mockedFetchState.mockResolvedValue(lowLockedState)
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectedChoice: 'C' }).selectedChoice = 'C'
+    expect((vm as unknown as { canSubmit: boolean }).canSubmit).toBe(false)
+
+    ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
+    expect((vm as unknown as { canSubmit: boolean }).canSubmit).toBe(true)
     wrapper.unmount()
   })
 
@@ -204,18 +263,18 @@ describe('参加者クイズのレベル確定', () => {
     wrapper.unmount()
   })
 
-  it('自信度POST成功後に遅れて返る同一問題のpollでlockを戻さずpendingを消す', async () => {
+  it('自信度POST成功後に遅れて返る同一問題のpollでlevelを戻さずpendingを消す', async () => {
     vi.useFakeTimers()
     const stalePoll = deferred<ParticipantQuizState>()
-    const normalLockedState: ParticipantQuizState = {
+    const highState: ParticipantQuizState = {
       ...unlockedState,
       confidence_level: 'high',
-      confidence_locked: true,
+      confidence_locked: false,
     }
     mockedFetchState
       .mockResolvedValueOnce(unlockedState)
       .mockReturnValueOnce(stalePoll.promise)
-    mockedConfirmConfidence.mockResolvedValueOnce(normalLockedState)
+    mockedConfirmConfidence.mockResolvedValueOnce(highState)
     const wrapper = mount(Harness)
     await flushPromises()
 
@@ -225,14 +284,12 @@ describe('参加者クイズのレベル確定', () => {
     expect((vm as unknown as { pendingConfidenceLevel: string }).pendingConfidenceLevel).toBe('high')
     await flushPromises()
 
-    expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(true)
     expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('high')
     expect((vm as unknown as { pendingConfidenceLevel: string | undefined }).pendingConfidenceLevel).toBeUndefined()
 
     stalePoll.resolve(unlockedState)
     await flushPromises()
 
-    expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(true)
     expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('high')
     wrapper.unmount()
   })

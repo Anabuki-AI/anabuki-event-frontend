@@ -289,6 +289,18 @@
   opacity: 1;
 }
 
+/* Lv.1で除外された不正解の選択肢（グレーアウト表示） */
+.answer-shell .choice-item.is-eliminated {
+  opacity: 0.45;
+  border-style: dashed;
+  background: #edeffa;
+  text-decoration: line-through;
+}
+
+.answer-shell .choice-item.is-eliminated .choice-check {
+  display: none;
+}
+
 /* 自信度（1つだけ選択可能） */
 .answer-shell .confidence-field {
   display: grid;

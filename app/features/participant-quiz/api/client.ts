@@ -13,7 +13,7 @@ export function fetchParticipantQuizState(): Promise<ParticipantQuizState> {
   return request<ParticipantQuizState>('/participant/quiz/state', { credentials, retry: 0 })
 }
 
-/** 回答前に自信度を一度だけ確定する。Lv.1ではサーバーが3択を返す。 */
+/** 自信度を選択・更新する。Lv.1確定時は choice を渡して除外対象から外す。 */
 export function confirmParticipantQuizConfidence(input: ConfirmParticipantQuizConfidenceInput): Promise<ParticipantQuizState> {
   return request<ParticipantQuizState>('/participant/quiz/confidence-level', {
     method: 'POST',

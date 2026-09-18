@@ -46,6 +46,7 @@ const {
   confidenceOptions,
   lockedConfidenceLevel,
   isConfidenceLocked,
+  eliminatedChoice,
   selectedChoice,
   selectedChoiceText,
   selectedMultiplier,
@@ -167,12 +168,36 @@ onMounted(async () => {
           <img v-if="question.image_url" class="question-image" :src="resolveApiImageUrl(question.image_url) ?? undefined" alt="">
         </div>
 
+        <div class="choice-list">
+          <button
+            v-for="choice in choices"
+            :key="choice.key"
+            type="button"
+            class="choice-item"
+            :class="{ 'is-selected': selectedChoice === choice.key, 'is-eliminated': choice.eliminated }"
+            :aria-pressed="selectedChoice === choice.key"
+            :disabled="isSubmitting || choice.eliminated"
+            @click="selectedChoice = choice.key"
+          >
+            <span class="choice-key">
+              {{ choice.key }}
+            </span>
+            <span class="choice-text">
+              {{ choice.text }}
+            </span>
+            <span class="choice-check" aria-hidden="true">✓</span>
+          </button>
+        </div>
+        <p v-if="eliminatedChoice" class="answer-note" role="status">
+          グレーアウトされた選択肢は不正解です。選択できません。
+        </p>
+
         <div class="confidence-field">
           <p class="confidence-label">
             自信度
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
-            一度確定すると変更できません。Lv.1は不正解の選択肢を1つ減らします。
+            Lv.2とLv.3は送信まで自由に変更できます。Lv.1は1度だけ選べて、不正解の選択肢を1つグレーアウトします。確定後は変更できません。
           </p>
           <p v-else class="confidence-help">
             {{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}を確定済みです。レベルは変更できません。
@@ -201,39 +226,9 @@ onMounted(async () => {
           </p>
         </div>
 
-        <p v-if="confidenceMessage" class="status-message error" role="alert">
-          {{ confidenceMessage }}
-        </p>
-
-        <p v-if="!isConfidenceLocked" class="answer-note">
-          レベルを確定すると、回答の選択肢を表示します。
-        </p>
-
-        <template v-else>
-          <div class="choice-list">
-            <button
-              v-for="choice in choices"
-              :key="choice.key"
-              type="button"
-              class="choice-item"
-              :class="{ 'is-selected': selectedChoice === choice.key }"
-              :aria-pressed="selectedChoice === choice.key"
-              :disabled="isSubmitting"
-              @click="selectedChoice = choice.key"
-            >
-              <span class="choice-key">
-                {{ choice.key }}
-              </span>
-              <span class="choice-text">
-                {{ choice.text }}
-              </span>
-              <span class="choice-check" aria-hidden="true">✓</span>
-            </button>
-          </div>
-
-          <div class="point-panel">
+        <div class="point-panel">
             <p class="point-summary">
-              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}
+              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label ?? '未選択' }}
             </p>
             <p v-if="isEditingAnswer" class="point-caption">
               受付済み：{{ savedChoiceText }}
@@ -252,8 +247,11 @@ onMounted(async () => {
           <p v-if="submissionMessage" class="status-message error" role="alert">
             {{ submissionMessage }}
           </p>
+          <p v-if="confidenceMessage" class="status-message error" role="alert">
+            {{ confidenceMessage }}
+          </p>
           <p class="answer-note">
-            レベルは変更できません。{{ isEditingAnswer ? '選択肢を変更したあと、変更を送信してください。' : '選択肢を選んで送信してください。' }}
+            {{ isEditingAnswer ? '選択肢を変更したあと、変更を送信してください。' : '選択肢を選んで送信してください。レベルはLv.1確定後・解答後は変更できません。' }}
           </p>
 
           <div v-if="isEditingAnswer" class="answer-edit-actions">
@@ -283,12 +281,16 @@ onMounted(async () => {
           >
             {{ isSubmitting ? '解答を送信しています…' : 'この内容で解答する' }}
           </button>
-        </template>
 
         <div v-if="isConfidenceConfirmOpen" class="confidence-confirmation-backdrop" @click.self="cancelConfidenceSelection">
           <section class="confidence-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="lv1-confirm-title">
             <h2 id="lv1-confirm-title">Lv.1を確定しますか？</h2>
-            <p>確定するとレベルは変更できません。不正解の選択肢を1つ減らしてから回答します。</p>
+            <p v-if="selectedChoice">
+              選択中の{{ selectedChoiceText }}を残して、他の不正解の選択肢を1つグレーアウトします。
+            </p>
+            <p v-else>
+              不正解の選択肢を1つグレーアウトします。確定するとレベルは変更できません。
+            </p>
             <div class="confidence-confirmation-actions">
               <button type="button" class="button-cancel" :disabled="isConfirmingConfidence" @click="cancelConfidenceSelection">いいえ</button>
               <button type="button" class="answer-submit" :disabled="isConfirmingConfidence" @click="confirmPendingConfidenceSelection">
