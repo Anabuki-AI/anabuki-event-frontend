@@ -46,6 +46,7 @@ const {
   confidenceOptions,
   lockedConfidenceLevel,
   isConfidenceLocked,
+  isLiveRelayQuestion,
   eliminatedChoice,
   selectedChoice,
   selectedChoiceText,
@@ -197,7 +198,12 @@ onMounted(async () => {
             自信度
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
-            Lv.2とLv.3は送信まで自由に変更できます。Lv.1は1度だけ選べて、不正解の選択肢を1つグレーアウトします。確定後は変更できません。
+            <template v-if="isLiveRelayQuestion">
+              ライブ問題は正解・不正解が未確定のため、Lv.1は選択できません。Lv.2とLv.3は送信まで自由に変更できます。
+            </template>
+            <template v-else>
+              Lv.2とLv.3は送信まで自由に変更できます。Lv.1は1度だけ選べて、不正解の選択肢を1つグレーアウトします。確定後は変更できません。
+            </template>
           </p>
           <p v-else class="confidence-help">
             {{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}を確定済みです。レベルは変更できません。
@@ -210,7 +216,7 @@ onMounted(async () => {
               class="confidence-item"
               :class="{ 'is-selected': lockedConfidenceLevel === option.value, 'is-pending': pendingConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
               :aria-pressed="lockedConfidenceLevel === option.value || pendingConfidenceLevel === option.value"
-              :disabled="isConfidenceLocked || isConfirmingConfidence"
+              :disabled="isConfidenceLocked || isConfirmingConfidence || (isLiveRelayQuestion && option.value === 'low')"
               @click="selectConfidenceLevel(option.value)"
             >
               <span class="confidence-name">
