@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, useId } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, useId, watch } from 'vue'
 import { fetchConfidenceMultipliers, updateConfidenceMultiplier } from '../api/client'
 import {
   CONFIDENCE_LEVEL_LABELS,
@@ -9,8 +9,15 @@ import {
   CONFIDENCE_MULTIPLIER_STEP,
 } from '../constants'
 import { problemErrorMessage, validateMultiplierInput } from '../validation'
-import type { ConfidenceLevel } from '../types'
+import type { ConfidenceLevel, ConfidenceMultipliers } from '../types'
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import { toApiError } from '~/lib/api/error'
+
+const props = withDefaults(defineProps<{
+  initialMultipliers?: ConfidenceMultipliers | null
+}>(), {
+  initialMultipliers: null,
+})
 
 const emit = defineEmits<{
   close: []
@@ -37,27 +44,46 @@ const rows = reactive<LevelRow[]>(CONFIDENCE_LEVELS.map(level => ({
   savedMessage: '',
 })))
 
-const isLoading = ref(true)
+const isLoading = ref(props.initialMultipliers == null)
+const isRefreshing = ref(false)
 const loadErrorMessage = ref('')
 const titleId = useId()
 const panelRef = ref<HTMLElement | null>(null)
+let hasDisplayedData = false
+let isFetchInFlight = false
+
+function applyMultipliers(current: ConfidenceMultipliers) {
+  for (const row of rows) {
+    row.baseline = current[row.level]
+    row.input = current[row.level]
+  }
+  hasDisplayedData = true
+}
+
+watch(() => props.initialMultipliers, (initialMultipliers) => {
+  if (initialMultipliers == null || hasDisplayedData) return
+  applyMultipliers(initialMultipliers)
+  isLoading.value = false
+  if (isFetchInFlight) isRefreshing.value = true
+}, { immediate: true })
 
 async function load() {
-  isLoading.value = true
+  isFetchInFlight = true
+  if (hasDisplayedData) isRefreshing.value = true
+  else isLoading.value = true
   loadErrorMessage.value = ''
   try {
     const current = await fetchConfidenceMultipliers()
-    for (const row of rows) {
-      row.baseline = current[row.level]
-      row.input = current[row.level]
-    }
+    applyMultipliers(current)
   }
   catch (error) {
     const apiError = toApiError(error)
     loadErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
   }
   finally {
+    isFetchInFlight = false
     isLoading.value = false
+    isRefreshing.value = false
   }
 }
 
@@ -117,12 +143,21 @@ onUnmounted(() => document.removeEventListener('keydown', handleKeydown))
         回答時に選ぶ自信度（あり・普通・なし）ごとの倍率です。すべての問題に共通で適用されます。0〜{{ CONFIDENCE_MULTIPLIER_MAX }}・小数第2位まで。
       </p>
 
-      <p v-if="isLoading" class="status-message" role="status">読み込み中…</p>
-      <div v-else-if="loadErrorMessage">
-        <p class="status-message error" role="alert">{{ loadErrorMessage }}</p>
-        <button type="button" class="retry-button" @click="load">再読み込み</button>
-      </div>
-      <ul v-else class="multiplier-modal-rows">
+      <ul v-if="isLoading" class="multiplier-modal-rows multiplier-modal-rows-skeleton" role="status" aria-busy="true">
+        <li v-for="level in CONFIDENCE_LEVELS" :key="level" class="multiplier-modal-row">
+          <LoadingSkeleton class="multiplier-row-skeleton-label" />
+          <LoadingSkeleton class="multiplier-row-skeleton-input" />
+        </li>
+        <span class="visually-hidden">倍率を読み込み中…</span>
+      </ul>
+      <template v-else>
+        <p v-if="isRefreshing" class="multiplier-refresh-status" role="status" aria-busy="true">最新の倍率を更新中…</p>
+        <div v-if="loadErrorMessage">
+          <p class="status-message error" role="alert">倍率の更新に失敗しました。{{ loadErrorMessage }}</p>
+          <button type="button" class="retry-button" @click="load">再読み込み</button>
+        </div>
+      </template>
+      <ul v-if="!isLoading" class="multiplier-modal-rows">
         <li v-for="row in rows" :key="row.level" class="multiplier-modal-row">
           <div class="multiplier-modal-row-controls">
             <span class="multiplier-modal-row-label">{{ row.label }}</span>

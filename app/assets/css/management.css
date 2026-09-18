@@ -81,6 +81,15 @@
 
 .multiplier-error .status-message,
 .questions-error .status-message { display: inline-block; }
+.question-refresh-status {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #516176;
+  background: #eef2f8;
+  font-size: 13px;
+}
+.question-refresh-status.is-error { color: #912018; background: #ffefed; }
+.question-refresh-status .retry-button { margin-left: 8px; }
 .question-list { min-height: 0; }
 .question-list-skeleton { min-height: 356px; }
 .question-rows { display: flex; flex-direction: column; gap: 12px; }
@@ -189,7 +198,11 @@
 .multiplier-modal-close:hover { color: #132238; background: rgb(19 34 56 / 6%); }
 .multiplier-modal-note { margin: 8px 0 0; }
 .multiplier-modal-rows { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+.multiplier-refresh-status { margin: 14px 0 0; color: #516176; font-size: 13px; }
 .multiplier-modal-row { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid rgb(19 34 56 / 10%); border-radius: 14px; background: #fff; }
+.multiplier-modal-rows-skeleton .multiplier-modal-row { grid-template-columns: 6.5rem minmax(0, 1fr); align-items: center; min-height: 68px; }
+.multiplier-row-skeleton-label { width: 5.5rem; height: 18px; }
+.multiplier-row-skeleton-input { width: 100%; height: 40px; border-radius: 9px; }
 .multiplier-modal-row-controls { gap: 12px; }
 .multiplier-modal-row-label { flex: 0 0 6.5rem; color: #253750; font-size: 14px; font-weight: 750; }
 .multiplier-input-label { flex: 1; min-width: 0; }
