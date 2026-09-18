@@ -8,6 +8,7 @@ import {
   finishQuiz,
   publishQuestion,
   revealAnswer,
+  resetQuiz,
   startQuiz,
 } from '~/features/quiz-control/api/client'
 import { useQuizControl } from '~/features/quiz-control/useQuizControl'
@@ -20,6 +21,7 @@ vi.mock('~/features/quiz-control/api/client', () => ({
   finishQuiz: vi.fn(),
   publishQuestion: vi.fn(),
   revealAnswer: vi.fn(),
+  resetQuiz: vi.fn(),
   startQuiz: vi.fn(),
 }))
 
@@ -34,6 +36,7 @@ const mockedFetch = vi.mocked(fetchQuizState)
 const mockedStart = vi.mocked(startQuiz)
 const mockedPublish = vi.mocked(publishQuestion)
 const mockedFinish = vi.mocked(finishQuiz)
+const mockedReset = vi.mocked(resetQuiz)
 
 const Harness = defineComponent({
   setup: useQuizControl,
@@ -54,6 +57,7 @@ describe('useQuizControl', () => {
     vi.mocked(closeAnswersImmediately).mockReset()
     vi.mocked(revealAnswer).mockReset()
     mockedFinish.mockReset()
+    mockedReset.mockReset()
   })
 
   it('進行操作後にstateを再取得し、二重操作を送らない', async () => {
@@ -146,6 +150,103 @@ describe('useQuizControl', () => {
 
     expect(mockedFinish).toHaveBeenCalledOnce()
     expect((wrapper.vm as { noticeMessage: string }).noticeMessage).toBe('クイズ大会を終了しました。')
+    wrapper.unmount()
+  })
+
+  it('リセット成功後に最新stateを再取得し、通知と履歴を更新する', async () => {
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const resetState = {
+      ...state,
+      status: 'waiting' as const,
+      phase: null,
+      current: null,
+      reset_operation: {
+        operation_id: 'operation-1',
+        started_at: '2026-09-30T00:00:00.000000Z',
+        completed_at: '2026-09-30T00:00:00.025000Z',
+        affected_rows: {
+          participant_reactions: 0,
+          participant_answers: 0,
+          confidence_selections: 0,
+          participant_sessions: 0,
+          participants: 0,
+          question_reveals: 0,
+          quiz_sessions: 1,
+        },
+      },
+    }
+    mockedReset.mockResolvedValueOnce(resetState)
+    mockedFetch.mockResolvedValueOnce(resetState)
+    const control = wrapper.vm as unknown as ReturnType<typeof useQuizControl>
+
+    await expect(control.reset('RESET')).resolves.toBe(true)
+
+    expect(mockedReset).toHaveBeenCalledWith('RESET')
+    expect(mockedFetch).toHaveBeenCalledTimes(2)
+    expect((wrapper.vm as { state: typeof resetState }).state).toEqual(resetState)
+    expect((wrapper.vm as { noticeMessage: string }).noticeMessage).toBe('クイズ大会を開始前の状態に戻しました。')
+    expect((wrapper.vm as { history: { label: string }[] }).history.at(-1)?.label).toBe('クイズ大会をリセット')
+    expect((wrapper.vm as { resetOperation: typeof resetState.reset_operation | null }).resetOperation).toEqual(resetState.reset_operation)
+
+    // GET state refreshes do not include the one-time POST receipt.
+    await control.refresh()
+    expect((wrapper.vm as { resetOperation: typeof resetState.reset_operation | null }).resetOperation).toEqual(resetState.reset_operation)
+
+    // A later failed reset must not leave the previous receipt visible.
+    mockedReset.mockRejectedValueOnce(new ApiError('confirmation must exactly equal RESET', 422))
+    await expect(control.reset('RESET')).resolves.toBe(false)
+    expect((wrapper.vm as { resetOperation: unknown }).resetOperation).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('リセットPOST成功後のstate再取得失敗をリセット失敗として扱わず、受付票を保持する', async () => {
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const resetState = {
+      ...state,
+      reset_operation: {
+        operation_id: 'operation-refresh-failure',
+        started_at: '2026-09-30T00:00:00.000000Z',
+        completed_at: '2026-09-30T00:00:00.025000Z',
+        affected_rows: {
+          participant_reactions: 0,
+          participant_answers: 0,
+          confidence_selections: 0,
+          participant_sessions: 0,
+          participants: 0,
+          question_reveals: 0,
+          quiz_sessions: 1,
+        },
+      },
+    }
+    mockedReset.mockResolvedValueOnce(resetState)
+    mockedFetch.mockRejectedValueOnce(new Error('state refresh failed'))
+    const control = wrapper.vm as unknown as ReturnType<typeof useQuizControl>
+
+    await expect(control.reset('RESET')).resolves.toBe(true)
+
+    expect((wrapper.vm as { resetOperation: typeof resetState.reset_operation | null }).resetOperation).toEqual(resetState.reset_operation)
+    expect((wrapper.vm as { noticeMessage: string }).noticeMessage).toBe('クイズ大会を開始前の状態に戻しました。')
+    expect((wrapper.vm as { errorMessage: string }).errorMessage).toBe('state refresh failed')
+    expect((wrapper.vm as { isActing: boolean }).isActing).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('リセット失敗時はエラーを表示して最新stateを再取得する', async () => {
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    mockedReset.mockRejectedValueOnce(new ApiError('confirmation must exactly equal RESET', 422))
+    const control = wrapper.vm as unknown as ReturnType<typeof useQuizControl>
+
+    await expect(control.reset('RESET')).resolves.toBe(false)
+
+    expect(mockedFetch).toHaveBeenCalledTimes(2)
+    expect((wrapper.vm as { errorMessage: string }).errorMessage).toBe('confirmation must exactly equal RESET')
+    expect((wrapper.vm as { isActing: boolean }).isActing).toBe(false)
     wrapper.unmount()
   })
 })

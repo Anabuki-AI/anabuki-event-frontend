@@ -14,7 +14,8 @@ let state: ReturnType<typeof useAuditLogs>
 const refreshSession = vi.fn<() => Promise<void>>()
 const validEntry = {
   id: '42', type: 'QUESTION_CREATED', actorEmail: 'staff@example.test', actorGoogleSub: 'sub-1',
-  targetType: 'QUESTION', targetId: '7', detail: { level: 2 }, occurredAt: '2026-09-18T01:00:00+09:00',
+  targetType: 'QUESTION', targetId: '7', operationId: null, operationStartedAt: null, operationCompletedAt: null,
+  detail: { level: 2 }, occurredAt: '2026-09-18T01:00:00+09:00',
 }
 function start(enabled = false) {
   wrapper = mount(defineComponent({ setup() { state = useAuditLogs(refreshSession, enabled); return () => h('div') } }))
@@ -34,10 +35,37 @@ describe('audit log contract parsing', () => {
     expect(page.entries[0]?.type).toBe('QUESTION_CREATED')
     expect(page.totalEntries).toBe(1)
   })
-  it('rejects unknown event types instead of dropping or labeling them', () => {
+  it('accepts the backend tournament reset receipt fields', () => {
+    const page = parseAuditLogPage({
+      entries: [{
+        ...validEntry,
+        type: 'TOURNAMENT_RESET',
+        targetType: 'TOURNAMENT',
+        targetId: 'operation-1',
+        operationId: 'operation-1',
+        operationStartedAt: '2026-09-30T00:00:00.000000Z',
+        operationCompletedAt: '2026-09-30T00:00:01.000000Z',
+        detail: {
+          participantsDeleted: 50,
+          participantSessionsDeleted: 50,
+          participantReactionsDeleted: 45,
+          participantAnswersDeleted: 300,
+          confidenceSelectionsDeleted: 300,
+          questionRevealsReset: 12,
+          quizSessionsReset: 1,
+        },
+      }],
+      page: 1,
+      perPage: 50,
+      totalEntries: 1,
+    })
+    expect(page.entries[0]?.operationId).toBe('operation-1')
+  })
+  it('rejects unknown or malformed event data instead of dropping or labeling it', () => {
     expect(() => parseAuditLogPage({ entries: [{ ...validEntry, type: 'MYSTERY_EVENT' }], page: 1, perPage: 50, totalEntries: 1 })).toThrow()
     expect(() => parseAuditLogPage({ entries: [{ ...validEntry, occurredAt: 'not-a-date' }], page: 1, perPage: 50, totalEntries: 1 })).toThrow()
     expect(() => parseAuditLogPage({ entries: [{ ...validEntry, detail: { secret: { nested: true } } }], page: 1, perPage: 50, totalEntries: 1 })).toThrow()
+    expect(() => parseAuditLogPage({ entries: [{ ...validEntry, type: 'TOURNAMENT_RESET', operationId: null }], page: 1, perPage: 50, totalEntries: 1 })).toThrow()
     expect(() => parseAuditLogPage({ entries: [validEntry], page: 0, perPage: 50, totalEntries: 1 })).toThrow()
   })
 })
@@ -111,6 +139,39 @@ describe('audit log panel presentation', () => {
     expect(wrapper.text()).toContain('staff@example.test')
     expect(wrapper.text()).toContain('1–50 件 / 全 51 件')
     expect(wrapper.text()).not.toContain('MYSTERY')
+  })
+  it('renders the tournament reset label and receipt without exposing participant identity', async () => {
+    api.page.mockResolvedValue({
+      entries: [{
+        ...validEntry,
+        type: 'TOURNAMENT_RESET',
+        targetType: 'TOURNAMENT',
+        targetId: 'operation-1',
+        operationId: 'operation-1',
+        operationStartedAt: '2026-09-30T00:00:00.000000Z',
+        operationCompletedAt: '2026-09-30T00:00:01.000000Z',
+        detail: {
+          participantsDeleted: 50,
+          participantSessionsDeleted: 50,
+          participantReactionsDeleted: 45,
+          participantAnswersDeleted: 300,
+          confidenceSelectionsDeleted: 300,
+          questionRevealsReset: 12,
+          quizSessionsReset: 1,
+        },
+      }],
+      page: 1,
+      perPage: 50,
+      totalEntries: 1,
+    })
+    renderPanel(true)
+    await state.load()
+    await flushPromises()
+    expect(wrapper.text()).toContain('クイズ大会のリセット')
+    expect(wrapper.text()).toContain('operation-1')
+    expect(wrapper.text()).toContain('参加者: 50件')
+    expect(wrapper.text()).toContain('回答: 300件')
+    expect(wrapper.text()).toContain('staff@example.test')
   })
   it('never renders an empty page as proof that nothing ever happened', async () => {
     api.page.mockResolvedValue({ entries: [], page: 1, perPage: 50, totalEntries: 0 })

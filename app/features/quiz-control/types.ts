@@ -30,6 +30,22 @@ export interface OperatorNextQuestion {
   image_url: string | null
 }
 
+/** POST /api/operator/quiz/reset が返す完了済みリセットの受付票。 */
+export interface OperatorQuizResetOperation {
+  operation_id: string
+  started_at: string
+  completed_at: string
+  affected_rows: {
+    participant_reactions: number
+    participant_answers: number
+    confidence_selections: number
+    participant_sessions: number
+    participants: number
+    question_reveals: number
+    quiz_sessions: number
+  }
+}
+
 /** クイズ本番セッションAPI契約(Phase 0)どおりの運営者向けレスポンス。 */
 export interface OperatorQuizState {
   status: QuizSessionStatus
@@ -52,6 +68,11 @@ export interface OperatorQuizState {
    * バックエンドPR未マージ時は未定義になりうるため呼び出し側は必ず ?? null で扱うこと。
    */
   next_question?: OperatorNextQuestion | null
+}
+
+/** Reset の成功レスポンスは通常の state に、必須の reset_operation を加える。 */
+export interface OperatorQuizResetResponse extends OperatorQuizState {
+  reset_operation: OperatorQuizResetOperation
 }
 
 export const PHASE_LABELS: Record<QuizPhase, string> = {

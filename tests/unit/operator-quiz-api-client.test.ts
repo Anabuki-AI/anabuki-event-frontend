@@ -7,6 +7,7 @@ import {
   finishQuiz,
   publishQuestion,
   revealAnswer,
+  resetQuiz,
   startQuiz,
 } from '~/features/quiz-control/api/client'
 
@@ -19,6 +20,23 @@ const state = {
   current: null,
   question_count: 10,
   total_participants: 60,
+}
+const resetResponse = {
+  ...state,
+  reset_operation: {
+    operation_id: 'operation-1',
+    started_at: '2026-09-30T00:00:00.000000Z',
+    completed_at: '2026-09-30T00:00:00.025000Z',
+    affected_rows: {
+      participant_reactions: 0,
+      participant_answers: 0,
+      confidence_selections: 0,
+      participant_sessions: 0,
+      participants: 0,
+      question_reveals: 0,
+      quiz_sessions: 1,
+    },
+  },
 }
 
 describe('運営クイズ進行 API client', () => {
@@ -41,6 +59,7 @@ describe('運営クイズ進行 API client', () => {
     ['immediate close after timer expiry', () => closeAnswersImmediately(), '/operator/quiz/close', { immediate: true }],
     ['reveal', () => revealAnswer(), '/operator/quiz/reveal', undefined],
     ['finish', () => finishQuiz(), '/operator/quiz/finish', undefined],
+    ['reset with server confirmation', () => resetQuiz('RESET'), '/operator/quiz/reset', { confirmation: 'RESET' }],
   ])('%sをCookie付きPOST・リトライなしで実行する', async (_name, action, path, body) => {
     mockedRequest.mockResolvedValueOnce(state)
 
@@ -48,6 +67,18 @@ describe('運営クイズ進行 API client', () => {
     expect(mockedRequest).toHaveBeenCalledWith(path, {
       method: 'POST',
       body,
+      credentials: 'include',
+      retry: 0,
+    })
+  })
+
+  it('reset returns the server-issued operation receipt without reshaping it', async () => {
+    mockedRequest.mockResolvedValueOnce(resetResponse)
+
+    await expect(resetQuiz('RESET')).resolves.toEqual(resetResponse)
+    expect(mockedRequest).toHaveBeenCalledWith('/operator/quiz/reset', {
+      method: 'POST',
+      body: { confirmation: 'RESET' },
       credentials: 'include',
       retry: 0,
     })
