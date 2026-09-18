@@ -29,9 +29,17 @@ export interface Question {
    * 中継問題のうち、今回の出題として運営者が選択した1問かどうか。
    * true になれるのは isRelayQuestion が true の問題のみで、全問題中で
    * 同時に true になれるのは最大1問(バックエンドが保証)。
-   * 中継問題でこれが false の間は correctAnswer を変更できない。
+   * 中継問題でこれが false かつ revealedAt が未設定の間は correctAnswer を変更できない。
    */
   isSelectedRelayQuestion?: boolean
+  /**
+   * ライブ進行画面で運営者がこの問題の正解を公開した日時(ISO8601)。未公開なら null。
+   * 一度設定されると、クイズ全体をリセットするまで消えない
+   * (= 中継問題としての出番が終わったかどうかの判定に使える)。
+   * 出番が終わった中継問題は、その後 isSelectedRelayQuestion が false に
+   * 戻っていても correctAnswer を変更できる。
+   */
+  revealedAt?: string | null
   /** 配点。この問題に正解した場合の基礎得点（自信度倍率を掛ける前の値）。 */
   points: number
   /**

@@ -117,6 +117,16 @@ function handleMultiplierUpdated(level: ConfidenceLevel, value: string) {
  * 選択すると他の中継問題の選択は自動的に解除される(バックエンドが保証)ため、
  * 一覧全体を再読み込みして状態を揃える。
  */
+/**
+ * 中継問題の一覧バッジ文言。選択中/出題済み(選択解除後も含む)/未選択・未出題の
+ * 3状態を運営者に区別できるようにする(revealedAt が付くと正解を編集できるため)。
+ */
+function relayBadgeText(question: Question): string {
+  if (question.isSelectedRelayQuestion) return '中継問題・選択中'
+  if (question.revealedAt) return '中継問題・出題済み'
+  return '中継問題'
+}
+
 async function toggleRelaySelection(question: Question) {
   if (relaySelectionSavingId.value !== null) return
 
@@ -238,8 +248,8 @@ onMounted(() => {
               <span
                 v-if="question.isRelayQuestion"
                 class="relay-badge"
-                :class="{ 'is-selected': question.isSelectedRelayQuestion }"
-              >{{ question.isSelectedRelayQuestion ? '中継問題・選択中' : '中継問題' }}</span>
+                :class="{ 'is-selected': question.isSelectedRelayQuestion, 'is-revealed': !question.isSelectedRelayQuestion && !!question.revealedAt }"
+              >{{ relayBadgeText(question) }}</span>
               <span class="correct-badge" :title="`正解: ${correctChoiceText(question)}`">{{ formatCorrectBadge(question) }}</span>
             </summary>
             <div class="question-row-detail">
@@ -253,8 +263,11 @@ onMounted(() => {
                 >
                   {{ question.isSelectedRelayQuestion ? '今回の出題の選択を解除' : '今回の出題として選択' }}
                 </button>
-                <p v-if="!question.isSelectedRelayQuestion" class="relay-selection-note">
+                <p v-if="!question.isSelectedRelayQuestion && !question.revealedAt" class="relay-selection-note">
                   中継問題は複数登録できますが、今回出題する1問を選択するまで正解を編集できません。
+                </p>
+                <p v-else-if="!question.isSelectedRelayQuestion" class="relay-selection-note is-revealed">
+                  この問題はすでに出題・正解公開済みのため、選択が外れていても正解を編集できます。
                 </p>
               </div>
               <p v-if="question.targetAudience" class="question-target-audience">
