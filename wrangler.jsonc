@@ -10,11 +10,5 @@
   },
   "vars": {
     "NUXT_BACKEND_ORIGIN": "https://api.anabuki-event.com"
-  },
-  "services": [
-    {
-      "binding": "BACKEND",
-      "service": "anabuki-event-backend"
-    }
-  ]
+  }
 }
