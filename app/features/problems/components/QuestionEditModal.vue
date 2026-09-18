@@ -45,6 +45,22 @@ const isCorrectAnswerLocked = computed<boolean>(
 // (上の isCorrectAnswerLocked と同じ理由の場合のみ発生しうる)。
 const RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
   = 'この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。'
+// backend/app/models/question.rb の protect_live_question が返すエラー。
+// 中継問題が「選択済み」かつ「出題・正解公開済み」であっても、ライブ進行画面で
+// まだ「次の問題」に進んでいない間(quiz_sessions.current_question_id が
+// このIDを指したまま)は correct_answer を含む LIVE_FIELDS の変更を拒否する。
+// これは中継問題の選択ロックとは別の理由であり、上の案内文をそのまま出すと
+// 「選択したのに保存できない」という誤解を招く(選択状態は無関係なため)。
+const LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE
+  = 'この問題は現在ライブ進行画面で出題中(または直前に出題済み)のため、正解を変更できません。「出題管理」で次の問題に進んでから変更してください。'
+// fieldErrors.correctAnswer に入りうる、バックエンドの生バリデーションメッセージ
+// (backend/app/models/question.rb) からユーザー向け文言へのマッピング。
+// 両方とも同じ HTTP 422 + fieldErrors.correctAnswer で返ってくるため、
+// メッセージ本文で原因を区別する必要がある。
+const CORRECT_ANSWER_LOCK_MESSAGES: Record<string, string> = {
+  'cannot be changed for a relay question that is not selected': RELAY_CORRECT_ANSWER_LOCKED_MESSAGE,
+  'cannot be changed while this question is live': LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE,
+}
 const submitErrorMessage = ref('')
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
@@ -179,9 +195,12 @@ async function save() {
     // 422 の汎用メッセージは、正解ロック違反という具体的な原因を隠してしまう
     // (問題テキスト長超過などの他の入力エラーと同じ「入力内容を確認してください」
     // になり、運営者にはなぜ保存できないか伝わらない)。fieldErrors.correctAnswer
-    // がある場合は、一覧・このモーダルの注記と同じ案内文で理由を伝える。
-    submitErrorMessage.value = apiError.fieldErrors?.correctAnswer
-      ? RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
+    // がある場合は、原因(中継問題の選択ロック/ライブ出題中ロック)に応じた案内文を
+    // 表示する。どちらでもない未知の correctAnswer エラーは汎用メッセージにフォールバックする。
+    const correctAnswerError = apiError.fieldErrors?.correctAnswer
+    const correctAnswerErrorMessage = Array.isArray(correctAnswerError) ? correctAnswerError[0] : correctAnswerError
+    submitErrorMessage.value = correctAnswerErrorMessage
+      ? (CORRECT_ANSWER_LOCK_MESSAGES[correctAnswerErrorMessage] ?? problemErrorMessage(apiError.statusCode, apiError.message))
       : problemErrorMessage(apiError.statusCode, apiError.message)
   }
   finally {

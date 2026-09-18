@@ -119,6 +119,43 @@ describe('正解ロック違反の422エラー表示（問題編集フォーム�
     wrapper.unmount()
   })
 
+  it('選択済み・出題済みの中継問題でも、ライブ出題中(protect_live_question)を理由にcorrectAnswerのfieldErrorが返る場合は、中継ロック案内ではなくライブ出題中の案内を表示する', async () => {
+    mockedRequest.mockReset()
+    mockedRequest.mockRejectedValueOnce({
+      statusCode: 422,
+      data: {
+        error: 'Correct answer cannot be changed while this question is live',
+        fieldErrors: { correctAnswer: 'cannot be changed while this question is live' },
+      },
+    })
+
+    // 運営者から見て「今回の出題として選択」済み・出題済み(revealedAt設定済み)
+    // なので isCorrectAnswerLocked はクライアント側では false になり、正解ラジオは
+    // 操作可能に見える。しかしライブ進行画面でまだ「次の問題」に進んでおらず、
+    // quiz_sessions.current_question_id がこの問題を指したままのため、
+    // backend の protect_live_question が correct_answer の変更を拒否するケース。
+    // これは中継問題の選択ロックとは無関係な理由なので、その案内文を出してはいけない。
+    const question = makeQuestion({
+      isRelayQuestion: true,
+      isSelectedRelayQuestion: true,
+      revealedAt: '2026-09-18T10:00:00.000Z',
+    })
+    const wrapper = mount(QuestionEdit, { props: { question }, attachTo: document.body })
+
+    await wrapper.get('.question-add-save').trigger('click')
+    await flushPromises()
+
+    const message = wrapper.find('.question-add-form > .status-message.error')
+    expect(message.exists()).toBe(true)
+    expect(message.text()).toBe(
+      'この問題は現在ライブ進行画面で出題中(または直前に出題済み)のため、正解を変更できません。「出題管理」で次の問題に進んでから変更してください。',
+    )
+    expect(message.text()).not.toContain('今回の出題」に選択されていないため')
+    expect(message.text()).not.toContain('入力内容を確認してください')
+
+    wrapper.unmount()
+  })
+
   it('correctAnswer以外の422では、従来通り汎用メッセージを表示する', async () => {
     mockedRequest.mockReset()
     mockedRequest.mockRejectedValueOnce({
