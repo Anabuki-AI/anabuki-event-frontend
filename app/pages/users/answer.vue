@@ -251,7 +251,7 @@ onMounted(async () => {
             {{ confidenceMessage }}
           </p>
           <p class="answer-note">
-            {{ isEditingAnswer ? '選択肢を変更したあと、変更を送信してください。' : '選択肢を選んで送信してください。レベルはLv.1確定後・解答後は変更できません。' }}
+            {{ isEditingAnswer ? '内容を確認して、変更を送信してください。' : '選択肢を選んで送信してください。レベルはLv.1確定後・解答後は変更できません。' }}
           </p>
 
           <div v-if="isEditingAnswer" class="answer-edit-actions">
@@ -347,7 +347,7 @@ onMounted(async () => {
           回答を選び直す
         </button>
         <p v-if="myAnswer && isAnswerWindowOpen" class="answer-note">
-          選択肢をタップしただけでは変更されません。変更内容を確認して送信してください。
+          選択肢をタップしただけでは変更されません。内容を確認して送信してください。
         </p>
         <div class="wait-state">
           <div class="wait-dots" aria-hidden="true">
