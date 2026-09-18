@@ -7,9 +7,11 @@ import {
   fetchConfidenceMultipliers,
   fetchQuestion,
   fetchQuestions,
+  selectRelayQuestion,
   updateConfidenceMultiplier,
   updateQuestion,
 } from '../../app/features/problems/api/client'
+import type { Question } from '../../app/features/problems/types'
 
 vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
 
@@ -92,6 +94,61 @@ describe('問題管理API client', () => {
 
     await updateQuestion(12, { ...payload, removeImage: true })
     expect(formDataEntries(mockedRequest.mock.calls[1]?.[1]?.body)).toMatchObject({ removeImage: 'true' })
+  })
+
+  it('isSelectedRelayQuestionが指定された場合のみFormDataに含める', async () => {
+    mockedRequest.mockResolvedValue(undefined)
+
+    await createQuestion({ ...payload, isSelectedRelayQuestion: true })
+    expect(formDataEntries(mockedRequest.mock.calls[0]?.[1]?.body)).toMatchObject({ isSelectedRelayQuestion: 'true' })
+
+    await createQuestion({ ...payload, isSelectedRelayQuestion: false })
+    expect(formDataEntries(mockedRequest.mock.calls[1]?.[1]?.body)).toMatchObject({ isSelectedRelayQuestion: 'false' })
+
+    await createQuestion(payload)
+    expect(formDataEntries(mockedRequest.mock.calls[2]?.[1]?.body)).not.toHaveProperty('isSelectedRelayQuestion')
+  })
+
+  it('selectRelayQuestionは一覧から読み込んだ問題の全項目を引き継ぎ、選択状態だけ更新するPUTを送る', async () => {
+    mockedRequest.mockResolvedValue(undefined)
+    const question: Question = {
+      id: 12,
+      position: 1,
+      questionText: 'テスト問題',
+      choiceA: 'A',
+      choiceB: 'B',
+      choiceC: 'C',
+      choiceD: 'D',
+      correctAnswer: 'A',
+      imageUrl: null,
+      explanation: null,
+      targetAudience: null,
+      isRelayQuestion: true,
+      isSelectedRelayQuestion: false,
+      points: 100,
+      timeLimitSeconds: 30,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+    }
+
+    await selectRelayQuestion(question, true)
+
+    expect(mockedRequest.mock.calls[0]?.[0]).toBe('/admin/questions/12')
+    expect(mockedRequest.mock.calls[0]?.[1]).toMatchObject({ method: 'PUT', credentials: 'include' })
+    expect(formDataEntries(mockedRequest.mock.calls[0]?.[1]?.body)).toEqual({
+      questionText: 'テスト問題',
+      choiceA: 'A',
+      choiceB: 'B',
+      choiceC: 'C',
+      choiceD: 'D',
+      correctAnswer: 'A',
+      explanation: '',
+      targetAudience: '',
+      isRelayQuestion: 'true',
+      isSelectedRelayQuestion: 'true',
+      points: '100',
+      time_limit_seconds: '30',
+    })
   })
 
   it('倍率取得・更新にはGET/PATCHを使い、実レスポンスの文字列倍率を返す', async () => {

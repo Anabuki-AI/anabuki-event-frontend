@@ -25,6 +25,13 @@ export interface Question {
   /** 出題対象。出題画面に問題文と併せて表示する。 */
   targetAudience: string | null
   isRelayQuestion?: boolean
+  /**
+   * 中継問題のうち、今回の出題として運営者が選択した1問かどうか。
+   * true になれるのは isRelayQuestion が true の問題のみで、全問題中で
+   * 同時に true になれるのは最大1問(バックエンドが保証)。
+   * 中継問題でこれが false の間は correctAnswer を変更できない。
+   */
+  isSelectedRelayQuestion?: boolean
   /** 配点。この問題に正解した場合の基礎得点（自信度倍率を掛ける前の値）。 */
   points: number
   /**

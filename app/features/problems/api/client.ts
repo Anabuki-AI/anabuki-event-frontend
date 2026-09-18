@@ -15,6 +15,8 @@ export interface QuestionPayload {
   explanation: string
   targetAudience: string
   isRelayQuestion?: boolean
+  /** 中継問題を今回の出題として選択するかどうか。undefined の場合は送信しない(既存値を変更しない)。 */
+  isSelectedRelayQuestion?: boolean
   /** 配点。この問題に正解した場合の基礎得点。 */
   points: number
   /**
@@ -48,6 +50,9 @@ function toFormData(payload: QuestionPayload): FormData {
   if (payload.isRelayQuestion !== undefined) {
     formData.append('isRelayQuestion', String(payload.isRelayQuestion))
   }
+  if (payload.isSelectedRelayQuestion !== undefined) {
+    formData.append('isSelectedRelayQuestion', String(payload.isSelectedRelayQuestion))
+  }
   formData.append('points', String(payload.points))
   if (payload.timeLimitSeconds !== undefined) {
     formData.append('time_limit_seconds', payload.timeLimitSeconds === null ? '' : String(payload.timeLimitSeconds))
@@ -79,6 +84,31 @@ export function updateQuestion(id: number, payload: QuestionPayload): Promise<Qu
     body: toFormData(payload),
     credentials,
   })
+}
+
+/**
+ * 問題管理の一覧(management.vue)から、中継問題の「今回出題する1問」の
+ * 選択/選択解除だけを行うためのヘルパー。
+ * 更新APIは全項目を送るPUTのみのため、一覧に読み込み済みの Question から
+ * 画像以外の全項目を引き継いだペイロードを組み立てて再送する
+ * (image/removeImage を省略するので既存の画像は変更されない)。
+ */
+export function selectRelayQuestion(question: Question, selected: boolean): Promise<Question> {
+  const payload: QuestionPayload = {
+    questionText: question.questionText,
+    choiceA: question.choiceA,
+    choiceB: question.choiceB,
+    choiceC: question.choiceC,
+    choiceD: question.choiceD,
+    correctAnswer: question.correctAnswer,
+    explanation: question.explanation ?? '',
+    targetAudience: question.targetAudience ?? '',
+    isRelayQuestion: question.isRelayQuestion,
+    isSelectedRelayQuestion: selected,
+    points: question.points,
+    timeLimitSeconds: question.timeLimitSeconds,
+  }
+  return updateQuestion(question.id, payload)
 }
 
 /** 問題管理・クイズAPIの画像フィールドを表示用URLへ解決する。 */

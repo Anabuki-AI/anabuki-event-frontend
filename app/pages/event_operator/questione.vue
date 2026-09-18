@@ -30,6 +30,11 @@ const form = reactive({
 })
 const correctChoice = ref<ChoiceLabel>(props.question.correctAnswer)
 const isSaving = ref(false)
+// 中継問題は、問題管理の一覧で「今回の出題」として選択されるまで正解を変更できない
+// (バックエンドAPIも同じ制約を強制する)。通常の問題には影響しない。
+const isCorrectAnswerLocked = computed<boolean>(
+  () => props.question.isRelayQuestion === true && props.question.isSelectedRelayQuestion !== true,
+)
 const submitErrorMessage = ref('')
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
@@ -131,6 +136,7 @@ function handleChoiceInput(choice: ChoiceLabel, value: string) {
 }
 
 function handleCorrectChoiceSelect(choice: ChoiceLabel) {
+  if (isCorrectAnswerLocked.value) return
   correctChoice.value = choice
 }
 
@@ -298,6 +304,9 @@ onUnmounted(() => {
 
         <fieldset class="question-add-field question-add-choices">
           <legend class="question-add-label">選択肢（正解にチェックを付けてください）</legend>
+          <p v-if="isCorrectAnswerLocked" class="question-add-hint question-add-relay-lock-note" role="status">
+            この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。
+          </p>
 
           <div
             v-for="choice in [
@@ -327,7 +336,7 @@ onUnmounted(() => {
                 name="question-add-correct"
                 :value="choice.label"
                 :checked="correctChoice === choice.label"
-                :disabled="isSaving"
+                :disabled="isSaving || isCorrectAnswerLocked"
                 :aria-label="`選択肢${choice.label}を正解にする`"
                 @change="handleCorrectChoiceSelect(choice.label)"
               >
