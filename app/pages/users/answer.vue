@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import QuizCloseCountdownBar from '~/components/QuizCloseCountdownBar.vue'
 import ParticipantQuizFinishedPanel from '~/features/participant-quiz/components/ParticipantQuizFinishedPanel.vue'
 import { useQuizClock } from '~/features/quiz-control/useQuizClock'
@@ -104,8 +105,11 @@ onMounted(async () => {
         </p>
         <h1>解答画面</h1>
         <p class="answer-user-name">
-          {{ participant ? `${participant.displayName} さん` : '参加情報を確認しています…' }}
+          {{ participant ? `${participant.displayName} さん` : '参加者 さん' }}
         </p>
+        <span v-if="!participant && !participantError" class="visually-hidden" role="status">
+          参加情報を確認しています…
+        </span>
       </div>
       <NuxtLink
         class="help-button"
@@ -123,10 +127,28 @@ onMounted(async () => {
         クイズの最新状態を取得できませんでした。自動的に再試行します。
       </p>
 
-      <section v-if="screen === 'loading'" class="answer-card" aria-live="polite">
-        <p class="muted-copy">
-          クイズの状態を確認しています…
-        </p>
+      <section
+        v-if="screen === 'loading'"
+        class="answer-card answer-loading-card"
+        aria-live="polite"
+        aria-busy="true"
+        role="status"
+      >
+        <span class="visually-hidden">クイズの状態を確認しています…</span>
+        <LoadingSkeleton class="answer-skeleton-question-number" />
+        <LoadingSkeleton class="answer-skeleton-question-line answer-skeleton-question-line--long" />
+        <LoadingSkeleton class="answer-skeleton-question-line answer-skeleton-question-line--short" />
+        <div class="answer-skeleton-confidence">
+          <LoadingSkeleton class="answer-skeleton-label" />
+          <div class="answer-skeleton-confidence-list">
+            <LoadingSkeleton v-for="index in 3" :key="index" class="answer-skeleton-confidence-item" />
+          </div>
+        </div>
+        <div class="answer-skeleton-choices">
+          <LoadingSkeleton v-for="index in 4" :key="index" class="answer-skeleton-choice" />
+        </div>
+        <LoadingSkeleton class="answer-skeleton-point" />
+        <LoadingSkeleton class="answer-skeleton-submit" />
       </section>
 
       <section v-else-if="screen === 'finished'" class="answer-card" aria-live="polite">

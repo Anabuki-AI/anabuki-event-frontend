@@ -9,6 +9,7 @@ import {
 import { CHOICE_KEYS, CONFIDENCE_LEVEL_LABELS, CONFIDENCE_LEVELS, formatMultiplier } from '~/features/problems/constants'
 import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '~/features/problems/types'
 import { choiceText, correctChoiceText, formatCorrectBadge, formatQuestionPosition, formatTimeLimit } from '~/features/problems/components/QuestionRow'
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import ConfidenceMultiplierModal from '~/features/problems/components/ConfidenceMultiplierModal.vue'
 import QuestionDeleteDialog from '~/features/problems/components/QuestionDeleteDialog.vue'
 import QuestionPreviewModal from '~/features/problems/components/QuestionPreviewModal.vue'
@@ -211,7 +212,10 @@ onMounted(() => {
       <div class="question-count-row">
         <div class="question-count-group">
           <p v-if="!isQuestionsLoading && !questionsErrorMessage" class="question-count" role="status">全 {{ questions.length }} 問</p>
-          <span v-if="isMultipliersLoading" class="multiplier-status" role="status">倍率を読み込み中…</span>
+          <span v-if="isMultipliersLoading" class="multiplier-status multiplier-status-skeleton" role="status" aria-busy="true">
+            <span class="visually-hidden">倍率を読み込み中…</span>
+            <LoadingSkeleton v-for="level in CONFIDENCE_LEVELS" :key="level" class="multiplier-chip-skeleton" />
+          </span>
           <template v-else-if="confidenceMultipliers">
             <span v-for="level in CONFIDENCE_LEVELS" :key="level" class="multiplier-chip">
               {{ CONFIDENCE_LEVEL_LABELS[level] }} ×{{ formatMultiplier(confidenceMultipliers[level]) }}
@@ -230,7 +234,21 @@ onMounted(() => {
         中継問題の選択に失敗しました。{{ relaySelectionErrorMessage }}
       </p>
 
-      <p v-if="isQuestionsLoading" class="status-message" role="status">問題を読み込み中…</p>
+      <div
+        v-if="isQuestionsLoading"
+        class="question-list question-list-skeleton"
+        role="status"
+        aria-busy="true"
+      >
+        <span class="visually-hidden">問題を読み込み中…</span>
+        <div class="question-rows">
+          <div v-for="index in 5" :key="index" class="question-row question-row-skeleton">
+            <LoadingSkeleton class="question-skeleton-id" />
+            <LoadingSkeleton class="question-skeleton-text" />
+            <LoadingSkeleton class="question-skeleton-badge" />
+          </div>
+        </div>
+      </div>
       <div v-else-if="questionsErrorMessage" class="questions-error">
         <p class="status-message error" role="alert">{{ questionsErrorMessage }}</p>
         <button type="button" class="retry-button" @click="loadQuestions">問題を再読み込み</button>

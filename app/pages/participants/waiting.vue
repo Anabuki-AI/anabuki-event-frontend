@@ -87,11 +87,13 @@ onMounted(async () => {
 
 <template>
   <main class="page-shell">
-    <p v-if="!participant && !participantError" class="status-message" role="status">
-      参加情報を確認しています…
-    </p>
-
-    <section v-else class="form-card waiting-card quiz-page">
+    <section
+      class="form-card waiting-card quiz-page"
+      :aria-busy="!participant && !participantError"
+    >
+      <span v-if="!participant && !participantError" class="visually-hidden" role="status">
+        参加情報を確認しています…
+      </span>
       <div class="waiting-header">
         <div class="waiting-user">
           <p class="quiz-header-title">

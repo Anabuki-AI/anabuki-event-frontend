@@ -32,6 +32,30 @@
   white-space: nowrap;
 }
 
+.quiz-phase-badge-skeleton {
+  width: 108px;
+  padding: 0;
+}
+
+.quiz-loading-layout {
+  min-height: 570px;
+}
+
+.quiz-loading-layout .quiz-control-grid {
+  pointer-events: none;
+}
+
+.quiz-skeleton-panel {
+  width: 100%;
+  border-radius: 18px;
+}
+
+.quiz-skeleton-panel--clock { min-height: 260px; }
+.quiz-skeleton-panel--timer { min-height: 190px; }
+.quiz-skeleton-panel--phase { min-height: 170px; }
+.quiz-skeleton-panel--question { min-height: 300px; }
+.quiz-skeleton-panel--next { min-height: 170px; }
+
 .quiz-control-note {
   margin: 0;
   color: #516176;

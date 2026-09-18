@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import { useVotingRate } from '~/features/voting-rate/use-voting-rate'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/voting-rate.css'
@@ -76,13 +77,31 @@ const {
       >
         {{ errorMessage }}
       </p>
-      <p
+      <div
         v-else-if="isLoading && !currentQuestion"
-        class="status-message"
+        class="voting-loading"
         role="status"
+        aria-busy="true"
       >
-        読み込み中…
-      </p>
+        <span class="visually-hidden">投票率を読み込み中…</span>
+        <ul class="voting-summary voting-skeleton-summary">
+          <li v-for="index in 3" :key="index" class="summary-item">
+            <LoadingSkeleton class="voting-skeleton-summary-label" />
+            <LoadingSkeleton class="voting-skeleton-summary-value" />
+          </li>
+        </ul>
+        <div class="question-panel voting-skeleton-question">
+          <LoadingSkeleton class="voting-skeleton-select" />
+          <LoadingSkeleton class="voting-skeleton-question-number" />
+          <LoadingSkeleton class="voting-skeleton-question-text" />
+        </div>
+        <div class="option-list">
+          <div class="option-item voting-skeleton-option">
+            <LoadingSkeleton class="voting-skeleton-option-label" />
+            <LoadingSkeleton class="voting-skeleton-option-bar" />
+          </div>
+        </div>
+      </div>
 
       <template v-else-if="currentQuestion">
         <ul class="voting-summary">
