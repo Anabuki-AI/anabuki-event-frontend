@@ -17,11 +17,13 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
   const monitoringError = ref('')
   const accounts = ref<ManagementAccount[]>([])
   const accountsLoading = ref(false)
+  const accountsRefreshing = ref(false)
   const accountsLoaded = ref(false)
   const accountsError = ref('')
   const accountRemoving = ref(false)
   const operatorAccounts = ref<OperatorAccount[]>([])
   const operatorAccountsLoading = ref(false)
+  const changingOperatorId = ref<string | null>(null)
   const operatorAccountsLoaded = ref(false)
   const operatorAccountsError = ref('')
   const health = ref<HealthObservation | null>(null)
@@ -30,12 +32,15 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
   let disposed = false
   onUnmounted(() => { disposed = true })
 
-  async function loadAccounts() {
-    if (accountsLoading.value || disposed) return
-    accountsLoading.value = true
+  async function loadAccounts(refresh = accountsLoaded.value) {
+    if (accountsLoading.value || accountsRefreshing.value || disposed) return
     accountsError.value = ''
-    accountsLoaded.value = false
-    accounts.value = []
+    if (refresh && accountsLoaded.value) accountsRefreshing.value = true
+    else {
+      accountsLoading.value = true
+      accountsLoaded.value = false
+      accounts.value = []
+    }
     try {
       const result = await adminConsoleApi.accounts()
       if (disposed) return
@@ -46,12 +51,17 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
       if (disposed) return
       if (cause instanceof ApiError && [401, 403].includes(cause.statusCode ?? 0)) {
         accountsError.value = '一覧を表示する権限、またはログインの有効期限を確認できません。'
+        accounts.value = []
+        accountsLoaded.value = false
         await onAccessLost()
       }
       else accountsError.value = 'ユーザー一覧を取得できませんでした。接続を確認して再試行してください。'
     }
     finally {
-      if (!disposed) accountsLoading.value = false
+      if (!disposed) {
+        accountsLoading.value = false
+        accountsRefreshing.value = false
+      }
     }
   }
 
@@ -79,8 +89,8 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
   }
 
   async function setOperatorAccess(id: string, managerEnabled: boolean) {
-    if (operatorAccountsLoading.value || disposed) return
-    operatorAccountsLoading.value = true
+    if (changingOperatorId.value !== null || disposed) return
+    changingOperatorId.value = id
     operatorAccountsError.value = ''
     try {
       const account = await adminConsoleApi.setOperatorAccess(id, managerEnabled)
@@ -95,7 +105,7 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
       else operatorAccountsError.value = 'オペレーター権限を変更できませんでした。接続を確認して再試行してください。'
     }
     finally {
-      if (!disposed) operatorAccountsLoading.value = false
+      if (!disposed) changingOperatorId.value = null
     }
   }
 
@@ -165,5 +175,5 @@ export function useAdminConsoleData(onAccessLost: () => Promise<void>, monitorin
     }
   }
 
-  return { accounts, accountsLoading, accountsLoaded, accountsError, accountRemoving, operatorAccounts, operatorAccountsLoading, operatorAccountsLoaded, operatorAccountsError, health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError, loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadMonitoring }
+  return { accounts, accountsLoading, accountsRefreshing, accountsLoaded, accountsError, accountRemoving, operatorAccounts, operatorAccountsLoading, changingOperatorId, operatorAccountsLoaded, operatorAccountsError, health, healthLoading, healthError, monitoring, monitoringLoading, monitoringError, loadAccounts, loadOperatorAccounts, setOperatorAccess, removeAccount, checkHealth, loadMonitoring }
 }

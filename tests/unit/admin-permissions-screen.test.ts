@@ -36,4 +36,13 @@ describe('/admin/permissions の権限シート', () => {
     expect(source).toContain('オペレーター権限を解除しますか？')
     expect(source).toContain('confirmOperatorAccessRemoval')
   })
+
+  it('申請とオペレーター変更は対象行だけを pending にする', () => {
+    expect(source).toContain('decidingRequestId === request.id')
+    expect(source).toContain(':aria-busy="decidingRequestId === request.id"')
+    expect(source).toContain('changingOperatorId === account.id')
+    expect(source).toContain(':aria-busy="changingOperatorId === account.id"')
+    expect(source).toContain('承認中…')
+    expect(source).toContain('付与中…')
+  })
 })

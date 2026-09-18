@@ -27,6 +27,31 @@ describe('fetchVotingRate', () => {
     })
   })
 
+  it('手動更新に失敗しても直前の集計値と取得時刻を保持する', async () => {
+    mockedRequest
+      .mockResolvedValueOnce({
+        questions: [{ question_id: 12, position: 3, answered_count: 2, answered_rate: 0.67 }],
+        total_participants: 3,
+      })
+      .mockRejectedValueOnce(new Error('network unavailable'))
+
+    let votingRate: ReturnType<typeof useVotingRate> | undefined
+    const wrapper = mount(defineComponent({
+      setup() {
+        votingRate = useVotingRate()
+        return () => null
+      },
+    }))
+    await flushPromises()
+    await votingRate!.refresh()
+
+    expect(votingRate?.currentQuestion.value?.answeredCount).toBe(2)
+    expect(votingRate?.participantCount.value).toBe(3)
+    expect(votingRate?.lastUpdatedAt.value).toBeTruthy()
+    expect(votingRate?.errorMessage.value).toContain('network unavailable')
+    wrapper.unmount()
+  })
+
   it('snake_caseの回答率からNaNではない表示用パーセントを算出する', async () => {
     mockedRequest.mockResolvedValueOnce({
       questions: [{ question_id: 12, position: 3, answered_count: 2, answered_rate: 0.67 }],

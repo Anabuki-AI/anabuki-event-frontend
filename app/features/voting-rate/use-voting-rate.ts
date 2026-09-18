@@ -40,6 +40,7 @@ export function useVotingRate() {
   const totalParticipants = ref(0)
   const isLoading = ref(false)
   const errorMessage = ref('')
+  const lastUpdatedAt = ref<string | null>(null)
   const selectedQuestionValue = ref('')
 
   const questionChoices = computed<QuestionChoice[]>(() => createQuestionChoices(questions.value))
@@ -66,6 +67,7 @@ export function useVotingRate() {
       if (!findQuestion(questions.value, selectedQuestionValue.value)) {
         selectedQuestionValue.value = questions.value[0] ? String(questions.value[0].questionId) : ''
       }
+      lastUpdatedAt.value = new Date().toISOString()
     }
     catch (error) {
       errorMessage.value = toApiError(error).message
@@ -83,6 +85,7 @@ export function useVotingRate() {
     questions,
     isLoading,
     errorMessage,
+    lastUpdatedAt,
     questionChoices,
     selectedQuestionValue,
     currentQuestion,

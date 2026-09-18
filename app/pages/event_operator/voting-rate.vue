@@ -12,6 +12,7 @@ useSeoMeta({
 const {
   isLoading,
   errorMessage,
+  lastUpdatedAt,
   questionChoices,
   selectedQuestionValue,
   currentQuestion,
@@ -21,6 +22,10 @@ const {
   answeredRatePercent,
   refresh,
 } = useVotingRate()
+
+function formatUpdatedAt(value: string | null) {
+  return value ? new Date(value).toLocaleString('ja-JP') : ''
+}
 
 const {
   isSidebarExpanded,
@@ -70,15 +75,19 @@ const {
         </div>
       </header>
 
-      <p
+      <div
         v-if="errorMessage"
-        class="status-message error"
+        class="status-message error voting-error"
         role="alert"
       >
-        {{ errorMessage }}
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="voting-retry" :disabled="isLoading" @click="refresh()">{{ isLoading ? '再試行中…' : '再試行' }}</button>
+      </div>
+      <p v-if="lastUpdatedAt" class="voting-updated" :class="{ 'is-stale': !!errorMessage }" role="status">
+        最終更新: {{ formatUpdatedAt(lastUpdatedAt) }}<span v-if="errorMessage">（保存済みの値を表示中）</span>
       </p>
       <div
-        v-else-if="isLoading && !currentQuestion"
+        v-if="isLoading && !currentQuestion"
         class="voting-loading"
         role="status"
         aria-busy="true"

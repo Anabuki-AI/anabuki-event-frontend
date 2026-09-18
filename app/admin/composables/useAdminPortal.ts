@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
 import { adminAuthApi } from '../api/admin-auth'
 import { useAccessRequestPolling } from '~/lib/auth/access-request'
 import type {
@@ -14,6 +14,7 @@ export function useAdminPortal() {
   const pendingRequests = ref<AccessRequest[]>([])
   const configured = ref(false)
   const busy = ref(false)
+  const decidingRequestId = ref<number | null>(null)
   const ready = ref(false)
   const error = ref('')
   const notice = ref('')
@@ -56,9 +57,10 @@ export function useAdminPortal() {
     ready.value = true
   }
 
-  async function run(action: () => Promise<void>) {
-    if (busy.value || disposed) return
-    busy.value = true
+  async function run(action: () => Promise<void>, localPending?: Ref<number | null>, pendingId?: number) {
+    if (busy.value || disposed || (localPending && localPending.value !== null)) return
+    if (localPending) localPending.value = pendingId ?? null
+    else busy.value = true
     error.value = ''
     try {
       await action()
@@ -89,7 +91,8 @@ export function useAdminPortal() {
       }
     }
     finally {
-      busy.value = false
+      if (localPending) localPending.value = null
+      else busy.value = false
     }
   }
 
@@ -136,7 +139,7 @@ export function useAdminPortal() {
       await adminAuthApi.decide(id, decision)
       pendingRequests.value = pendingRequests.value.filter(item => item.id !== id)
       notice.value = decision === 'approve' ? '申請を承認しました。申請者は同じブラウザから管理画面へ進めます。' : '申請を却下しました。'
-    })
+    }, decidingRequestId, id)
   }
 
   function restoreNavigation() {
@@ -164,5 +167,5 @@ export function useAdminPortal() {
     refresh,
   })
 
-  return { session, accessRequest, pendingRequests, configured, busy, ready, error, notice, departing, isManager, canApprove, step, refresh, apply, enter, logout, decide }
+  return { session, accessRequest, pendingRequests, configured, busy, decidingRequestId, ready, error, notice, departing, isManager, canApprove, step, refresh, apply, enter, logout, decide }
 }

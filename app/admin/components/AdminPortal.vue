@@ -13,6 +13,7 @@ const {
   session,
   accessRequest,
   pendingRequests,
+  decidingRequestId,
   configured,
   busy,
   ready,
@@ -67,6 +68,7 @@ async function confirmLogout() {
     v-if="ready && isManager && session"
     :session="session"
     :pending-requests="pendingRequests"
+    :deciding-request-id="decidingRequestId"
     :busy="busy"
     :can-approve="canApprove"
     :error="error"

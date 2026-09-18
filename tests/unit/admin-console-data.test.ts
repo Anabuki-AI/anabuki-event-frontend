@@ -55,13 +55,14 @@ describe('admin console resource boundaries', () => {
     expect(api.setOperatorAccess).toHaveBeenCalledWith(operator.id, true)
   })
 
-  it('distinguishes an empty successful account list from an unavailable list', async () => {
-    api.accounts.mockResolvedValueOnce([]).mockRejectedValueOnce(new ApiError('outage', 503))
+  it('keeps the existing account list visible when a refresh fails', async () => {
+    const account = { id: 'account-1', email: 'team@example.test', source: 'MANAGEMENT_ACCESS' as const, active: true }
+    api.accounts.mockResolvedValueOnce([account]).mockRejectedValueOnce(new ApiError('outage', 503))
     const state = start()
     await state.loadAccounts()
-    expect(state.accountsLoaded.value).toBe(true)
     await state.loadAccounts()
-    expect(state.accountsLoaded.value).toBe(false)
+    expect(state.accountsLoaded.value).toBe(true)
+    expect(state.accounts.value).toEqual([account])
     expect(state.accountsError.value).toContain('取得できません')
   })
 
@@ -73,6 +74,22 @@ describe('admin console resource boundaries', () => {
     expect(state.accounts.value).toEqual([])
     expect(state.accountsError.value).toContain('権限')
     expect(refreshSession).toHaveBeenCalledOnce()
+  })
+
+  it('keeps operator rows available while a single identity change is pending', async () => {
+    const first = { id: 'operator-1', email: 'one@example.test', source: 'MANAGEMENT_ACCESS' as const, active: false, managerEnabled: false }
+    const second = { id: 'operator-2', email: 'two@example.test', source: 'MANAGEMENT_ACCESS' as const, active: true, managerEnabled: true }
+    let resolve!: (value: typeof first) => void
+    api.setOperatorAccess.mockImplementation(() => new Promise(done => { resolve = done }))
+    const state = start()
+    state.operatorAccounts.value = [first, second]
+    const change = state.setOperatorAccess(first.id, true)
+    expect(state.changingOperatorId.value).toBe(first.id)
+    expect(state.operatorAccounts.value).toEqual([first, second])
+    resolve({ ...first, active: true, managerEnabled: true })
+    await change
+    expect(state.changingOperatorId.value).toBeNull()
+    expect(state.operatorAccounts.value[1]).toEqual(second)
   })
 
   it('prevents duplicate account loads', async () => {
