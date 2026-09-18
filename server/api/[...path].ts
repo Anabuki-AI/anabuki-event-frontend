@@ -1,5 +1,5 @@
 import { createError, getRequestURL, proxyRequest, sendRedirect, setResponseHeader } from 'h3'
-import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime } from '../utils/cloudflare-backend'
+import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime, sanitizeBackendResponse } from '../utils/cloudflare-backend'
 
 // One same-origin API in development and production. Forward HttpOnly session
 // cookies and Set-Cookie headers, but leave OAuth redirects to the browser.
@@ -25,7 +25,8 @@ function oauthLoginPath(pathname: string) {
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
   const url = getRequestURL(event)
-  const target = `${config.backendBaseUrl.replace(/\/$/, '')}${url.pathname}${url.search}`
+  const backendBaseUrl = String(config.backendBaseUrl).replace(/\/$/, '')
+  const target = `${backendBaseUrl}${url.pathname}${url.search}`
   const cloudflareRuntime = isCloudflareRuntime(event)
   const cloudflareBackend = getCloudflareBackend(event)
   const isOAuthNavigation = event.method === 'GET' && OAUTH_NAVIGATION_PATHS.has(url.pathname)
@@ -53,26 +54,25 @@ export default defineEventHandler(async (event) => {
           await response.body?.cancel()
           return returnToLogin()
         }
-        return response
+        return sanitizeBackendResponse(response)
       }
 
       if (!cloudflareBackend) {
         throw createError({ statusCode: 503, statusMessage: 'Backend service binding is not configured' })
       }
 
-      // Service bindings keep Rails off the public Internet. The hostname is
-      // only a placeholder used to construct a valid Request for the binding.
+      // Service bindings use an internal placeholder only to construct a valid
+      // Request. The actual destination is selected by the binding itself.
       const serviceTarget = new URL(`${url.pathname}${url.search}`, 'https://anabuki-event-backend.internal')
-      const serviceRequest = createBackendRequest(event, serviceTarget, {
+      const response = await cloudflareBackend.fetch(createBackendRequest(event, serviceTarget, {
         forwardRequestHeaders: true,
         forwardedProto: url.protocol.replace(':', ''),
-      })
-      const response = await cloudflareBackend.fetch(serviceRequest)
+      }))
       if (isOAuthNavigation && response.status >= 400) {
         await response.body?.cancel()
         return returnToLogin()
       }
-      return response
+      return sanitizeBackendResponse(response)
     }
 
     const response = await proxyRequest(event, target, {
