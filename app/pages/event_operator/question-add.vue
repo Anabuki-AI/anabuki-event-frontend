@@ -14,6 +14,11 @@ const emit = defineEmits<{
 
 type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
 
+// 中継問題は出題時点まで正解が確定しないことがあるため、正解未選択のまま保存できる。
+// ただし backend の questions.correct_answer は NOT NULL かつ A〜D の inclusion バリデーション対象のため、
+// 未選択時はこの仮の値を送信する（運営者は後から編集フォームで正解を確定できる）。
+const RELAY_QUESTION_DEFAULT_CORRECT_ANSWER: ChoiceLabel = 'A'
+
 const form = reactive({
   questionText: '',
   points: String(QUESTION_POINTS_DEFAULT),
@@ -96,7 +101,7 @@ const canSave = computed<boolean>(
     && form.choiceB.trim().length > 0
     && form.choiceC.trim().length > 0
     && form.choiceD.trim().length > 0
-    && correctChoice.value !== null
+    && (correctChoice.value !== null || form.isRelayQuestion)
     && validatePointsInput(form.points, QUESTION_POINTS_MIN, QUESTION_POINTS_MAX) === '',
 )
 
@@ -116,7 +121,8 @@ function handleCorrectChoiceSelect(choice: ChoiceLabel) {
 }
 
 async function save() {
-  if (!canSave.value || correctChoice.value === null) return
+  if (!canSave.value) return
+  if (correctChoice.value === null && !form.isRelayQuestion) return
 
   isSaving.value = true
   submitErrorMessage.value = ''
@@ -126,7 +132,7 @@ async function save() {
     choiceB: form.choiceB.trim(),
     choiceC: form.choiceC.trim(),
     choiceD: form.choiceD.trim(),
-    correctAnswer: correctChoice.value,
+    correctAnswer: correctChoice.value ?? RELAY_QUESTION_DEFAULT_CORRECT_ANSWER,
     explanation: form.explanation.trim(),
     targetAudience: form.targetAudience.trim(),
     points: Number(form.points),
@@ -303,6 +309,9 @@ onUnmounted(() => {
           </div>
           <p class="question-add-hint">
             正解はA〜Dのいずれか1つを選択してください。
+          </p>
+          <p v-if="form.isRelayQuestion" class="question-add-hint">
+            中継問題として扱う場合、正解は未選択のまま保存できます（後から正解を編集できます）。
           </p>
         </fieldset>
 
