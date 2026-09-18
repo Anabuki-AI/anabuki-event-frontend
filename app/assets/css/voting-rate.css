@@ -60,6 +60,34 @@
   line-height: 1.6;
 }
 
+.voting-rate-shell .voting-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.voting-rate-shell .voting-retry {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #912018;
+  border-radius: 10px;
+  color: #912018;
+  background: #ffffff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.voting-rate-shell .voting-updated {
+  margin: 0;
+  color: #516176;
+  font-size: 0.75rem;
+}
+
+.voting-rate-shell .voting-updated.is-stale {
+  color: #912018;
+}
+
 .voting-rate-shell .voting-refresh {
   min-height: 44px;
   padding: 0 22px;
