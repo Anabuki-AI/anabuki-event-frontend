@@ -354,6 +354,16 @@
   color: rgb(255 255 255 / 78%);
 }
 
+.answer-shell .confidence-item.is-pending {
+  border-color: #1769c2;
+  color: #1769c2;
+  background: #e6f0fb;
+}
+
+.answer-shell .confidence-item.is-pending .confidence-rate {
+  color: #1769c2;
+}
+
 /* 現在の選択 + 予定獲得ポイント */
 .answer-shell .point-panel {
   display: grid;
@@ -424,6 +434,13 @@
   margin: 0;
   color: #516176;
   font-size: 0.8125rem;
+}
+
+.answer-shell .confidence-pending-message {
+  margin: 0;
+  color: #1769c2;
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .answer-shell .confidence-item:disabled,

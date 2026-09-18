@@ -8,9 +8,10 @@ type StateLoader = () => Promise<ParticipantQuizState>
 
 export interface ParticipantQuizPollerOptions {
   loadState: StateLoader
-  onState: (state: ParticipantQuizState) => void
+  onState: (state: ParticipantQuizState, requestGeneration?: number) => void
   onError: (error: unknown) => void
   document?: Document
+  getRequestGeneration?: () => number
 }
 
 /**
@@ -28,8 +29,11 @@ export function createParticipantQuizPoller(options: ParticipantQuizPollerOption
     if (!isVisible() || loading) return
 
     loading = true
+    const requestGeneration = options.getRequestGeneration?.()
     try {
-      options.onState(await options.loadState())
+      const nextState = await options.loadState()
+      if (requestGeneration == null) options.onState(nextState)
+      else options.onState(nextState, requestGeneration)
     }
     catch (error) {
       options.onError(error)
@@ -93,6 +97,12 @@ export function useParticipantQuizState(options: UseParticipantQuizStateOptions 
   const state = ref<ParticipantQuizState>()
   const isLoading = ref(true)
   const loadError = ref<unknown>()
+  let mutationGeneration = 0
+
+  function hasPhaseOrQuestionChanged(nextState: ParticipantQuizState) {
+    return state.value?.phase !== nextState.phase
+      || state.value?.question?.question_id !== nextState.question?.question_id
+  }
 
   function applyState(nextState: ParticipantQuizState) {
     state.value = nextState
@@ -101,10 +111,24 @@ export function useParticipantQuizState(options: UseParticipantQuizStateOptions 
     options.onState?.(nextState)
   }
 
+  function applyPolledState(nextState: ParticipantQuizState, requestGeneration?: number) {
+    if (requestGeneration != null && requestGeneration < mutationGeneration && !hasPhaseOrQuestionChanged(nextState)) return
+    applyState(nextState)
+  }
+
+  function beginMutation() {
+    mutationGeneration += 1
+  }
+
+  function endMutation() {
+    mutationGeneration += 1
+  }
+
   const poller = createParticipantQuizPoller({
     loadState: fetchParticipantQuizState,
     document: import.meta.client ? document : undefined,
-    onState: applyState,
+    getRequestGeneration: () => mutationGeneration,
+    onState: applyPolledState,
     onError: (error) => {
       loadError.value = error
       isLoading.value = false
@@ -120,6 +144,8 @@ export function useParticipantQuizState(options: UseParticipantQuizStateOptions 
     isLoading,
     loadError,
     applyState,
+    beginMutation,
+    endMutation,
     refresh: poller.refresh,
   }
 }

@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { defineComponent, nextTick } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   confirmParticipantQuizConfidence,
   fetchParticipantQuizState,
@@ -60,12 +60,26 @@ const Harness = defineComponent({
   template: '<div />',
 })
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (error: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { promise, resolve, reject }
+}
+
 async function flushPromises() {
   await Promise.resolve()
   await nextTick()
 }
 
 describe('参加者クイズのレベル確定', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   beforeEach(() => {
     mockedConfirmConfidence.mockReset()
     mockedFetchState.mockReset().mockResolvedValue(unlockedState)
@@ -161,6 +175,128 @@ describe('参加者クイズのレベル確定', () => {
     expect((vm as unknown as { isEditingAnswer: boolean }).isEditingAnswer).toBe(true)
     expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
     expect((vm as unknown as { selectedChoice: string }).selectedChoice).toBe('C')
+    wrapper.unmount()
+  })
+
+  it('解答POST成功後に遅れて返る同一問題のpollで受付済み表示を戻さない', async () => {
+    vi.useFakeTimers()
+    const stalePoll = deferred<ParticipantQuizState>()
+    mockedFetchState
+      .mockResolvedValueOnce(lowLockedState)
+      .mockReturnValueOnce(stalePoll.promise)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: { choice: 'B', confidence_level: 'low' } })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
+    await vi.advanceTimersByTimeAsync(5_000)
+    await (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
+
+    expect((vm as unknown as { screen: string }).screen).toBe('submitted')
+    expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
+
+    stalePoll.resolve({ ...lowLockedState, answered: false, my_answer: null })
+    await flushPromises()
+
+    expect((vm as unknown as { screen: string }).screen).toBe('submitted')
+    expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
+    wrapper.unmount()
+  })
+
+  it('自信度POST成功後に遅れて返る同一問題のpollでlockを戻さずpendingを消す', async () => {
+    vi.useFakeTimers()
+    const stalePoll = deferred<ParticipantQuizState>()
+    const normalLockedState: ParticipantQuizState = {
+      ...unlockedState,
+      confidence_level: 'high',
+      confidence_locked: true,
+    }
+    mockedFetchState
+      .mockResolvedValueOnce(unlockedState)
+      .mockReturnValueOnce(stalePoll.promise)
+    mockedConfirmConfidence.mockResolvedValueOnce(normalLockedState)
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    await vi.advanceTimersByTimeAsync(5_000)
+    ;(vm as unknown as { selectConfidenceLevel: (level: 'high') => void }).selectConfidenceLevel('high')
+    expect((vm as unknown as { pendingConfidenceLevel: string }).pendingConfidenceLevel).toBe('high')
+    await flushPromises()
+
+    expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(true)
+    expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('high')
+    expect((vm as unknown as { pendingConfidenceLevel: string | undefined }).pendingConfidenceLevel).toBeUndefined()
+
+    stalePoll.resolve(unlockedState)
+    await flushPromises()
+
+    expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(true)
+    expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('high')
+    wrapper.unmount()
+  })
+
+  it('mutation中でもphaseが変わったpollは反映する', async () => {
+    vi.useFakeTimers()
+    const stalePoll = deferred<ParticipantQuizState>()
+    mockedFetchState
+      .mockResolvedValueOnce(lowLockedState)
+      .mockReturnValueOnce(stalePoll.promise)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: { choice: 'B', confidence_level: 'low' } })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
+    await vi.advanceTimersByTimeAsync(5_000)
+    const submitPromise = (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
+    stalePoll.resolve({ ...lowLockedState, phase: 'closed' })
+    await flushPromises()
+    await submitPromise
+
+    expect((vm as unknown as { screen: string }).screen).toBe('closed')
+    wrapper.unmount()
+  })
+
+  it('mutation中でもquestionが変わったpollは反映する', async () => {
+    vi.useFakeTimers()
+    const stalePoll = deferred<ParticipantQuizState>()
+    const nextQuestionState: ParticipantQuizState = {
+      ...unlockedState,
+      question: { ...unlockedState.question!, question_id: 13 },
+    }
+    mockedFetchState
+      .mockResolvedValueOnce(lowLockedState)
+      .mockReturnValueOnce(stalePoll.promise)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: { choice: 'B', confidence_level: 'low' } })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
+    await vi.advanceTimersByTimeAsync(5_000)
+    const submitPromise = (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
+    stalePoll.resolve(nextQuestionState)
+    await flushPromises()
+    await submitPromise
+
+    expect((vm as unknown as { question: { question_id: number } }).question.question_id).toBe(13)
+    wrapper.unmount()
+  })
+
+  it('自信度POST失敗時はpendingを消して再試行可能に戻す', async () => {
+    mockedConfirmConfidence.mockRejectedValueOnce(new Error('offline'))
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { selectConfidenceLevel: (level: 'high') => void }).selectConfidenceLevel('high')
+    await flushPromises()
+
+    expect((vm as unknown as { pendingConfidenceLevel: string | undefined }).pendingConfidenceLevel).toBeUndefined()
+    expect((vm as unknown as { isConfirmingConfidence: boolean }).isConfirmingConfidence).toBe(false)
+    expect((vm as unknown as { confidenceMessage: string }).confidenceMessage).toContain('自信度を確定できませんでした')
     wrapper.unmount()
   })
 })

@@ -61,7 +61,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const isConfirmingConfidence = ref(false)
   const confidenceMessage = ref('')
 
-  const { state, isLoading, loadError, applyState, refresh } = useParticipantQuizState({
+  const { state, isLoading, loadError, applyState, beginMutation, endMutation, refresh } = useParticipantQuizState({
     onState: (nextState) => {
       if (isParticipantQuizWaitingState(nextState)) options.onWaiting()
     },
@@ -162,8 +162,8 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (isConfidenceLocked.value || isConfirmingConfidence.value) return
 
     confidenceMessage.value = ''
+    pendingConfidenceLevel.value = level
     if (level === 'low') {
-      pendingConfidenceLevel.value = level
       isConfidenceConfirmOpen.value = true
       return
     }
@@ -190,7 +190,9 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (!currentQuestion || isConfidenceLocked.value || isConfirmingConfidence.value) return
 
     isConfirmingConfidence.value = true
+    pendingConfidenceLevel.value = level
     confidenceMessage.value = ''
+    beginMutation()
     try {
       applyState(await confirmParticipantQuizConfidence({
         question_id: currentQuestion.question_id,
@@ -200,6 +202,8 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       isConfidenceConfirmOpen.value = false
     }
     catch (error) {
+      pendingConfidenceLevel.value = undefined
+      isConfidenceConfirmOpen.value = false
       if (error instanceof ApiError) {
         if (error.statusCode === 401) {
           options.onUnauthorized()
@@ -214,6 +218,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       confidenceMessage.value = '自信度を確定できませんでした。通信状況を確認して、もう一度お試しください。'
     }
     finally {
+      endMutation()
       isConfirmingConfidence.value = false
     }
   }
@@ -224,6 +229,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     isSubmitting.value = true
     submissionMessage.value = ''
+    beginMutation()
     try {
       const result = await submitParticipantQuizAnswer({
         question_id: currentQuestion.question_id,
@@ -259,6 +265,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       submissionMessage.value = '解答を送信できませんでした。通信状況を確認して、しばらくしてからお試しください。'
     }
     finally {
+      endMutation()
       isSubmitting.value = false
     }
   }
@@ -286,6 +293,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     cancelAnswerEditing,
     isConfidenceConfirmOpen,
     isConfirmingConfidence,
+    pendingConfidenceLevel,
     confidenceMessage,
     isSubmitting,
     canSubmit,

@@ -57,6 +57,7 @@ const {
   cancelAnswerEditing,
   isConfidenceConfirmOpen,
   isConfirmingConfidence,
+  pendingConfidenceLevel,
   confidenceMessage,
   isSubmitting,
   canSubmit,
@@ -182,8 +183,8 @@ onMounted(async () => {
               :key="option.value"
               type="button"
               class="confidence-item"
-              :class="{ 'is-selected': lockedConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
-              :aria-pressed="lockedConfidenceLevel === option.value"
+              :class="{ 'is-selected': lockedConfidenceLevel === option.value, 'is-pending': pendingConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
+              :aria-pressed="lockedConfidenceLevel === option.value || pendingConfidenceLevel === option.value"
               :disabled="isConfidenceLocked || isConfirmingConfidence"
               @click="selectConfidenceLevel(option.value)"
             >
@@ -195,6 +196,9 @@ onMounted(async () => {
               </span>
             </button>
           </div>
+          <p v-if="isConfirmingConfidence && pendingConfidenceLevel" class="confidence-pending-message" role="status">
+            {{ confidenceOptions.find(option => option.value === pendingConfidenceLevel)?.label }}を確定しています…
+          </p>
         </div>
 
         <p v-if="confidenceMessage" class="status-message error" role="alert">
