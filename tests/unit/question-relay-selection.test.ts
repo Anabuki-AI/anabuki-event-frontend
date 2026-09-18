@@ -71,6 +71,30 @@ describe('中継問題の正解編集ロック（問題編集フォーム）', (
     wrapper.unmount()
   })
 
+  it('選択済み・出題済みでも、現在ライブ進行画面で出題中(isLiveQuestion)の中継問題は正解ラジオボタンをロックし、ライブ中の注記を表示する', async () => {
+    // 「今回の出題」として選択されている(＝一覧上は選択中バッジ)だけでは、実際に
+    // ライブ進行画面へ進んでいるとは限らない。isLiveQuestion はその独立した状態を
+    // 表し、true の間は選択状態やrevealedAtに関わらず保存時に必ず拒否されるため、
+    // 保存を試す前からロック・案内表示する必要がある(このテストが検証する対象)。
+    const question = makeQuestion({
+      isRelayQuestion: true,
+      isSelectedRelayQuestion: true,
+      revealedAt: '2026-09-18T10:00:00.000Z',
+      isLiveQuestion: true,
+    })
+    const wrapper = mount(QuestionEdit, { props: { question }, attachTo: document.body })
+
+    const note = wrapper.find('.question-add-relay-lock-note')
+    expect(note.exists()).toBe(true)
+    expect(note.text()).toBe(
+      'この問題は現在ライブ進行画面で出題中(または直前に出題済み)のため、正解を変更できません。「出題管理」で次の問題に進んでから変更してください。',
+    )
+    const radios = wrapper.findAll('.question-add-correct-radio')
+    radios.forEach(radio => expect(radio.attributes('disabled')).toBeDefined())
+
+    wrapper.unmount()
+  })
+
   it('選択が外れていても、既にライブ出題・正解公開済み(revealedAt設定済み)の中継問題は正解ラジオボタンを操作できる', async () => {
     const question = makeQuestion({
       isRelayQuestion: true,

@@ -30,19 +30,8 @@ const form = reactive({
 })
 const correctChoice = ref<ChoiceLabel>(props.question.correctAnswer)
 const isSaving = ref(false)
-// 中継問題は、問題管理の一覧で「今回の出題」として選択されるまで正解を変更できない
-// (バックエンドAPIも同じ制約を強制する)。通常の問題には影響しない。
-// ただし、一度ライブ進行で出題・正解公開済み(revealedAt が設定済み)の中継問題は、
-// その後の出題で別の中継問題が選択されて選択が外れても、正解を変更できる。
-const isCorrectAnswerLocked = computed<boolean>(
-  () =>
-    props.question.isRelayQuestion === true
-    && props.question.isSelectedRelayQuestion !== true
-    && !props.question.revealedAt,
-)
 // バックエンドの correct_answer_locked_for_unselected_relay_question バリデーション
-// が返すエラーを、汎用メッセージではなくこの案内文で表示するために使う
-// (上の isCorrectAnswerLocked と同じ理由の場合のみ発生しうる)。
+// が返すエラーを、汎用メッセージではなくこの案内文で表示するために使う。
 const RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
   = 'この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。'
 // backend/app/models/question.rb の protect_live_question が返すエラー。
@@ -61,6 +50,35 @@ const CORRECT_ANSWER_LOCK_MESSAGES: Record<string, string> = {
   'cannot be changed for a relay question that is not selected': RELAY_CORRECT_ANSWER_LOCKED_MESSAGE,
   'cannot be changed while this question is live': LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE,
 }
+// 正解ロックの理由。2つは完全に独立した状態(isSelectedRelayQuestion と
+// isLiveQuestion)から生じるため、どちらか一方だけを見て判定すると
+// 「選択済みなのにロックされて見える/選択されていないだけだと誤案内する」
+// といった食い違いが起きる。'live' を 'unselected' より優先するのは、
+// 選択状態に関わらずライブ中は保存できない(バックエンドの優先順位と一致)ため。
+type CorrectAnswerLockReason = 'live' | 'unselected' | null
+const correctAnswerLockReason = computed<CorrectAnswerLockReason>(() => {
+  // ライブ進行画面で quiz_sessions.current_question として出題中(または
+  // 正解公開直後でまだ次の問題に進んでいない)間は、選択状態やrevealedAtに
+  // 関わらず常にロックする(backendのprotect_live_questionと同じ優先順位)。
+  if (props.question.isLiveQuestion === true) return 'live'
+  // 中継問題は、問題管理の一覧で「今回の出題」として選択されるまで正解を
+  // 変更できない(バックエンドAPIも同じ制約を強制する)。通常の問題には影響
+  // しない。ただし、一度ライブ進行で出題・正解公開済み(revealedAt設定済み)の
+  // 中継問題は、その後の出題で別の中継問題が選択されて選択が外れても、
+  // 正解を変更できる。
+  if (
+    props.question.isRelayQuestion === true
+    && props.question.isSelectedRelayQuestion !== true
+    && !props.question.revealedAt
+  ) return 'unselected'
+  return null
+})
+const isCorrectAnswerLocked = computed<boolean>(() => correctAnswerLockReason.value !== null)
+const correctAnswerLockNote = computed<string>(() => {
+  if (correctAnswerLockReason.value === 'live') return LIVE_QUESTION_CORRECT_ANSWER_LOCKED_MESSAGE
+  if (correctAnswerLockReason.value === 'unselected') return RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
+  return ''
+})
 const submitErrorMessage = ref('')
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
@@ -340,7 +358,7 @@ onUnmounted(() => {
         <fieldset class="question-add-field question-add-choices">
           <legend class="question-add-label">選択肢（正解にチェックを付けてください）</legend>
           <p v-if="isCorrectAnswerLocked" class="question-add-hint question-add-relay-lock-note" role="status">
-            {{ RELAY_CORRECT_ANSWER_LOCKED_MESSAGE }}
+            {{ correctAnswerLockNote }}
           </p>
 
           <div
