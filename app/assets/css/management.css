@@ -39,6 +39,8 @@
 .question-count-group { flex-wrap: wrap; gap: 10px; }
 .question-count { margin: 0; color: #516176; font-size: 14px; }
 .multiplier-status { color: #516176; font-size: 13px; }
+.multiplier-status-skeleton { display: flex; align-items: center; gap: 8px; }
+.multiplier-chip-skeleton { width: 72px; height: 28px; border-radius: 999px; }
 .multiplier-chip {
   padding: 5px 12px;
   border: 1px solid rgb(23 105 194 / 32%);
@@ -80,7 +82,18 @@
 .multiplier-error .status-message,
 .questions-error .status-message { display: inline-block; }
 .question-list { min-height: 0; }
+.question-list-skeleton { min-height: 356px; }
 .question-rows { display: flex; flex-direction: column; gap: 12px; }
+.question-row-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 14px 18px;
+}
+.question-skeleton-id { width: 52px; height: 18px; flex: 0 0 auto; }
+.question-skeleton-text { width: min(52%, 420px); height: 20px; }
+.question-skeleton-badge { width: 76px; height: 24px; margin-left: auto; flex: 0 0 auto; }
 .question-row {
   overflow: hidden;
   border: 1px solid rgb(19 34 56 / 10%);
