@@ -13,7 +13,10 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
+    // Browser requests always use the same-origin /api route. This URL is
+    // consumed only by the server-side proxy; production is the API hostname
+    // behind Cloudflare Tunnel and development keeps the local Rails fallback.
+    backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://api.anabuki-event.com' : 'http://localhost:8080'),
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
       // Rails GET /api/admin/api-status is the monitoring contract. Keep this
@@ -28,16 +31,6 @@ export default defineNuxtConfig({
   },
   nitro: {
     preset: 'cloudflare_module',
-    cloudflare: {
-      wrangler: {
-        services: [
-          {
-            binding: 'BACKEND',
-            service: 'anabuki-event-backend',
-          },
-        ],
-      },
-    },
     devProxy: {
       // h3がマウント済みプレフィックス(/api)をreq.urlから取り除いてから
       // プロキシへ渡すため、転送先に /api パスを含めて復元する

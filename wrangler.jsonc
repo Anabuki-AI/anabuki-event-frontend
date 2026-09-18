@@ -7,11 +7,5 @@
   "assets": {
     "binding": "ASSETS",
     "directory": "./.output/public"
-  },
-  "services": [
-    {
-      "binding": "BACKEND",
-      "service": "anabuki-event-backend"
-    }
-  ]
+  }
 }

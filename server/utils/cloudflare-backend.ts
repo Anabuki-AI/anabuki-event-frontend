@@ -1,14 +1,29 @@
-type BackendService = {
-  fetch(request: Request): Promise<Response>
-}
-
 type CloudflareEventContext = {
   cloudflare?: {
-    env?: {
-      BACKEND?: BackendService
-    }
+    env?: Record<string, unknown>
   }
 }
+
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'content-length',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+])
+
+const SPOOFABLE_REQUEST_HEADERS = new Set([
+  ...HOP_BY_HOP_HEADERS,
+  'forwarded',
+  'host',
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+])
 
 type RequestLike = {
   url?: unknown
@@ -20,7 +35,7 @@ type RequestLike = {
 
 type BackendEvent = {
   context?: unknown
-  // h3's request shape differs between the Node and Cloudflare adapters.
+  // H3's request shape differs between the Node and Cloudflare adapters.
   // Keep this boundary runtime-shaped instead of casting it to a Web Request.
   req: unknown
   method?: string
@@ -31,9 +46,9 @@ type BackendEvent = {
 
 /**
  * Nitro's cloudflare_module exposes the Worker environment at
- * event.context.cloudflare.env. The request itself remains on event.req (or
- * event.node.req for the Node adapter); it is intentionally handled through
- * the small runtime-shaped boundary below.
+ * event.context.cloudflare.env. The environment is used only to distinguish
+ * the Worker runtime; the backend itself is reached through the configured
+ * tunnel hostname, never a service binding.
  */
 function cloudflareContext(event: BackendEvent) {
   return (event.context as CloudflareEventContext | undefined)?.cloudflare
@@ -43,18 +58,17 @@ export function isCloudflareRuntime(event: BackendEvent) {
   return cloudflareContext(event)?.env !== undefined
 }
 
-export function getCloudflareBackend(event: BackendEvent) {
-  return cloudflareContext(event)?.env?.BACKEND
-}
-
 /** Copy either Web Request Headers or Node's plain header map into Web Headers. */
 function copyRequestHeaders(source: unknown, target: Headers) {
+  const copy = (name: unknown, value: unknown) => {
+    if (typeof name !== 'string' || value == null) return
+    const normalizedName = name.toLowerCase()
+    if (SPOOFABLE_REQUEST_HEADERS.has(normalizedName)) return
+    target.set(name, Array.isArray(value) ? value.filter(Boolean).join(', ') : String(value))
+  }
+
   if (source instanceof Headers) {
-    source.forEach((value, name) => {
-      if (!['connection', 'content-length'].includes(name.toLowerCase())) {
-        target.set(name, value)
-      }
-    })
+    source.forEach((value, name) => copy(name, value))
     return
   }
 
@@ -63,20 +77,12 @@ function copyRequestHeaders(source: unknown, target: Headers) {
   const iterableSource = source as { [Symbol.iterator]?: () => Iterator<unknown> }
   if (typeof iterableSource[Symbol.iterator] === 'function') {
     for (const entry of source as Iterable<unknown>) {
-      if (!Array.isArray(entry) || entry.length < 2) continue
-      const [name, value] = entry
-      if (typeof name !== 'string' || value == null) continue
-      if (!['connection', 'content-length'].includes(name.toLowerCase())) {
-        target.set(name, Array.isArray(value) ? value.join(', ') : String(value))
-      }
+      if (Array.isArray(entry) && entry.length >= 2) copy(entry[0], entry[1])
     }
     return
   }
 
-  for (const [name, value] of Object.entries(source)) {
-    if (value == null || ['connection', 'content-length'].includes(name.toLowerCase())) continue
-    target.set(name, Array.isArray(value) ? value.join(', ') : String(value))
-  }
+  for (const [name, value] of Object.entries(source)) copy(name, value)
 }
 
 function asRequestLike(value: unknown): RequestLike {
@@ -84,9 +90,9 @@ function asRequestLike(value: unknown): RequestLike {
 }
 
 /**
- * Build a request for a Worker service binding without changing the browser's
+ * Build a request for the private backend origin without changing the browser's
  * Origin. Rails uses Origin for its same-origin guard, so it must remain the
- * public frontend origin rather than the internal service URL.
+ * public frontend origin rather than the upstream API hostname.
  *
  * The forwarded protocol is derived from the incoming request URL, not
  * accepted from a client-supplied X-Forwarded-Proto header. This keeps Rails'
@@ -133,4 +139,30 @@ export function createBackendRequest(
     signal: request.signal,
   } as RequestInit & { duplex?: 'half' }
   return new Request(target, requestInit)
+}
+
+/**
+ * Return only end-to-end response headers. In particular, do not relay
+ * hop-by-hop headers from the tunnel origin, while preserving Set-Cookie for
+ * the same-origin browser session.
+ */
+export function sanitizeBackendResponse(response: Response) {
+  const headers = new Headers()
+  response.headers.forEach((value, name) => {
+    if (!HOP_BY_HOP_HEADERS.has(name)) headers.set(name, value)
+  })
+
+  const responseWithCookies = response.headers as Headers & { getSetCookie?: () => string[] }
+  const cookies = responseWithCookies.getSetCookie?.()
+  if (cookies?.length) {
+    headers.delete('set-cookie')
+    for (const cookie of cookies) headers.append('set-cookie', cookie)
+  }
+
+  headers.set('cache-control', 'no-store')
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
 }

@@ -1,18 +1,16 @@
 // @vitest-environment node
 
-import { describe, expect, it, vi } from 'vitest'
-import { createBackendRequest, getCloudflareBackend, isCloudflareRuntime } from '../../server/utils/cloudflare-backend'
+import { describe, expect, it } from 'vitest'
+import { createBackendRequest, isCloudflareRuntime, sanitizeBackendResponse } from '../../server/utils/cloudflare-backend'
 
-describe('Cloudflare backend service binding', () => {
-  it('reads BACKEND from Nitro cloudflare event context', () => {
-    const backend = { fetch: vi.fn() }
+describe('Cloudflare backend tunnel proxy', () => {
+  it('detects the Nitro Cloudflare runtime without requiring a service binding', () => {
     const event = {
-      context: { cloudflare: { env: { BACKEND: backend } } },
+      context: { cloudflare: { env: {} } },
       req: new Request('https://event.example/api/questions'),
     }
 
     expect(isCloudflareRuntime(event)).toBe(true)
-    expect(getCloudflareBackend(event)).toBe(backend)
   })
 
   it.each([
@@ -44,6 +42,24 @@ describe('Cloudflare backend service binding', () => {
     expect(request.headers.get('cookie')).toBe('admin_session=opaque-token')
     expect(request.headers.get('x-forwarded-proto')).toBe(expectedProtocol)
     expect(request.headers.has('content-length')).toBe(false)
+    expect(request.headers.has('host')).toBe(false)
+    expect(request.headers.has('x-forwarded-proto')).toBe(true)
+  })
+
+  it('removes hop-by-hop response headers while retaining cookies', () => {
+    const response = sanitizeBackendResponse(new Response('ok', {
+      status: 200,
+      headers: {
+        Connection: 'keep-alive',
+        'Set-Cookie': 'admin_session=opaque-token; HttpOnly',
+        'X-Test': 'ok',
+      },
+    }))
+
+    expect(response.headers.has('connection')).toBe(false)
+    expect(response.headers.get('x-test')).toBe('ok')
+    expect(response.headers.get('set-cookie')).toContain('admin_session=opaque-token')
+    expect(response.headers.get('cache-control')).toBe('no-store')
   })
 
   it('normalizes H3 Node plain-object headers and uses the trusted getRequestURL protocol', () => {
