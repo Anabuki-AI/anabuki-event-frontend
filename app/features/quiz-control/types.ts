@@ -10,6 +10,17 @@ export interface OperatorQuizCurrentQuestion {
   question_text: string
   choices: Record<ChoiceKey, string>
   image_url: string | null
+  /** True when the current live question is a relay question. */
+  is_relay_question?: boolean
+  /** True when this relay question is the one the operator picked to ask now. */
+  is_selected_relay_question?: boolean
+  /** ISO8601。答えが参加者に公開済みなら値が入る。 */
+  revealed_at?: string | null
+  /**
+   * 中継問題について、運営がライブ中に明示的に正解を確定させたかどうか。
+   * false のままだと correct_answer は作成/編集時点の暫定値の可能性がある。
+   */
+  live_correct_answer_confirmed?: boolean
   correct_answer: ChoiceKey
   answered_count: number
   /** 0〜1 の小数。 */

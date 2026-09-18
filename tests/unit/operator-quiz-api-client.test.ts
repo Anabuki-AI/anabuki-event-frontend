@@ -9,6 +9,7 @@ import {
   revealAnswer,
   resetQuiz,
   startQuiz,
+  updateCorrectAnswer,
 } from '~/features/quiz-control/api/client'
 
 vi.mock('~/lib/api/client', () => ({ request: vi.fn() }))
@@ -59,6 +60,7 @@ describe('運営クイズ進行 API client', () => {
     ['immediate close after timer expiry', () => closeAnswersImmediately(), '/operator/quiz/close', { immediate: true }],
     ['reveal', () => revealAnswer(), '/operator/quiz/reveal', undefined],
     ['finish', () => finishQuiz(), '/operator/quiz/finish', undefined],
+    ['live relay correct answer', () => updateCorrectAnswer('C'), '/operator/quiz/correct-answer', { correct_answer: 'C' }],
     ['reset with server confirmation', () => resetQuiz('RESET'), '/operator/quiz/reset', { confirmation: 'RESET' }],
   ])('%sをCookie付きPOST・リトライなしで実行する', async (_name, action, path, body) => {
     mockedRequest.mockResolvedValueOnce(state)

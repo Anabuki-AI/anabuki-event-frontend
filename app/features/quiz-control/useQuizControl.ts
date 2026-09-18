@@ -1,5 +1,5 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import type { OperatorQuizResetOperation, OperatorQuizState } from './types'
+import type { ChoiceKey, OperatorQuizResetOperation, OperatorQuizState } from './types'
 import { getNextQuizPosition, getQuizPhase, PHASE_LABELS } from './types'
 import {
   closeAnswers,
@@ -10,6 +10,7 @@ import {
   revealAnswer,
   resetQuiz,
   startQuiz,
+  updateCorrectAnswer,
 } from './api/client'
 import { ApiError, toApiError } from '~/lib/api/error'
 
@@ -105,6 +106,12 @@ export function useQuizControl() {
     '問題公開',
   )
 
+  const setCorrectAnswer = (choice: ChoiceKey) => act(
+    () => updateCorrectAnswer(choice),
+    `正解を${choice}に設定しました。`,
+    `正解を${choice}に設定`,
+  )
+
   const close = () => act(closeAnswers, '10秒後に解答受付を締め切ります。', '解答締め切りを開始')
   const closeImmediately = () => act(closeAnswersImmediately, '解答の受付を締め切りました。', '時間切れで解答締め切り')
   const reveal = () => act(revealAnswer, '答えを表示しました。', '答え表示')
@@ -166,6 +173,7 @@ export function useQuizControl() {
     refresh,
     start,
     publish,
+    setCorrectAnswer,
     close,
     closeImmediately,
     reveal,

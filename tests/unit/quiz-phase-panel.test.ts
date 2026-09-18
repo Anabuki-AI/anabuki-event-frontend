@@ -26,8 +26,8 @@ function makeState(overrides: Partial<OperatorQuizState>): OperatorQuizState {
   }
 }
 
-function mountPanel(state: OperatorQuizState) {
-  return mount(QuizPhasePanel, { props: { state, isActing: false } })
+function mountPanel(state: OperatorQuizState, revealBlockedReason: string | null = null) {
+  return mount(QuizPhasePanel, { props: { state, isActing: false, revealBlockedReason } })
 }
 
 describe('QuizPhasePanel のAPI状態別描画', () => {
@@ -88,6 +88,26 @@ describe('QuizPhasePanel のAPI状態別描画', () => {
     const wrapper = mountPanel(makeState({ status: 'in_progress', phase: 'closed', current: currentQuestion }))
     await wrapper.find('.quiz-action-button').trigger('click')
     expect(wrapper.emitted('reveal')).toHaveLength(1)
+  })
+
+  it('中継問題の正解が未確定なら答え表示ボタンを無効化し理由を表示する', async () => {
+    const wrapper = mountPanel(
+      makeState({ status: 'in_progress', phase: 'closed', current: currentQuestion }),
+      '中継問題の正解が未確定です。',
+    )
+    expect(wrapper.find('.quiz-action-button').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('.quiz-phase-hint').text()).toBe('中継問題の正解が未確定です。')
+
+    await wrapper.find('.quiz-action-button').trigger('click')
+    expect(wrapper.emitted('reveal')).toBeUndefined()
+  })
+
+  it('答え表示以外のフェーズではrevealBlockedReasonがあってもボタンを無効化しない', () => {
+    const wrapper = mountPanel(
+      makeState({ status: 'in_progress', phase: 'answering', current: currentQuestion }),
+      '中継問題の正解が未確定です。',
+    )
+    expect(wrapper.find('.quiz-action-button').attributes('disabled')).toBeUndefined()
   })
 
   it('終了ボタン押下でfinishイベントが発火する', async () => {

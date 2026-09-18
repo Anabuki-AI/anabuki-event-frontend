@@ -1,17 +1,35 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { CHOICE_KEYS, getQuizPhase } from '../types'
-import type { OperatorQuizState } from '../types'
+import type { ChoiceKey, OperatorQuizState } from '../types'
 import { resolveApiImageUrl } from '~/lib/api/image'
 
 const props = defineProps<{
   state: OperatorQuizState
+  isActing?: boolean
+}>()
+const emit = defineEmits<{
+  correctAnswer: [choice: ChoiceKey]
 }>()
 
 const phase = computed(() => getQuizPhase(props.state))
 const currentQuestion = computed(() => props.state.current)
 const imageUrl = computed(() => resolveApiImageUrl(currentQuestion.value?.image_url ?? null))
 const isAnswerVisible = computed(() => phase.value === 'REVEALED' || phase.value === 'FINISHED')
+const isLiveRelayQuestion = computed(() =>
+  currentQuestion.value?.is_relay_question === true
+  && currentQuestion.value?.is_selected_relay_question === true,
+)
+const isCorrectAnswerEditable = computed(() =>
+  props.state.status === 'in_progress'
+  && isLiveRelayQuestion.value
+  && phase.value !== 'REVEALED'
+  && phase.value !== 'FINISHED',
+)
+/** 正解未確定のまま答え表示すると仮の値が公開されてしまうため、確定済みかどうかで注記を出し分ける。 */
+const isLiveCorrectAnswerConfirmed = computed(() =>
+  !isLiveRelayQuestion.value || currentQuestion.value?.live_correct_answer_confirmed === true,
+)
 const statusLabel = computed(() => {
   switch (phase.value) {
     case 'PUBLISHED':
@@ -27,6 +45,12 @@ const statusLabel = computed(() => {
 const answeredRatePercent = computed(() =>
   currentQuestion.value ? Math.round(currentQuestion.value.answered_rate * 100) : 0,
 )
+
+function selectCorrectAnswer(choice: ChoiceKey) {
+  if (!isCorrectAnswerEditable.value || props.isActing) return
+  if (currentQuestion.value?.correct_answer === choice) return
+  emit('correctAnswer', choice)
+}
 </script>
 
 <template>
@@ -70,6 +94,40 @@ const answeredRatePercent = computed(() =>
     <p v-else class="quiz-answer-masked">
       正解は締め切り後に表示されます
     </p>
+
+    <fieldset
+      v-if="isLiveRelayQuestion"
+      class="quiz-live-answer-selector"
+      :disabled="!isCorrectAnswerEditable || props.isActing"
+    >
+      <legend>中継問題の正解</legend>
+      <p
+        class="quiz-live-answer-selector-note"
+        :class="{ 'is-warning': !isLiveCorrectAnswerConfirmed }"
+      >
+        <template v-if="isLiveCorrectAnswerConfirmed">
+          参加者への答え表示前に、運営側で正解を確定してください。選択は即時反映されます。
+        </template>
+        <template v-else>
+          正解が未確定です。下から必ず選択してから答え表示してください（未選択のまま表示すると仮の値が公開されます）。
+        </template>
+      </p>
+      <div class="quiz-live-answer-options" role="radiogroup" aria-label="中継問題の正解">
+        <label v-for="key in CHOICE_KEYS" :key="key" class="quiz-live-answer-option">
+          <input
+            type="radio"
+            name="live-relay-correct-answer"
+            :value="key"
+            :checked="currentQuestion.correct_answer === key && isLiveCorrectAnswerConfirmed"
+            @change="selectCorrectAnswer(key)"
+          >
+          <span>{{ key }}：{{ currentQuestion.choices[key] }}</span>
+        </label>
+      </div>
+      <p v-if="!isCorrectAnswerEditable" class="quiz-live-answer-selector-note">
+        答え表示後は正解を変更できません。
+      </p>
+    </fieldset>
   </article>
 
   <article v-else class="quiz-question-card is-empty">

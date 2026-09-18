@@ -10,6 +10,7 @@ import {
   revealAnswer,
   resetQuiz,
   startQuiz,
+  updateCorrectAnswer,
 } from '~/features/quiz-control/api/client'
 import { useQuizControl } from '~/features/quiz-control/useQuizControl'
 import { ApiError } from '~/lib/api/error'
@@ -23,6 +24,7 @@ vi.mock('~/features/quiz-control/api/client', () => ({
   revealAnswer: vi.fn(),
   resetQuiz: vi.fn(),
   startQuiz: vi.fn(),
+  updateCorrectAnswer: vi.fn(),
 }))
 
 const state = {
@@ -37,6 +39,7 @@ const mockedStart = vi.mocked(startQuiz)
 const mockedPublish = vi.mocked(publishQuestion)
 const mockedFinish = vi.mocked(finishQuiz)
 const mockedReset = vi.mocked(resetQuiz)
+const mockedUpdateCorrectAnswer = vi.mocked(updateCorrectAnswer)
 
 const Harness = defineComponent({
   setup: useQuizControl,
@@ -58,6 +61,7 @@ describe('useQuizControl', () => {
     vi.mocked(revealAnswer).mockReset()
     mockedFinish.mockReset()
     mockedReset.mockReset()
+    mockedUpdateCorrectAnswer.mockReset()
   })
 
   it('進行操作後にstateを再取得し、二重操作を送らない', async () => {
@@ -107,6 +111,19 @@ describe('useQuizControl', () => {
 
     expect(mockedPublish).toHaveBeenCalledOnce()
     expect(mockedPublish).toHaveBeenCalledWith()
+    wrapper.unmount()
+  })
+
+  it('中継問題の正解変更をサーバーへ委譲し、最新stateを取得する', async () => {
+    const wrapper = mount(Harness)
+    await flushPromises()
+    mockedUpdateCorrectAnswer.mockResolvedValueOnce(state)
+
+    const control = wrapper.vm as unknown as ReturnType<typeof useQuizControl>
+    await control.setCorrectAnswer('C')
+
+    expect(mockedUpdateCorrectAnswer).toHaveBeenCalledWith('C')
+    expect((wrapper.vm as { noticeMessage: string }).noticeMessage).toBe('正解をCに設定しました。')
     wrapper.unmount()
   })
 

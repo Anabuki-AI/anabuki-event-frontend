@@ -315,6 +315,71 @@
   font-size: 13px;
 }
 
+.quiz-live-answer-selector {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid rgb(23 105 194 / 20%);
+  border-radius: 12px;
+  background: #f5f8ff;
+}
+
+.quiz-live-answer-selector legend {
+  padding: 0 6px;
+  color: #1769c2;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.quiz-live-answer-selector-note {
+  margin: 0;
+  color: #516176;
+  font-size: 13px;
+}
+
+.quiz-live-answer-selector-note.is-warning {
+  color: #912018;
+  font-weight: 700;
+}
+
+.quiz-phase-hint.is-warning {
+  color: #912018;
+  font-weight: 700;
+}
+
+.quiz-live-answer-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quiz-live-answer-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgb(19 34 56 / 12%);
+  border-radius: 10px;
+  color: #132238;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.quiz-live-answer-option:has(input:checked) {
+  border-color: #1769c2;
+  color: #1769c2;
+  background: #eaf2ff;
+  font-weight: 750;
+}
+
+.quiz-live-answer-selector:disabled .quiz-live-answer-option {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 /* ===== 時刻・履歴パネル(QuizClockPanel、補助情報) ===== */
 
 .quiz-clock-panel {

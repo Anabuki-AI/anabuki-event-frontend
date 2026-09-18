@@ -1,4 +1,4 @@
-import type { OperatorQuizResetResponse, OperatorQuizState } from '../types'
+import type { ChoiceKey, OperatorQuizResetResponse, OperatorQuizState } from '../types'
 import { request } from '~/lib/api/client'
 
 const credentials = 'include' as const
@@ -18,6 +18,11 @@ export function startQuiz(): Promise<OperatorQuizState> {
 
 export function publishQuestion(): Promise<OperatorQuizState> {
   return act('/operator/quiz/publish')
+}
+
+/** Sets the answer for the relay question that is currently live. */
+export function updateCorrectAnswer(correctAnswer: ChoiceKey): Promise<OperatorQuizState> {
+  return act('/operator/quiz/correct-answer', { correct_answer: correctAnswer })
 }
 
 /** Starts the participant-visible ten-second close countdown. */
