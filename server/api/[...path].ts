@@ -1,5 +1,5 @@
 import { createError, getRequestURL, proxyRequest, sendRedirect, setResponseHeader } from 'h3'
-import { createBackendRequest, getCloudflareBackend, isCloudflareRuntime } from '../utils/cloudflare-backend'
+import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime } from '../utils/cloudflare-backend'
 
 // One same-origin API in development and production. Forward HttpOnly session
 // cookies and Set-Cookie headers, but leave OAuth redirects to the browser.
@@ -36,6 +36,26 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'no-store')
   try {
     if (cloudflareRuntime) {
+      const remoteOrigin = getRemoteBackendOrigin(event)
+      if (remoteOrigin) {
+        // Cloudflare Tunnel origin: the Worker fetches the Rails API over its
+        // public https hostname. The browser's Origin must still be forwarded
+        // unchanged for Rails' same-origin guard, and the Host header must
+        // reflect the tunnel hostname, so it is dropped from the copy.
+        const remoteTarget = new URL(`${url.pathname}${url.search}`, remoteOrigin)
+        const remoteRequest = createBackendRequest(event, remoteTarget, {
+          forwardRequestHeaders: true,
+          forwardedProto: url.protocol.replace(':', ''),
+          excludeHostHeader: true,
+        })
+        const response = await fetch(remoteRequest)
+        if (isOAuthNavigation && response.status >= 400) {
+          await response.body?.cancel()
+          return returnToLogin()
+        }
+        return response
+      }
+
       if (!cloudflareBackend) {
         throw createError({ statusCode: 503, statusMessage: 'Backend service binding is not configured' })
       }

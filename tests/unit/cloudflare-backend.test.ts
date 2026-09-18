@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it, vi } from 'vitest'
-import { createBackendRequest, getCloudflareBackend, isCloudflareRuntime } from '../../server/utils/cloudflare-backend'
+import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime } from '../../server/utils/cloudflare-backend'
 
 describe('Cloudflare backend service binding', () => {
   it('reads BACKEND from Nitro cloudflare event context', () => {
@@ -75,5 +75,33 @@ describe('Cloudflare backend service binding', () => {
     expect(request.headers.get('x-test')).toBe('one, two')
     expect(request.headers.get('x-forwarded-proto')).toBe('https')
     expect(request.headers.has('content-length')).toBe(false)
+  })
+
+  it('exposes the tunnel origin only for https and drops the Host header for remote fetches', () => {
+    const incomingOrigin = 'https://event.example'
+    const tunnelEvent = {
+      context: { cloudflare: { env: { NUXT_BACKEND_ORIGIN: 'https://api.anabuki-event.com' } } },
+      req: new Request(`${incomingOrigin}/api/health`, {
+        headers: { Origin: incomingOrigin, Host: 'event.example' },
+      }),
+    }
+    expect(getRemoteBackendOrigin(tunnelEvent)).toBe('https://api.anabuki-event.com')
+
+    const insecureEvent = {
+      context: { cloudflare: { env: { NUXT_BACKEND_ORIGIN: 'http://api.anabuki-event.com' } } },
+      req: new Request('https://event.example/api/health'),
+    }
+    expect(getRemoteBackendOrigin(insecureEvent)).toBeUndefined()
+
+    const unboundEvent = { context: {}, req: new Request('https://event.example/api/health') }
+    expect(getRemoteBackendOrigin(unboundEvent)).toBeUndefined()
+
+    const request = createBackendRequest(
+      tunnelEvent,
+      new URL('https://api.anabuki-event.com/api/health'),
+      { forwardRequestHeaders: true, forwardedProto: 'https', excludeHostHeader: true },
+    )
+    expect(request.headers.has('host')).toBe(false)
+    expect(request.headers.get('origin')).toBe(incomingOrigin)
   })
 })
