@@ -13,6 +13,8 @@ export interface ParticipantQuizQuestion {
   choices: Record<AnswerChoice, string>
   /** Lv.1（low）確定時にサーバーが選んだ不正解の選択肢。未確定/他レベルでは null。 */
   eliminated_choice: AnswerChoice | null
+  /** 中継問題のライブ出題中は true。正解・不正解が未確定のためLv.1を選択できない。 */
+  is_live_relay_question?: boolean
   image_url: string | null
 }
 
