@@ -11,12 +11,12 @@ export interface AuditLogQuery {
 
 // GET /api/admin/audit-logs — guarded server-side by MANAGEMENT_PAGE_VIEW.
 // Same contract options as the other admin reads: session cookies, no retry,
-// 10-second timeout, no-store (contract + proxy requirement).
+// 20-second timeout, no-store (contract + proxy requirement).
 export const auditLogApi = {
   page: (query: AuditLogQuery) => request<unknown>('/admin/audit-logs', {
     credentials: 'include',
     retry: 0,
-    timeout: 10000,
+    timeout: 20000,
     query: {
       page: query.page,
       perPage: query.perPage,

@@ -8,14 +8,14 @@ const { adminConsoleApi } = await import('~/admin/api/admin-console')
 afterEach(() => vi.clearAllMocks())
 
 describe('admin api-status request boundary', () => {
-  it('uses the Rails api-status URL with the session, no retries, and the existing timeout budget', () => {
+  it('uses the Rails api-status URL with the session, no retries, and the 20-second timeout budget', () => {
     adminConsoleApi.monitoring()
 
     expect(request).toHaveBeenCalledOnce()
     expect(request).toHaveBeenCalledWith('/admin/api-status', {
       credentials: 'include',
       retry: 0,
-      timeout: 10000,
+      timeout: 20000,
     })
   })
 
