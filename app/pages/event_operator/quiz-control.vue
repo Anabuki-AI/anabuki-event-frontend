@@ -36,6 +36,7 @@ const {
   reveal,
   finish,
   reset,
+  setCorrectAnswer,
 } = useQuizControl()
 
 const RESET_CONFIRMATION = 'RESET'
@@ -83,6 +84,18 @@ function handleAutomaticExpiry() {
   if (phase.value !== 'PUBLISHED') return
   closeImmediately()
 }
+
+// 中継問題は正解が未確定のまま登録されうる(既定値はプレースホルダ)。運営が
+// ライブ中に明示的に確定させる前に「答え表示」が押されると、参加者に仮の
+// 正解が公開されてしまうため、その間はボタン自体を無効化する。
+const revealBlockedReason = computed(() => {
+  const current = state.value?.current
+  if (!current) return null
+  if (current.is_relay_question !== true || current.is_selected_relay_question !== true) return null
+  if (current.live_correct_answer_confirmed === true) return null
+
+  return '中継問題の正解が未確定です。上の「中継問題の正解」から選択してから答え表示してください。'
+})
 </script>
 
 <template>
@@ -225,13 +238,14 @@ function handleAutomaticExpiry() {
             <QuizPhasePanel
               :state="state"
               :is-acting="isActing"
+              :reveal-blocked-reason="revealBlockedReason"
               @start="start"
               @publish="publish"
               @close="close"
               @reveal="reveal"
               @finish="finish"
             />
-            <QuizCurrentQuestionCard :state="state" />
+            <QuizCurrentQuestionCard :state="state" :is-acting="isActing" @correct-answer="setCorrectAnswer" />
             <QuizNextQuestionPreview :next-question="state.next_question ?? null" />
           </div>
         </div>

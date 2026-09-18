@@ -6,6 +6,12 @@ import type { QuizPhase, OperatorQuizState } from '../types'
 const props = defineProps<{
   state: OperatorQuizState
   isActing: boolean
+  /**
+   * 「答え表示」を無効化する理由。中継問題の正解がまだ未確定の間、
+   * 誤って仮の正解を参加者に公開してしまわないための安全策。
+   * null/未指定なら通常通り操作可能。
+   */
+  revealBlockedReason?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -77,8 +83,10 @@ watch(phase, () => {
   })
 }, { immediate: true })
 
+const isRevealBlocked = computed(() => action.value?.key === 'reveal' && Boolean(props.revealBlockedReason))
+
 function handleAction() {
-  if (!action.value || props.isActing) return
+  if (!action.value || props.isActing || isRevealBlocked.value) return
 
   switch (action.value.key) {
     case 'start':
@@ -114,13 +122,13 @@ function handleAction() {
     </ol>
 
     <div v-if="action" class="quiz-phase-action">
-      <p class="quiz-phase-hint">
-        {{ action.hint }}
+      <p class="quiz-phase-hint" :class="{ 'is-warning': isRevealBlocked }">
+        {{ isRevealBlocked ? revealBlockedReason : action.hint }}
       </p>
       <button
         type="button"
         class="quiz-action-button"
-        :disabled="isActing"
+        :disabled="isActing || isRevealBlocked"
         @click="handleAction"
       >
         {{ isActing ? '処理中…' : action.label }}
