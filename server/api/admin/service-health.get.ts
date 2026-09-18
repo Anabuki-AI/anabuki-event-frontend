@@ -1,5 +1,5 @@
 import { createError, getRequestURL, setResponseHeader } from 'h3'
-import { createBackendRequest, getCloudflareBackend, isCloudflareRuntime } from '../../utils/cloudflare-backend'
+import { createBackendRequest, getCloudflareBackend, getRemoteBackendOrigin, isCloudflareRuntime } from '../../utils/cloudflare-backend'
 
 // Rails /health is a public, liveness-only check. Never accept a target from input
 // and never forward session cookies or Origin to a monitoring destination.
@@ -7,9 +7,24 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'Cache-Control', 'no-store')
   const cloudflareRuntime = isCloudflareRuntime(event)
   const cloudflareBackend = getCloudflareBackend(event)
+  const remoteOrigin = getRemoteBackendOrigin(event)
 
   try {
     if (cloudflareRuntime) {
+      if (remoteOrigin) {
+        // Cloudflare Tunnel origin: plain liveness fetch without forwarding
+        // any client headers (mirrors the service binding behavior below).
+        const response = await fetch(new URL('/health', remoteOrigin), {
+          redirect: 'error',
+        })
+        if (!response.ok) {
+          await response.body?.cancel()
+          throw createError({ statusCode: 502, statusMessage: 'Backend health check failed' })
+        }
+        const result = await response.json() as { status?: string }
+        return { status: result.status === 'ok' ? 'ok' : 'unknown' }
+      }
+
       if (!cloudflareBackend) {
         throw createError({ statusCode: 503, statusMessage: 'Backend service binding is not configured' })
       }
