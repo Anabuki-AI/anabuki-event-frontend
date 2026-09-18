@@ -95,6 +95,12 @@
   font-size: 0.75rem;
 }
 
+.question-add-shell .question-add-relay-lock-note {
+  margin: 4px 0 10px;
+  color: #a3661b;
+  font-weight: 700;
+}
+
 /* --- 問題画像アップロード --- */
 
 .question-add-shell .question-add-dropzone {

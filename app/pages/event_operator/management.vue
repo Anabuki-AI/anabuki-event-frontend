@@ -4,6 +4,7 @@ import {
   deleteQuestion,
   fetchConfidenceMultipliers,
   fetchQuestions,
+  selectRelayQuestion,
 } from '~/features/problems/api/client'
 import { CHOICE_KEYS, CONFIDENCE_LEVEL_LABELS, CONFIDENCE_LEVELS, formatMultiplier } from '~/features/problems/constants'
 import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '~/features/problems/types'
@@ -36,6 +37,8 @@ const deleteErrorMessage = ref('')
 const isAddModalOpen = ref(false)
 const editingQuestion = ref<Question | null>(null)
 const previewingQuestion = ref<Question | null>(null)
+const relaySelectionSavingId = ref<number | null>(null)
+const relaySelectionErrorMessage = ref('')
 const {
   isSidebarExpanded,
   toggleSidebar,
@@ -107,6 +110,29 @@ async function confirmDelete() {
 
 function handleMultiplierUpdated(level: ConfidenceLevel, value: string) {
   if (confidenceMultipliers.value != null) confidenceMultipliers.value[level] = value
+}
+
+/**
+ * 中継問題の「今回出題する1問」を選択/選択解除する。
+ * 選択すると他の中継問題の選択は自動的に解除される(バックエンドが保証)ため、
+ * 一覧全体を再読み込みして状態を揃える。
+ */
+async function toggleRelaySelection(question: Question) {
+  if (relaySelectionSavingId.value !== null) return
+
+  relaySelectionSavingId.value = question.id
+  relaySelectionErrorMessage.value = ''
+  try {
+    await selectRelayQuestion(question, !question.isSelectedRelayQuestion)
+    await loadQuestions()
+  }
+  catch (error) {
+    const apiError = toApiError(error)
+    relaySelectionErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
+  }
+  finally {
+    relaySelectionSavingId.value = null
+  }
 }
 
 function closeAddModal() {
@@ -190,6 +216,10 @@ onMounted(() => {
         <button type="button" class="retry-button" @click="loadMultipliers">倍率を再読み込み</button>
       </div>
 
+      <p v-if="relaySelectionErrorMessage" class="status-message error" role="alert">
+        中継問題の選択に失敗しました。{{ relaySelectionErrorMessage }}
+      </p>
+
       <p v-if="isQuestionsLoading" class="status-message" role="status">問題を読み込み中…</p>
       <div v-else-if="questionsErrorMessage" class="questions-error">
         <p class="status-message error" role="alert">{{ questionsErrorMessage }}</p>
@@ -205,9 +235,28 @@ onMounted(() => {
               <span class="question-id">{{ formatQuestionPosition(question.position) }}</span>
               <span class="question-text">{{ question.questionText }}</span>
               <span class="points-badge">配点 {{ question.points }}点</span>
+              <span
+                v-if="question.isRelayQuestion"
+                class="relay-badge"
+                :class="{ 'is-selected': question.isSelectedRelayQuestion }"
+              >{{ question.isSelectedRelayQuestion ? '中継問題・選択中' : '中継問題' }}</span>
               <span class="correct-badge" :title="`正解: ${correctChoiceText(question)}`">{{ formatCorrectBadge(question) }}</span>
             </summary>
             <div class="question-row-detail">
+              <div v-if="question.isRelayQuestion" class="relay-selection-row">
+                <button
+                  type="button"
+                  class="relay-select-toggle"
+                  :class="{ 'is-selected': question.isSelectedRelayQuestion }"
+                  :disabled="relaySelectionSavingId !== null"
+                  @click="toggleRelaySelection(question)"
+                >
+                  {{ question.isSelectedRelayQuestion ? '今回の出題の選択を解除' : '今回の出題として選択' }}
+                </button>
+                <p v-if="!question.isSelectedRelayQuestion" class="relay-selection-note">
+                  中継問題は複数登録できますが、今回出題する1問を選択するまで正解を編集できません。
+                </p>
+              </div>
               <p v-if="question.targetAudience" class="question-target-audience">
                 出題対象: {{ question.targetAudience }}
               </p>
