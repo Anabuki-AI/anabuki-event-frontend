@@ -99,6 +99,64 @@
   line-height: 1.25;
 }
 
+.answer-shell .answer-loading-card {
+  min-height: 430px;
+  grid-template-rows: 18px 24px 18px auto auto 52px 52px;
+  gap: 12px;
+}
+
+.answer-shell .answer-skeleton-question-number {
+  width: 54px;
+  height: 18px;
+}
+
+.answer-shell .answer-skeleton-question-line--long {
+  width: 92%;
+  height: 24px;
+}
+
+.answer-shell .answer-skeleton-question-line--short {
+  width: 62%;
+  height: 18px;
+}
+
+.answer-shell .answer-skeleton-confidence,
+.answer-shell .answer-skeleton-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.answer-shell .answer-skeleton-label {
+  width: 72px;
+  height: 18px;
+}
+
+.answer-shell .answer-skeleton-confidence-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.answer-shell .answer-skeleton-confidence-item {
+  height: 50px;
+  border-radius: 12px;
+}
+
+.answer-shell .answer-skeleton-choice {
+  height: 50px;
+  border-radius: 12px;
+}
+
+.answer-shell .answer-skeleton-point {
+  height: 66px;
+  border-radius: 12px;
+}
+
+.answer-shell .answer-skeleton-submit {
+  height: 52px;
+  border-radius: 12px;
+}
+
 .answer-shell .answer-card .muted-copy {
   margin: 0;
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import QuizCloseCountdownBar from '~/components/QuizCloseCountdownBar.vue'
 import QuizClockPanel from '~/features/quiz-control/components/QuizClockPanel.vue'
 import QuizPhasePanel from '~/features/quiz-control/components/QuizPhasePanel.vue'
@@ -100,6 +101,7 @@ function handleAutomaticExpiry() {
         >
           {{ phaseLabel }}
         </span>
+        <LoadingSkeleton v-else class="quiz-phase-badge quiz-phase-badge-skeleton" />
       </header>
 
 
@@ -111,13 +113,25 @@ function handleAutomaticExpiry() {
         {{ errorMessage }}
       </p>
 
-      <p
+      <div
         v-if="isLoading"
-        class="status-message"
+        class="quiz-loading-layout"
         role="status"
+        aria-busy="true"
       >
-        読み込み中…
-      </p>
+        <span class="visually-hidden">クイズの状態を読み込み中…</span>
+        <div class="quiz-control-grid">
+          <div class="quiz-control-aside">
+            <LoadingSkeleton class="quiz-skeleton-panel quiz-skeleton-panel--clock" />
+            <LoadingSkeleton class="quiz-skeleton-panel quiz-skeleton-panel--timer" />
+          </div>
+          <div class="quiz-control-main">
+            <LoadingSkeleton class="quiz-skeleton-panel quiz-skeleton-panel--phase" />
+            <LoadingSkeleton class="quiz-skeleton-panel quiz-skeleton-panel--question" />
+            <LoadingSkeleton class="quiz-skeleton-panel quiz-skeleton-panel--next" />
+          </div>
+        </div>
+      </div>
 
       <template v-else-if="state">
         <p

@@ -420,6 +420,24 @@ h1 {
   background: #e9f8ef;
 }
 
+/* 共通スケルトン。実データの領域を先に確保し、待機中のレイアウト移動を防ぐ。 */
+.ui-skeleton {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f7f9fc 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: ui-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes ui-skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton { animation: none; }
+}
+
 /* ===== ランキング画面 ===== */
 
 .home-actions {
@@ -547,6 +565,49 @@ h1 {
   border-radius: 14px;
   background: #ffffff;
   text-align: left;
+}
+
+.ranking-loading {
+  display: grid;
+  gap: 16px;
+  min-height: 404px;
+}
+
+.ranking-skeleton-cards,
+.ranking-skeleton-list {
+  pointer-events: none;
+}
+
+.ranking-skeleton-cards .ranking-card {
+  min-height: 52px;
+}
+
+.ranking-skeleton-rank {
+  width: 42px;
+  height: 24px;
+}
+
+.ranking-skeleton-name {
+  width: min(58%, 180px);
+  height: 20px;
+}
+
+.ranking-skeleton-list {
+  margin-top: 0;
+}
+
+.ranking-skeleton-list-item {
+  min-height: 48px;
+}
+
+.ranking-skeleton-list-rank {
+  width: 32px;
+  height: 18px;
+}
+
+.ranking-skeleton-list-name {
+  width: min(52%, 160px);
+  height: 18px;
 }
 
 .ranking-card-medal {
