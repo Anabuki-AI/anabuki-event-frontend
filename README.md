@@ -58,7 +58,7 @@ pnpm dev
 
 外部監視は `NUXT_PUBLIC_ADMIN_MONITORING_ENABLED=false` が初期値です。Rails `GET /api/admin/api-status` を対象環境で確認してから `true` にしてください。詳細な型、provider/availability/metricごとの状態、観測時刻・鮮度の扱いは [監視連携契約](docs/admin-monitoring-contract.md) を参照してください。プロバイダーのAPIキーをフロント側に設定しないでください。
 
-別枠の「疎通確認」は既存 Rails `/health` に Nuxt を経由して接続します。表示時間はブラウザからの単発往復時間で、Datadogのレイテンシ・全API稼働率・DB正常性ではありません。
+別枠の「疎通確認」は Rails `GET /api/health` に Nuxt を経由して接続します。表示時間はブラウザからの単発往復時間で、Datadogのレイテンシ・全API稼働率・DB正常性ではありません。
 
 画面マップ・API調査・ブランチの依存関係は `.agent/admin-console.md`、ブラウザ検証は `.agent/check-admin-console.mjs` に記録しています。
 
