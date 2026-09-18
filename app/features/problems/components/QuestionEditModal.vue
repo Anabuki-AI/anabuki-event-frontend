@@ -16,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
+const RELAY_QUESTION_DEFAULT_CORRECT_ANSWER: ChoiceLabel = 'A'
 
 const form = reactive({
   questionText: props.question.questionText,
@@ -28,7 +29,8 @@ const form = reactive({
   targetAudience: props.question.targetAudience ?? '',
   isRelayQuestion: props.question.isRelayQuestion ?? false,
 })
-const correctChoice = ref<ChoiceLabel>(props.question.correctAnswer)
+const correctChoice = ref<ChoiceLabel | null>(props.question.correctAnswer)
+let correctChoiceBeforeRelayToggle = correctChoice.value
 const isSaving = ref(false)
 // バックエンドの correct_answer_locked_for_unselected_relay_question バリデーション
 // が返すエラーを、汎用メッセージではなくこの案内文で表示するために使う。
@@ -184,6 +186,20 @@ function handleCorrectChoiceSelect(choice: ChoiceLabel) {
   correctChoice.value = choice
 }
 
+function handleRelayQuestionToggle(event: Event) {
+  const checked = (event.target as HTMLInputElement).checked
+
+  if (checked && !form.isRelayQuestion) {
+    correctChoiceBeforeRelayToggle = correctChoice.value
+    correctChoice.value = null
+  }
+  else if (!checked && form.isRelayQuestion && correctChoice.value === null) {
+    correctChoice.value = correctChoiceBeforeRelayToggle ?? props.question.correctAnswer
+  }
+
+  form.isRelayQuestion = checked
+}
+
 async function save() {
   if (!canSave.value) return
 
@@ -195,7 +211,10 @@ async function save() {
     choiceB: form.choiceB.trim(),
     choiceC: form.choiceC.trim(),
     choiceD: form.choiceD.trim(),
-    correctAnswer: correctChoice.value,
+    // The backend stores A as the required placeholder while a relay answer
+    // is undecided. Never submit the old ordinary-question answer after the
+    // operator turns the question into a relay question.
+    correctAnswer: correctChoice.value ?? RELAY_QUESTION_DEFAULT_CORRECT_ANSWER,
     explanation: form.explanation.trim(),
     targetAudience: form.targetAudience.trim(),
     points: Number(form.points),
@@ -423,7 +442,12 @@ onUnmounted(() => {
 
         <div class="question-add-actions">
           <label class="question-add-checkbox-field">
-            <input v-model="form.isRelayQuestion" type="checkbox" :disabled="isSaving">
+            <input
+              type="checkbox"
+              :checked="form.isRelayQuestion"
+              :disabled="isSaving"
+              @change="handleRelayQuestionToggle"
+            >
             <span>中継問題として扱う</span>
           </label>
           <button

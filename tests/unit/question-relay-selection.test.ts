@@ -29,6 +29,24 @@ function makeQuestion(overrides: Partial<Question> = {}): Question {
 }
 
 describe('中継問題の正解編集ロック（問題編集フォーム）', () => {
+  it('通常問題を中継問題へ切り替えると、以前の正解を未選択に戻す', async () => {
+    const question = makeQuestion({ correctAnswer: 'C' })
+    mockedRequest.mockResolvedValueOnce({ ...question, correctAnswer: 'A', isRelayQuestion: true })
+    const wrapper = mount(QuestionEdit, { props: { question }, attachTo: document.body })
+
+    const relayCheckbox = wrapper.get('.question-add-checkbox-field input[type="checkbox"]')
+    await relayCheckbox.setValue(true)
+
+    const radios = wrapper.findAll('.question-add-correct-radio')
+    radios.forEach(radio => expect(radio.element.checked).toBe(false))
+
+    await wrapper.get('.question-add-save').trigger('click')
+    const body = mockedRequest.mock.calls[0]?.[1]?.body as FormData
+    expect(body.get('correctAnswer')).toBe('A')
+
+    wrapper.unmount()
+  })
+
   it('通常の問題(isRelayQuestionなし)は正解ラジオボタンを常に操作できる', async () => {
     const wrapper = mount(QuestionEdit, { props: { question: makeQuestion() }, attachTo: document.body })
 
