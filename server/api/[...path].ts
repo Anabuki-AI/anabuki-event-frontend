@@ -43,7 +43,10 @@ export default defineEventHandler(async (event) => {
       // Service bindings keep Rails off the public Internet. The hostname is
       // only a placeholder used to construct a valid Request for the binding.
       const serviceTarget = new URL(`${url.pathname}${url.search}`, 'https://anabuki-event-backend.internal')
-      const serviceRequest = createBackendRequest(event, serviceTarget, { forwardRequestHeaders: true })
+      const serviceRequest = createBackendRequest(event, serviceTarget, {
+        forwardRequestHeaders: true,
+        forwardedProto: url.protocol.replace(':', ''),
+      })
       const response = await cloudflareBackend.fetch(serviceRequest)
       if (isOAuthNavigation && response.status >= 400) {
         await response.body?.cancel()
