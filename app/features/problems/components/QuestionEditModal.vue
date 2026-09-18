@@ -12,7 +12,7 @@ import '~/assets/css/questionedit2.css'
 const props = defineProps<{ question: Question }>()
 const emit = defineEmits<{
   close: []
-  saved: []
+  saved: [question: Question]
 }>()
 
 type ChoiceLabel = 'A' | 'B' | 'C' | 'D'
@@ -205,8 +205,8 @@ async function save() {
   }
 
   try {
-    await updateQuestion(props.question.id, payload)
-    emit('saved')
+    const question = await updateQuestion(props.question.id, payload)
+    emit('saved', question)
   }
   catch (error) {
     const apiError = toApiError(error)

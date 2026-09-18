@@ -27,6 +27,8 @@ useSeoMeta({
 
 const questions = ref<Question[]>([])
 const isQuestionsLoading = ref(true)
+const isQuestionsRefreshing = ref(false)
+const hasLoadedQuestions = ref(false)
 const questionsErrorMessage = ref('')
 const confidenceMultipliers = ref<ConfidenceMultipliers | null>(null)
 const isMultipliersLoading = ref(true)
@@ -47,7 +49,10 @@ const {
 } = setupAdminSidebar()
 
 async function loadQuestions() {
-  isQuestionsLoading.value = true
+  const isInitialLoad = !hasLoadedQuestions.value
+  hasLoadedQuestions.value = true
+  if (isInitialLoad) isQuestionsLoading.value = true
+  else isQuestionsRefreshing.value = true
   questionsErrorMessage.value = ''
   try {
     questions.value = await fetchQuestions()
@@ -57,7 +62,8 @@ async function loadQuestions() {
     questionsErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
   }
   finally {
-    isQuestionsLoading.value = false
+    if (isInitialLoad) isQuestionsLoading.value = false
+    else isQuestionsRefreshing.value = false
   }
 }
 
@@ -139,8 +145,11 @@ async function toggleRelaySelection(question: Question) {
   relaySelectionSavingId.value = question.id
   relaySelectionErrorMessage.value = ''
   try {
-    await selectRelayQuestion(question, !question.isSelectedRelayQuestion)
-    await loadQuestions()
+    const savedQuestion = await selectRelayQuestion(question, !question.isSelectedRelayQuestion)
+    patchQuestion(savedQuestion)
+    // Relay selection changes can affect every relay row. Keep the response patch
+    // visible immediately, then reconcile all rows with the backend in the background.
+    void loadQuestions()
   }
   catch (error) {
     const apiError = toApiError(error)
@@ -151,11 +160,26 @@ async function toggleRelaySelection(question: Question) {
   }
 }
 
+function patchQuestion(question: Question) {
+  const currentIndex = questions.value.findIndex(item => item.id === question.id)
+  const patchedQuestions = questions.value.map((item) => {
+    if (item.id === question.id) return question
+    if (question.isRelayQuestion && question.isSelectedRelayQuestion && item.isRelayQuestion) {
+      return { ...item, isSelectedRelayQuestion: false }
+    }
+    return item
+  })
+
+  if (currentIndex === -1) patchedQuestions.push(question)
+  questions.value = patchedQuestions.sort((left, right) => left.position - right.position)
+}
+
 function closeAddModal() {
   isAddModalOpen.value = false
 }
 
-function handleQuestionAdded() {
+function handleQuestionAdded(question: Question) {
+  patchQuestion(question)
   isAddModalOpen.value = false
   void loadQuestions()
 }
@@ -164,7 +188,8 @@ function closeEditModal() {
   editingQuestion.value = null
 }
 
-function handleQuestionEdited() {
+function handleQuestionEdited(question: Question) {
+  patchQuestion(question)
   editingQuestion.value = null
   void loadQuestions()
 }
@@ -216,7 +241,7 @@ onMounted(() => {
 
       <div class="question-count-row">
         <div class="question-count-group">
-          <p v-if="!isQuestionsLoading && !questionsErrorMessage" class="question-count" role="status">全 {{ questions.length }} 問</p>
+          <p v-if="!isQuestionsLoading && (!questionsErrorMessage || questions.length > 0)" class="question-count" role="status">全 {{ questions.length }} 問</p>
           <span v-if="isMultipliersLoading" class="multiplier-status multiplier-status-skeleton" role="status" aria-busy="true">
             <span class="visually-hidden">倍率を読み込み中…</span>
             <LoadingSkeleton v-for="level in CONFIDENCE_LEVELS" :key="level" class="multiplier-chip-skeleton" />
@@ -238,6 +263,13 @@ onMounted(() => {
       <p v-if="relaySelectionErrorMessage" class="status-message error" role="alert">
         中継問題の選択に失敗しました。{{ relaySelectionErrorMessage }}
       </p>
+      <div v-if="isQuestionsRefreshing" class="question-refresh-status" role="status" aria-busy="true">
+        問題一覧を更新中…
+      </div>
+      <div v-else-if="questionsErrorMessage && questions.length > 0" class="question-refresh-status is-error" role="alert">
+        問題一覧の更新に失敗しました。{{ questionsErrorMessage }}
+        <button type="button" class="retry-button" @click="loadQuestions">再読み込み</button>
+      </div>
 
       <div
         v-if="isQuestionsLoading"
@@ -254,7 +286,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div v-else-if="questionsErrorMessage" class="questions-error">
+      <div v-else-if="questionsErrorMessage && questions.length === 0" class="questions-error">
         <p class="status-message error" role="alert">{{ questionsErrorMessage }}</p>
         <button type="button" class="retry-button" @click="loadQuestions">問題を再読み込み</button>
       </div>
@@ -327,7 +359,12 @@ onMounted(() => {
       </div>
     </section>
 
-    <ConfidenceMultiplierModal v-if="isMultiplierModalOpen" @close="isMultiplierModalOpen = false" @updated="handleMultiplierUpdated" />
+    <ConfidenceMultiplierModal
+      v-if="isMultiplierModalOpen"
+      :initial-multipliers="confidenceMultipliers"
+      @close="isMultiplierModalOpen = false"
+      @updated="handleMultiplierUpdated"
+    />
     <QuestionDeleteDialog
       v-if="deletingQuestion"
       :question="deletingQuestion"
