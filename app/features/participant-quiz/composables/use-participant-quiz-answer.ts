@@ -145,7 +145,6 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     && Boolean(lockedConfidenceLevel.value)
     && Boolean(selectedChoice.value)
     && selectedChoice.value !== eliminatedChoice.value
-    && (!isEditingAnswer.value || hasDraftChange.value)
     && !isSubmitting.value
     && !isOperationBlocked.value)
 
@@ -249,7 +248,16 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       isEditingAnswer.value = false
       selectedChoice.value = undefined
       if (state.value?.question?.question_id === currentQuestion.question_id) {
-        applyState({ ...state.value, answered: true, my_answer: result.my_answer })
+        // The answer API response only contains my_answer. Mirror the server's
+        // state transition locally so the confidence controls do not appear
+        // editable until the next poll arrives.
+        applyState({
+          ...state.value,
+          answered: true,
+          my_answer: result.my_answer,
+          confidence_level: result.my_answer.confidence_level,
+          confidence_locked: true,
+        })
       }
     }
     catch (error) {

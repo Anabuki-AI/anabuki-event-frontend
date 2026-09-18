@@ -163,6 +163,7 @@ describe('参加者クイズのレベル確定', () => {
     ;(vm as unknown as { selectedChoice: 'B' }).selectedChoice = 'B'
     await (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
     expect(mockedSubmitAnswer).toHaveBeenCalledWith({ question_id: 12, choice: 'B' })
+    expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(true)
     wrapper.unmount()
   })
 
@@ -197,7 +198,7 @@ describe('参加者クイズのレベル確定', () => {
     wrapper.unmount()
   })
 
-  it('送信後は受付済み回答とdraftを分離し、タップだけでは再送しない', async () => {
+  it('送信後は受付済み回答とdraftを分離し、選択肢をタップしただけでは再送しない', async () => {
     mockedFetchState.mockResolvedValue(submittedState)
     const wrapper = mount(Harness)
     await flushPromises()
@@ -217,6 +218,28 @@ describe('参加者クイズのレベル確定', () => {
     expect((vm as unknown as { isEditingAnswer: boolean }).isEditingAnswer).toBe(false)
     expect((vm as unknown as { selectedChoice: string | undefined }).selectedChoice).toBeUndefined()
     expect((vm as unknown as { myAnswer: { choice: string } }).myAnswer.choice).toBe('B')
+    wrapper.unmount()
+  })
+
+  it('編集をキャンセルしても同じ選択肢を再送できる', async () => {
+    mockedFetchState.mockResolvedValue(submittedState)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: submittedState.my_answer! })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    ;(vm as unknown as { beginAnswerEditing: () => void }).beginAnswerEditing()
+    ;(vm as unknown as { cancelAnswerEditing: () => void }).cancelAnswerEditing()
+    ;(vm as unknown as { beginAnswerEditing: () => void }).beginAnswerEditing()
+
+    expect((vm as unknown as { selectedChoice: string }).selectedChoice).toBe('B')
+    expect((vm as unknown as { hasDraftChange: boolean }).hasDraftChange).toBe(false)
+    expect((vm as unknown as { canSubmit: boolean }).canSubmit).toBe(true)
+
+    await (vm as unknown as { submitAnswer: () => Promise<void> }).submitAnswer()
+
+    expect(mockedSubmitAnswer).toHaveBeenCalledWith({ question_id: 12, choice: 'B' })
+    expect((vm as unknown as { isEditingAnswer: boolean }).isEditingAnswer).toBe(false)
     wrapper.unmount()
   })
 
