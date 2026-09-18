@@ -10,21 +10,30 @@ type CloudflareEventContext = {
   }
 }
 
-type RuntimeRequest = Pick<Request, 'url' | 'method' | 'body' | 'signal'> & {
-  headers: Headers | Record<string, string | string[] | undefined>
+type RequestLike = {
+  url?: unknown
+  method?: unknown
+  headers?: unknown
+  body?: BodyInit | null
+  signal?: AbortSignal
 }
 
 type BackendEvent = {
   context?: unknown
-  // h3's Node-compatible declaration is used at build time, while
-  // cloudflare_module supplies a Web Request at runtime.
+  // h3's request shape differs between the Node and Cloudflare adapters.
+  // Keep this boundary runtime-shaped instead of casting it to a Web Request.
   req: unknown
+  method?: string
+  node?: {
+    req?: unknown
+  }
 }
 
 /**
  * Nitro's cloudflare_module exposes the Worker environment at
- * event.context.cloudflare.env. Do not read it from event.req: that is the
- * incoming Web Request and has no runtime binding object.
+ * event.context.cloudflare.env. The request itself remains on event.req (or
+ * event.node.req for the Node adapter); it is intentionally handled through
+ * the small runtime-shaped boundary below.
  */
 function cloudflareContext(event: BackendEvent) {
   return (event.context as CloudflareEventContext | undefined)?.cloudflare
@@ -38,51 +47,85 @@ export function getCloudflareBackend(event: BackendEvent) {
   return cloudflareContext(event)?.env?.BACKEND
 }
 
+/** Copy either Web Request Headers or Node's plain header map into Web Headers. */
+function copyRequestHeaders(source: unknown, target: Headers) {
+  if (source instanceof Headers) {
+    source.forEach((value, name) => {
+      if (!['connection', 'content-length'].includes(name.toLowerCase())) {
+        target.set(name, value)
+      }
+    })
+    return
+  }
+
+  if (source == null || typeof source !== 'object') return
+
+  const iterableSource = source as { [Symbol.iterator]?: () => Iterator<unknown> }
+  if (typeof iterableSource[Symbol.iterator] === 'function') {
+    for (const entry of source as Iterable<unknown>) {
+      if (!Array.isArray(entry) || entry.length < 2) continue
+      const [name, value] = entry
+      if (typeof name !== 'string' || value == null) continue
+      if (!['connection', 'content-length'].includes(name.toLowerCase())) {
+        target.set(name, Array.isArray(value) ? value.join(', ') : String(value))
+      }
+    }
+    return
+  }
+
+  for (const [name, value] of Object.entries(source)) {
+    if (value == null || ['connection', 'content-length'].includes(name.toLowerCase())) continue
+    target.set(name, Array.isArray(value) ? value.join(', ') : String(value))
+  }
+}
+
+function asRequestLike(value: unknown): RequestLike {
+  return value != null && typeof value === 'object' ? value as RequestLike : {}
+}
+
 /**
  * Build a request for a Worker service binding without changing the browser's
  * Origin. Rails uses Origin for its same-origin guard, so it must remain the
  * public frontend origin rather than the internal service URL.
  *
- * The forwarded protocol is derived from the Worker request URL, not accepted
- * from a client-supplied X-Forwarded-Proto header. This keeps Rails' SSL
- * handling correct after the Worker-to-Worker/container hop.
+ * The forwarded protocol is derived from the incoming request URL, not
+ * accepted from a client-supplied X-Forwarded-Proto header. This keeps Rails'
+ * SSL handling correct after the Worker-to-Worker/container hop.
  */
 export function createBackendRequest(
   event: BackendEvent,
   target: URL,
   options: { forwardRequestHeaders?: boolean; forwardedProto?: string } = {},
 ) {
-  const request = event.req as RuntimeRequest
+  const request = asRequestLike(event.req)
+  const nodeRequest = asRequestLike(event.node?.req)
   const headers = new Headers()
   if (options.forwardRequestHeaders) {
-    if (request.headers instanceof Headers) {
-      for (const [name, value] of request.headers) {
-        if (name !== 'connection' && name !== 'content-length') {
-          headers.set(name, value)
-        }
-      }
-    }
-    else {
-      for (const [name, value] of Object.entries(request.headers)) {
-        if (name !== 'connection' && name !== 'content-length' && value !== undefined) {
-          headers.set(name, Array.isArray(value) ? value.filter(Boolean).join(', ') : value)
-        }
-      }
-    }
+    // H3's Node-compatible event uses an IncomingHttpHeaders object here,
+    // while a native Worker Request exposes the iterable Headers class.
+    copyRequestHeaders(request.headers ?? nodeRequest.headers, headers)
   }
 
-  // H3's Node-compatible event uses an IncomingHttpHeaders object here, not
-  // the iterable Headers class exposed by a native Worker Request. The route
-  // passes the protocol parsed from the trusted event URL; the fallback keeps
-  // direct unit callers working without trusting a client header.
+  // The route passes the protocol parsed from h3's trusted getRequestURL(event)
+  // result. The fallback keeps direct unit callers working without trusting a
+  // client-supplied X-Forwarded-Proto header.
+  const rawUrl = request.url ?? nodeRequest.url
+  let requestUrl: URL
+  try {
+    requestUrl = new URL(String(rawUrl), target)
+  }
+  catch {
+    requestUrl = target
+  }
   headers.set(
     'x-forwarded-proto',
-    options.forwardedProto ?? new URL(request.url, target).protocol.replace(':', ''),
+    options.forwardedProto ?? requestUrl.protocol.replace(':', ''),
   )
 
-  const methodHasBody = !['GET', 'HEAD'].includes(request.method)
+  const method = String(event.method ?? request.method ?? nodeRequest.method ?? 'GET').toUpperCase()
+  const methodHasBody = !['GET', 'HEAD'].includes(method)
   const requestInit = {
-    method: request.method,
+    method,
     headers,
     body: methodHasBody ? request.body : undefined,
     duplex: methodHasBody ? 'half' : undefined,

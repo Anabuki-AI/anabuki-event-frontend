@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import QuizTimerPanel from '../../app/features/quiz-control/components/QuizTimerPanel.vue'
 
 function mountPanel(overrides: Partial<{
-  phase: 'IDLE' | 'PUBLISHED' | 'CLOSED' | 'REVEALED' | 'FINISHED' | null
+  phase: 'IDLE' | 'PUBLISHED' | 'CLOSING' | 'CLOSED' | 'REVEALED' | 'FINISHED' | null
   phaseStartedAt: string | null
   finishedElapsedSeconds: number | null
   timeLimitSeconds: number | null
@@ -25,9 +25,22 @@ function mountPanel(overrides: Partial<{
 }
 
 describe('QuizTimerPanel', () => {
-  it('経過時間を常に表示する', () => {
+  it('解答受付中(PUBLISHED)は問題の経過時間を表示する', () => {
     const wrapper = mountPanel({ now: new Date('2026-09-07T12:00:07Z') })
     expect(wrapper.find('.quiz-timer-elapsed').text()).toBe('00:07')
+  })
+
+  it.each(['CLOSING', 'CLOSED', 'REVEALED'] as const)('フェーズ%sではphase_started_atを問題時間の起点にしない', (phase) => {
+    const wrapper = mountPanel({
+      phase,
+      phaseStartedAt: '2026-09-07T12:01:00Z',
+      now: new Date('2026-09-07T12:01:05Z'),
+    })
+
+    expect(wrapper.find('.quiz-timer-elapsed').text()).toBe('--:--')
+    expect(wrapper.find('.quiz-timer-no-limit').text()).toBe('制限時間なし')
+    expect(wrapper.find('.quiz-timer-remaining').exists()).toBe(false)
+    expect(wrapper.emitted('expire')).toBeUndefined()
   })
 
   it('終了後はサーバーが固定した経過時間を時計更新後も表示する', async () => {

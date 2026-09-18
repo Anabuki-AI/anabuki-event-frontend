@@ -15,15 +15,19 @@ describe('Cloudflare backend service binding', () => {
     expect(getCloudflareBackend(event)).toBe(backend)
   })
 
-  it('preserves Origin and cookies while replacing spoofable forwarded protocol', () => {
+  it.each([
+    ['https', 'http', 'https'],
+    ['http', 'https', 'http'],
+  ] as const)('uses the incoming %s ingress protocol instead of spoofed X-Forwarded-Proto', (ingressProtocol, spoofedProtocol, expectedProtocol) => {
+    const origin = `${ingressProtocol}://event.example`
     const event = {
       context: {},
-      req: new Request('https://event.example/api/questions', {
+      req: new Request(`${origin}/api/questions`, {
         method: 'POST',
         headers: {
-          Origin: 'https://event.example',
+          Origin: origin,
           Cookie: 'admin_session=opaque-token',
-          'X-Forwarded-Proto': 'http',
+          'X-Forwarded-Proto': spoofedProtocol,
         },
         body: JSON.stringify({ question: 'test' }),
       }),
@@ -36,13 +40,13 @@ describe('Cloudflare backend service binding', () => {
     )
 
     expect(request.url).toBe('https://anabuki-event-backend.internal/api/questions')
-    expect(request.headers.get('origin')).toBe('https://event.example')
+    expect(request.headers.get('origin')).toBe(origin)
     expect(request.headers.get('cookie')).toBe('admin_session=opaque-token')
-    expect(request.headers.get('x-forwarded-proto')).toBe('https')
+    expect(request.headers.get('x-forwarded-proto')).toBe(expectedProtocol)
     expect(request.headers.has('content-length')).toBe(false)
   })
 
-  it('accepts H3 Node-compatible headers in a Cloudflare request path', () => {
+  it('normalizes H3 Node plain-object headers and uses the trusted getRequestURL protocol', () => {
     const event = {
       context: {},
       req: {
@@ -53,6 +57,7 @@ describe('Cloudflare backend service binding', () => {
           cookie: 'admin_session=opaque-token',
           'x-forwarded-proto': 'http',
           'x-test': ['one', 'two'],
+          'content-length': '42',
         },
         body: null,
         signal: new AbortController().signal,
@@ -69,5 +74,6 @@ describe('Cloudflare backend service binding', () => {
     expect(request.headers.get('cookie')).toBe('admin_session=opaque-token')
     expect(request.headers.get('x-test')).toBe('one, two')
     expect(request.headers.get('x-forwarded-proto')).toBe('https')
+    expect(request.headers.has('content-length')).toBe(false)
   })
 })

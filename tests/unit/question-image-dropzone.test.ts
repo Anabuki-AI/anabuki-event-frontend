@@ -1,7 +1,9 @@
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import QuestionAdd from '../../app/pages/event_operator/question-add.vue'
-import QuestionEdit from '../../app/pages/event_operator/questione.vue'
+import QuestionAdd from '../../app/features/problems/components/QuestionAddModal.vue'
+import QuestionEdit from '../../app/features/problems/components/QuestionEditModal.vue'
 import type { Question } from '../../app/features/problems/types'
 
 const question: Question = {
@@ -19,6 +21,13 @@ function makeImageFile(): File {
 }
 
 describe('問題画像のドラッグ&ドロップ', () => {
+  it('編集フォームはページルートとして登録されない', () => {
+    const addPagePath = resolve(process.cwd(), 'app/pages/event_operator/question-add.vue')
+    const editPagePath = resolve(process.cwd(), 'app/pages/event_operator/questione.vue')
+    expect(existsSync(addPagePath)).toBe(false)
+    expect(existsSync(editPagePath)).toBe(false)
+  })
+
   it('新規追加フォーム: ドロップした画像をプレビュー表示する', async () => {
     const wrapper = mount(QuestionAdd, { attachTo: document.body })
     const dropzone = wrapper.find('.question-add-dropzone')

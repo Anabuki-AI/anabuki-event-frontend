@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import QuestionAdd from '../../app/pages/event_operator/question-add.vue'
+import QuestionAdd from '../../app/features/problems/components/QuestionAddModal.vue'
 
 async function fillRequiredFields(wrapper: ReturnType<typeof mount>) {
   const questionText = wrapper.findAll('textarea')[0]!
