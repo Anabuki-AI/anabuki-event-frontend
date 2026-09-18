@@ -32,9 +32,19 @@ const correctChoice = ref<ChoiceLabel>(props.question.correctAnswer)
 const isSaving = ref(false)
 // 中継問題は、問題管理の一覧で「今回の出題」として選択されるまで正解を変更できない
 // (バックエンドAPIも同じ制約を強制する)。通常の問題には影響しない。
+// ただし、一度ライブ進行で出題・正解公開済み(revealedAt が設定済み)の中継問題は、
+// その後の出題で別の中継問題が選択されて選択が外れても、正解を変更できる。
 const isCorrectAnswerLocked = computed<boolean>(
-  () => props.question.isRelayQuestion === true && props.question.isSelectedRelayQuestion !== true,
+  () =>
+    props.question.isRelayQuestion === true
+    && props.question.isSelectedRelayQuestion !== true
+    && !props.question.revealedAt,
 )
+// バックエンドの correct_answer_locked_for_unselected_relay_question バリデーション
+// が返すエラーを、汎用メッセージではなくこの案内文で表示するために使う
+// (上の isCorrectAnswerLocked と同じ理由の場合のみ発生しうる)。
+const RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
+  = 'この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。'
 const submitErrorMessage = ref('')
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
@@ -166,7 +176,13 @@ async function save() {
   }
   catch (error) {
     const apiError = toApiError(error)
-    submitErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
+    // 422 の汎用メッセージは、正解ロック違反という具体的な原因を隠してしまう
+    // (問題テキスト長超過などの他の入力エラーと同じ「入力内容を確認してください」
+    // になり、運営者にはなぜ保存できないか伝わらない)。fieldErrors.correctAnswer
+    // がある場合は、一覧・このモーダルの注記と同じ案内文で理由を伝える。
+    submitErrorMessage.value = apiError.fieldErrors?.correctAnswer
+      ? RELAY_CORRECT_ANSWER_LOCKED_MESSAGE
+      : problemErrorMessage(apiError.statusCode, apiError.message)
   }
   finally {
     isSaving.value = false
@@ -305,7 +321,7 @@ onUnmounted(() => {
         <fieldset class="question-add-field question-add-choices">
           <legend class="question-add-label">選択肢（正解にチェックを付けてください）</legend>
           <p v-if="isCorrectAnswerLocked" class="question-add-hint question-add-relay-lock-note" role="status">
-            この問題は中継問題として「今回の出題」に選択されていないため、正解を変更できません。「問題管理」の一覧で選択してから変更してください。
+            {{ RELAY_CORRECT_ANSWER_LOCKED_MESSAGE }}
           </p>
 
           <div
