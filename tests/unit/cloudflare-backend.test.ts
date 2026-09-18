@@ -41,4 +41,33 @@ describe('Cloudflare backend service binding', () => {
     expect(request.headers.get('x-forwarded-proto')).toBe('https')
     expect(request.headers.has('content-length')).toBe(false)
   })
+
+  it('accepts H3 Node-compatible headers in a Cloudflare request path', () => {
+    const event = {
+      context: {},
+      req: {
+        url: '/api/health',
+        method: 'GET',
+        headers: {
+          origin: 'https://event.example',
+          cookie: 'admin_session=opaque-token',
+          'x-forwarded-proto': 'http',
+          'x-test': ['one', 'two'],
+        },
+        body: null,
+        signal: new AbortController().signal,
+      },
+    }
+
+    const request = createBackendRequest(
+      event,
+      new URL('https://anabuki-event-backend.internal/api/health'),
+      { forwardRequestHeaders: true, forwardedProto: 'https' },
+    )
+
+    expect(request.headers.get('origin')).toBe('https://event.example')
+    expect(request.headers.get('cookie')).toBe('admin_session=opaque-token')
+    expect(request.headers.get('x-test')).toBe('one, two')
+    expect(request.headers.get('x-forwarded-proto')).toBe('https')
+  })
 })

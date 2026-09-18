@@ -10,7 +10,9 @@ type CloudflareEventContext = {
   }
 }
 
-type RuntimeRequest = Pick<Request, 'url' | 'method' | 'headers' | 'body' | 'signal'>
+type RuntimeRequest = Pick<Request, 'url' | 'method' | 'body' | 'signal'> & {
+  headers: Headers | Record<string, string | string[] | undefined>
+}
 
 type BackendEvent = {
   context?: unknown
@@ -48,19 +50,35 @@ export function getCloudflareBackend(event: BackendEvent) {
 export function createBackendRequest(
   event: BackendEvent,
   target: URL,
-  options: { forwardRequestHeaders?: boolean } = {},
+  options: { forwardRequestHeaders?: boolean; forwardedProto?: string } = {},
 ) {
   const request = event.req as RuntimeRequest
   const headers = new Headers()
   if (options.forwardRequestHeaders) {
-    for (const [name, value] of request.headers) {
-      if (name !== 'connection' && name !== 'content-length') {
-        headers.set(name, value)
+    if (request.headers instanceof Headers) {
+      for (const [name, value] of request.headers) {
+        if (name !== 'connection' && name !== 'content-length') {
+          headers.set(name, value)
+        }
+      }
+    }
+    else {
+      for (const [name, value] of Object.entries(request.headers)) {
+        if (name !== 'connection' && name !== 'content-length' && value !== undefined) {
+          headers.set(name, Array.isArray(value) ? value.filter(Boolean).join(', ') : value)
+        }
       }
     }
   }
 
-  headers.set('x-forwarded-proto', new URL(request.url).protocol.replace(':', ''))
+  // H3's Node-compatible event uses an IncomingHttpHeaders object here, not
+  // the iterable Headers class exposed by a native Worker Request. The route
+  // passes the protocol parsed from the trusted event URL; the fallback keeps
+  // direct unit callers working without trusting a client header.
+  headers.set(
+    'x-forwarded-proto',
+    options.forwardedProto ?? new URL(request.url, target).protocol.replace(':', ''),
+  )
 
   const methodHasBody = !['GET', 'HEAD'].includes(request.method)
   const requestInit = {

@@ -1,4 +1,4 @@
-import { createError, setResponseHeader } from 'h3'
+import { createError, getRequestURL, setResponseHeader } from 'h3'
 import { createBackendRequest, getCloudflareBackend, isCloudflareRuntime } from '../../utils/cloudflare-backend'
 
 // Rails /health is a public, liveness-only check. Never accept a target from input
@@ -14,7 +14,9 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 503, statusMessage: 'Backend service binding is not configured' })
       }
       const target = new URL('/health', 'https://anabuki-event-backend.internal')
-      const response = await cloudflareBackend.fetch(createBackendRequest(event, target))
+      const response = await cloudflareBackend.fetch(createBackendRequest(event, target, {
+        forwardedProto: getRequestURL(event).protocol.replace(':', ''),
+      }))
       if (!response.ok) {
         await response.body?.cancel()
         throw createError({ statusCode: 502, statusMessage: 'Backend health check failed' })
