@@ -33,6 +33,16 @@ export interface Question {
    */
   isSelectedRelayQuestion?: boolean
   /**
+   * 現在ライブ進行画面(出題管理)の quiz_sessions.current_question として
+   * 出題中かどうか(quizが in_progress かつ このIDが current_question_id と一致)。
+   * isSelectedRelayQuestion(「今回の出題」として運営者が選択したか)とは無関係の
+   * 別状態: 選択されていても実際にライブへ進むまでは false のままだし、逆に
+   * 正解を公開した直後、次の問題へ進むまではこれが true のまま残る。
+   * true の間はバックエンド(Question#protect_live_question)が correctAnswer を
+   * 含む LIVE_FIELDS の変更を拒否する。
+   */
+  isLiveQuestion?: boolean
+  /**
    * ライブ進行画面で運営者がこの問題の正解を公開した日時(ISO8601)。未公開なら null。
    * 一度設定されると、クイズ全体をリセットするまで消えない
    * (= 中継問題としての出番が終わったかどうかの判定に使える)。

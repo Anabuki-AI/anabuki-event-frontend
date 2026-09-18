@@ -119,10 +119,15 @@ function handleMultiplierUpdated(level: ConfidenceLevel, value: string) {
  * 一覧全体を再読み込みして状態を揃える。
  */
 /**
- * 中継問題の一覧バッジ文言。選択中/出題済み(選択解除後も含む)/未選択・未出題の
- * 3状態を運営者に区別できるようにする(revealedAt が付くと正解を編集できるため)。
+ * 中継問題の一覧バッジ文言。ライブ出題中/選択中/出題済み(選択解除後も含む)/
+ * 未選択・未出題の4状態を運営者に区別できるようにする。
+ * isLiveQuestion(ライブ進行画面で現在出題中)は isSelectedRelayQuestion(「今回の
+ * 出題」として選択済みか)とは独立した別状態のため、優先して表示する。
+ * (例: 選択済みのまま正解を公開した直後、「次の問題へ」を押すまではライブ扱いの
+ * ままで、選択中バッジだけでは正解を編集できない理由が伝わらないため。)
  */
 function relayBadgeText(question: Question): string {
+  if (question.isLiveQuestion) return '中継問題・ライブ出題中'
   if (question.isSelectedRelayQuestion) return '中継問題・選択中'
   if (question.revealedAt) return '中継問題・出題済み'
   return '中継問題'
@@ -266,7 +271,11 @@ onMounted(() => {
               <span
                 v-if="question.isRelayQuestion"
                 class="relay-badge"
-                :class="{ 'is-selected': question.isSelectedRelayQuestion, 'is-revealed': !question.isSelectedRelayQuestion && !!question.revealedAt }"
+                :class="{
+                  'is-live': question.isLiveQuestion,
+                  'is-selected': !question.isLiveQuestion && question.isSelectedRelayQuestion,
+                  'is-revealed': !question.isLiveQuestion && !question.isSelectedRelayQuestion && !!question.revealedAt,
+                }"
               >{{ relayBadgeText(question) }}</span>
               <span class="correct-badge" :title="`正解: ${correctChoiceText(question)}`">{{ formatCorrectBadge(question) }}</span>
             </summary>
@@ -281,7 +290,10 @@ onMounted(() => {
                 >
                   {{ question.isSelectedRelayQuestion ? '今回の出題の選択を解除' : '今回の出題として選択' }}
                 </button>
-                <p v-if="!question.isSelectedRelayQuestion && !question.revealedAt" class="relay-selection-note">
+                <p v-if="question.isLiveQuestion" class="relay-selection-note is-live">
+                  この問題は現在ライブ進行画面で出題中(または直前に出題済み)のため、選択状態に関わらず正解を編集できません。「出題管理」で次の問題に進んでから変更してください。
+                </p>
+                <p v-else-if="!question.isSelectedRelayQuestion && !question.revealedAt" class="relay-selection-note">
                   中継問題は複数登録できますが、今回出題する1問を選択するまで正解を編集できません。
                 </p>
                 <p v-else-if="!question.isSelectedRelayQuestion" class="relay-selection-note is-revealed">
