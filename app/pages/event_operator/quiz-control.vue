@@ -10,8 +10,6 @@ import { useQuizClock } from '~/features/quiz-control/useQuizClock'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/quiz-control.css'
 
-const QUIZ_COUNTDOWN_SECONDS = 10
-
 useSeoMeta({
   title: 'クイズ出題管理画面',
   description: 'イベント開始から問題公開・解答締め切り・答え表示までを管理する画面です。',
@@ -41,6 +39,13 @@ const {
   toggleSidebar,
   handleSidebarKeydown,
 } = setupAdminSidebar()
+
+function handleAutomaticExpiry() {
+  // This event is only for the server-validated per-question deadline. Manual
+  // close continues to use the participant-visible ten-second countdown.
+  if (phase.value !== 'PUBLISHED') return
+  closeImmediately()
+}
 </script>
 
 <template>
@@ -134,12 +139,12 @@ const {
             <QuizTimerPanel
               :phase="phase"
               :phase-started-at="state.phase_started_at ?? null"
-              :time-limit-seconds="QUIZ_COUNTDOWN_SECONDS"
+              :time-limit-seconds="state.current?.time_limit_seconds ?? null"
               :finished-elapsed-seconds="state.finished_elapsed_seconds ?? null"
               :question-id="state.current?.question_id ?? null"
               :now="now"
               :is-acting="isActing"
-              @expire="closeImmediately"
+              @expire="handleAutomaticExpiry"
             />
           </div>
 

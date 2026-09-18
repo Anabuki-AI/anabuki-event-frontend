@@ -20,23 +20,30 @@ const emit = defineEmits<{
   expire: []
 }>()
 
+const isAnswering = computed(() => props.phase === 'PUBLISHED')
 const elapsedLabel = computed(() => {
   if (props.phase === 'FINISHED') {
     return props.finishedElapsedSeconds === null
       ? '--:--'
       : formatElapsedSeconds(props.finishedElapsedSeconds)
   }
-  return formatElapsed(props.phaseStartedAt, props.now)
+  // phase_started_at changes when closing/closed/revealed begins. It is not
+  // the question's answer-start timestamp, so never use it for the question
+  // timer outside the answering phase.
+  return isAnswering.value ? formatElapsed(props.phaseStartedAt, props.now) : '--:--'
 })
-const countdown = computed(() => computeCountdown(props.phaseStartedAt, props.timeLimitSeconds, props.now))
+const countdown = computed(() => isAnswering.value
+  ? computeCountdown(props.phaseStartedAt, props.timeLimitSeconds, props.now)
+  : computeCountdown(null, null, props.now))
 
 const expireGuard = createExpireGuard()
 
 watch(
   [countdown, () => props.phase, () => props.questionId, () => props.isActing],
   ([current]) => {
-    // 解答受付中(PUBLISHED)以外での期限切れは締め切り操作の対象外なので何もしない。
-    if (props.phase !== 'PUBLISHED') return
+    // Only an answering(PUBLISHED) question deadline may trigger automatic
+    // expiry. Closing/closed/revealed phase_started_at is never a question
+    // timer origin and must not cause a reset or a second close.
     if (props.isActing) return
     if (!current.hasLimit) return
 

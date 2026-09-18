@@ -25,7 +25,12 @@ export function closeAnswers(): Promise<OperatorQuizState> {
   return act('/operator/quiz/close')
 }
 
-/** Used only for an elapsed per-question time limit, which is an immediate deadline. */
+/**
+ * Requests automatic expiry for an elapsed per-question time limit.
+ * The backend treats `immediate: true` as an automatic-expiry hint only and
+ * validates the server-side deadline under a row lock; it is not a force-close
+ * or manual-close contract.
+ */
 export function closeAnswersImmediately(): Promise<OperatorQuizState> {
   return act('/operator/quiz/close', { immediate: true })
 }
