@@ -11,6 +11,7 @@ const question = {
   position: 2,
   question_text: '問題文',
   choices: { A: '選択肢A', B: '選択肢B', C: '選択肢C', D: '選択肢D' },
+  eliminated_choice: null,
   image_url: null,
 }
 
