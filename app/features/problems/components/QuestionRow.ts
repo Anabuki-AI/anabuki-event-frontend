@@ -5,6 +5,28 @@ export function formatQuestionPosition(position: number): string {
   return `Q${position}`
 }
 
+export interface BulkDeleteImpact {
+  /** 選択された問題数 */
+  total: number
+  /** 出題中(ライブ)の問題数 */
+  live: number
+  /** 正解公開済みの問題数 */
+  revealed: number
+  /** 参加者の回答・自信度記録がある問題数 */
+  answered: number
+  /** 上記のいずれかに該当する問題数(重複は1問と数える)。0なら通常の削除。 */
+  affected: number
+}
+
+/** 一括削除の確認ダイアログ用に、選択中の問題のうち影響の大きいものを数える。 */
+export function summarizeBulkDeleteImpact(questions: Question[]): BulkDeleteImpact {
+  const live = questions.filter(question => question.isLiveQuestion === true)
+  const revealed = questions.filter(question => !!question.revealedAt)
+  const answered = questions.filter(question => question.hasParticipantData === true)
+  const affected = questions.filter(question => question.isLiveQuestion === true || !!question.revealedAt || question.hasParticipantData === true)
+  return { total: questions.length, live: live.length, revealed: revealed.length, answered: answered.length, affected: affected.length }
+}
+
 export function formatCorrectBadge(question: Question): string {
   return `正解 ${question.correctAnswer}`
 }

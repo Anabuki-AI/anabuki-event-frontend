@@ -23,6 +23,13 @@ export function deleteQuestionErrorMessage(statusCode: number | undefined, fallb
   return problemErrorMessage(statusCode, fallback)
 }
 
+/** 一括削除失敗時のメッセージ。404は選択中の問題が既に他で削除されたケース。 */
+export function bulkDeleteQuestionsErrorMessage(statusCode: number | undefined, fallback: string): string {
+  if (statusCode === 404) return '選択された問題の一部が見つかりませんでした。一覧を更新したので、選び直してください。'
+  if (statusCode === 422) return '削除対象の指定が正しくありません。選び直してください。'
+  return problemErrorMessage(statusCode, fallback)
+}
+
 /**
  * 制限時間(秒)の入力を検証する。空欄は「制限時間なし」として許可する。
  * 有効なら空文字列、無効なら理由を返す。

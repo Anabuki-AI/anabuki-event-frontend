@@ -121,6 +121,24 @@ export async function deleteQuestion(id: number): Promise<void> {
   })
 }
 
+export interface BulkDeleteQuestionsResult {
+  deletedCount: number
+  deletedIds: number[]
+}
+
+/**
+ * 複数の問題を一括削除する(全件成功か全件失敗)。
+ * 単体削除と異なり、公開済み・回答済み・出題中の問題も削除する(回答・自信度記録も連動削除)。
+ * DELETE ボディはプロキシ経由で落ちやすいため POST で送る。
+ */
+export function bulkDeleteQuestions(ids: number[]): Promise<BulkDeleteQuestionsResult> {
+  return request<BulkDeleteQuestionsResult>('/admin/questions/bulk_destroy', {
+    method: 'POST',
+    credentials,
+    body: { ids },
+  })
+}
+
 export function fetchConfidenceMultipliers(): Promise<ConfidenceMultipliers> {
   return request<ConfidenceMultipliers>('/admin/confidence-multipliers', { credentials })
 }

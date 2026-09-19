@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import {
+  bulkDeleteQuestions,
   deleteQuestion,
   fetchConfidenceMultipliers,
   fetchQuestions,
@@ -11,11 +12,12 @@ import type { ConfidenceLevel, ConfidenceMultipliers, Question } from '~/feature
 import { choiceText, correctChoiceText, formatCorrectBadge, formatQuestionPosition, formatTimeLimit } from '~/features/problems/components/QuestionRow'
 import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import ConfidenceMultiplierModal from '~/features/problems/components/ConfidenceMultiplierModal.vue'
+import QuestionBulkDeleteDialog from '~/features/problems/components/QuestionBulkDeleteDialog.vue'
 import QuestionDeleteDialog from '~/features/problems/components/QuestionDeleteDialog.vue'
 import QuestionPreviewModal from '~/features/problems/components/QuestionPreviewModal.vue'
 import QuestionAddModal from '~/features/problems/components/QuestionAddModal.vue'
 import QuestionEditModal from '~/features/problems/components/QuestionEditModal.vue'
-import { deleteQuestionErrorMessage, problemErrorMessage } from '~/features/problems/validation'
+import { bulkDeleteQuestionsErrorMessage, deleteQuestionErrorMessage, problemErrorMessage } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/management.css'
@@ -37,6 +39,11 @@ const isMultiplierModalOpen = ref(false)
 const deletingQuestion = ref<Question | null>(null)
 const isDeleting = ref(false)
 const deleteErrorMessage = ref('')
+const selectedIds = ref<number[]>([])
+const isBulkDeleteDialogOpen = ref(false)
+const isBulkDeleting = ref(false)
+const bulkDeleteErrorMessage = ref('')
+const bulkDeleteSuccessMessage = ref('')
 const isAddModalOpen = ref(false)
 const editingQuestion = ref<Question | null>(null)
 const previewingQuestion = ref<Question | null>(null)
@@ -112,6 +119,66 @@ async function confirmDelete() {
   }
   finally {
     isDeleting.value = false
+  }
+}
+
+const selectedQuestions = computed(() => questions.value.filter(question => selectedIds.value.includes(question.id)))
+const isAllSelected = computed(() => questions.value.length > 0 && selectedQuestions.value.length === questions.value.length)
+const isSomeSelected = computed(() => selectedQuestions.value.length > 0 && !isAllSelected.value)
+
+// 一覧の再読み込みや削除で消えた問題の選択は自動的に外す。
+watch(questions, (list) => {
+  const existing = new Set(list.map(question => question.id))
+  const remaining = selectedIds.value.filter(id => existing.has(id))
+  if (remaining.length !== selectedIds.value.length) selectedIds.value = remaining
+})
+
+function toggleSelected(question: Question, checked: boolean) {
+  const without = selectedIds.value.filter(id => id !== question.id)
+  selectedIds.value = checked ? [...without, question.id] : without
+}
+
+function toggleSelectAll(checked: boolean) {
+  selectedIds.value = checked ? questions.value.map(question => question.id) : []
+}
+
+function openBulkDeleteDialog() {
+  if (selectedQuestions.value.length === 0) return
+  bulkDeleteErrorMessage.value = ''
+  bulkDeleteSuccessMessage.value = ''
+  isBulkDeleteDialogOpen.value = true
+}
+
+function closeBulkDeleteDialog() {
+  if (isBulkDeleting.value) return
+  isBulkDeleteDialogOpen.value = false
+  bulkDeleteErrorMessage.value = ''
+}
+
+async function confirmBulkDelete() {
+  const targets = selectedQuestions.value
+  if (targets.length === 0 || isBulkDeleting.value) return
+
+  isBulkDeleting.value = true
+  bulkDeleteErrorMessage.value = ''
+  try {
+    const result = await bulkDeleteQuestions(targets.map(question => question.id))
+    const deleted = new Set(result.deletedIds)
+    questions.value = questions.value.filter(item => !deleted.has(item.id))
+    selectedIds.value = []
+    isBulkDeleteDialogOpen.value = false
+    bulkDeleteSuccessMessage.value = `${result.deletedCount}問を削除しました。`
+    // 削除後の問題番号の振り直しなどを反映するため、バックグラウンドで再取得する。
+    void loadQuestions()
+  }
+  catch (error) {
+    const apiError = toApiError(error)
+    bulkDeleteErrorMessage.value = bulkDeleteQuestionsErrorMessage(apiError.statusCode, apiError.message)
+    // 一部が既に削除済み(404)の場合は最新の一覧に揃える。
+    if (apiError.statusCode === 404) void loadQuestions()
+  }
+  finally {
+    isBulkDeleting.value = false
   }
 }
 
@@ -293,10 +360,40 @@ onMounted(() => {
       <p v-else-if="questions.length === 0" class="status-message empty" role="status">
         登録されている問題がありません。「＋ 問題を追加」から最初の問題を登録してください。
       </p>
-      <div v-else class="question-list">
+      <p v-if="bulkDeleteSuccessMessage" class="status-message success" role="status">{{ bulkDeleteSuccessMessage }}</p>
+      <div v-if="!isQuestionsLoading && questions.length > 0" class="bulk-toolbar">
+        <label class="bulk-select-all">
+          <input
+            type="checkbox"
+            :checked="isAllSelected"
+            :indeterminate.prop="isSomeSelected"
+            @change="toggleSelectAll(($event.target as HTMLInputElement).checked)"
+          >
+          すべて選択
+        </label>
+        <div class="bulk-toolbar-actions">
+          <p class="bulk-selected-count" role="status">{{ selectedQuestions.length }} 問を選択中</p>
+          <button
+            type="button"
+            class="bulk-delete-button"
+            :disabled="selectedQuestions.length === 0"
+            aria-haspopup="dialog"
+            @click="openBulkDeleteDialog"
+          >一括削除</button>
+        </div>
+      </div>
+      <div v-if="!isQuestionsLoading && questions.length > 0" class="question-list">
         <div class="question-rows">
           <details v-for="question in questions" :key="question.id" class="question-row">
             <summary class="question-row-summary">
+              <input
+                type="checkbox"
+                class="question-select-checkbox"
+                :checked="selectedIds.includes(question.id)"
+                :aria-label="`${formatQuestionPosition(question.position)}を選択`"
+                @click.stop
+                @change="toggleSelected(question, ($event.target as HTMLInputElement).checked)"
+              >
               <span class="question-id">{{ formatQuestionPosition(question.position) }}</span>
               <span class="question-text">{{ question.questionText }}</span>
               <span class="points-badge">配点 {{ question.points }}点</span>
@@ -372,6 +469,14 @@ onMounted(() => {
       :error-message="deleteErrorMessage"
       @close="closeDeleteDialog"
       @confirm="confirmDelete"
+    />
+    <QuestionBulkDeleteDialog
+      v-if="isBulkDeleteDialogOpen"
+      :questions="selectedQuestions"
+      :is-deleting="isBulkDeleting"
+      :error-message="bulkDeleteErrorMessage"
+      @close="closeBulkDeleteDialog"
+      @confirm="confirmBulkDelete"
     />
     <QuestionAddModal v-if="isAddModalOpen" @close="closeAddModal" @saved="handleQuestionAdded" />
     <QuestionEditModal
