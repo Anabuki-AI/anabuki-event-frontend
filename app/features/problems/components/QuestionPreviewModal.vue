@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, useId } from 'vue'
-import type { Question } from '../types'
+import type { ConfidenceLevel, Question } from '../types'
+import { CONFIDENCE_LEVEL_LABELS } from '~/features/participant-quiz/types'
 import { resolveQuestionImageUrl } from '../api/client'
 import { CHOICE_KEYS } from '../constants'
 import { choiceText, formatQuestionPosition } from './QuestionRow'
@@ -10,24 +11,24 @@ import '~/assets/css/answer.css'
 const props = defineProps<{ question: Question }>()
 const emit = defineEmits<{ close: [] }>()
 
-type Confidence = 'Lv.1' | 'Lv.2' | 'Lv.3'
+type Confidence = ConfidenceLevel
 interface ConfidenceOption {
-  label: Confidence
+  level: Confidence
   rate: string
 }
 
-// 参加者画面のLv表記に合わせた見た目確認用の既定倍率。プレビュー専用で送信は行わない。
+// 参加者画面と同じ表記(CONFIDENCE_LEVEL_LABELS)の見た目確認用の既定倍率。プレビュー専用で送信は行わない。
 const confidenceOptions: ConfidenceOption[] = [
-  { label: 'Lv.1', rate: '×0.5' },
-  { label: 'Lv.2', rate: '×1.0' },
-  { label: 'Lv.3', rate: '×2.0' },
+  { level: 'low', rate: '×0.5' },
+  { level: 'normal', rate: '×1.0' },
+  { level: 'high', rate: '×2.0' },
 ]
 // 獲得予定ポイントの基礎点は、この問題に設定された配点（question.points）を使う。
-const CONFIDENCE_RATE: Record<Confidence, number> = { 'Lv.1': 0.5, 'Lv.2': 1, 'Lv.3': 2 }
+const CONFIDENCE_RATE: Record<Confidence, number> = { low: 0.5, normal: 1, high: 2 }
 
 const imageUrl = resolveQuestionImageUrl(props.question.imageUrl)
 const selectedChoice = ref<Question['correctAnswer'] | null>(null)
-const confidence = ref<Confidence>('Lv.2')
+const confidence = ref<Confidence>('normal')
 const submitted = ref(false)
 const panel = ref<HTMLElement | null>(null)
 const titleId = useId()
@@ -101,14 +102,14 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
                 <div class="confidence-list">
                   <button
                     v-for="option in confidenceOptions"
-                    :key="option.label"
+                    :key="option.level"
                     type="button"
                     class="confidence-item"
-                    :class="{ 'is-selected': confidence === option.label }"
-                    :aria-pressed="confidence === option.label"
-                    @click="confidence = option.label"
+                    :class="{ 'is-selected': confidence === option.level }"
+                    :aria-pressed="confidence === option.level"
+                    @click="confidence = option.level"
                   >
-                    <span class="confidence-name">{{ option.label }}</span>
+                    <span class="confidence-name">{{ CONFIDENCE_LEVEL_LABELS[option.level] }}</span>
                     <span class="confidence-rate">{{ option.rate }}</span>
                   </button>
                 </div>
@@ -116,7 +117,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
               <div class="point-panel">
                 <p class="point-summary">
-                  現在の選択：{{ selectedChoiceText }}／自信度：{{ confidence }}
+                  現在の選択：{{ selectedChoiceText }}／自信度：{{ CONFIDENCE_LEVEL_LABELS[confidence] }}
                 </p>
                 <p class="point-value">
                   {{ expectedPoint }}<span class="point-unit">pt</span>
