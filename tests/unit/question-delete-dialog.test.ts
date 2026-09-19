@@ -28,3 +28,12 @@ describe('問題削除確認ダイアログ', () => {
     expect(wrapper.find('.delete-button').attributes('disabled')).toBeDefined()
   })
 })
+
+describe('問題削除エラーメッセージ', () => {
+  it('422(出題中・公開済み・回答済み)は削除できない理由を返す', async () => {
+    const { deleteQuestionErrorMessage } = await import('../../app/features/problems/validation')
+    expect(deleteQuestionErrorMessage(422, 'x')).toContain('削除できません')
+    expect(deleteQuestionErrorMessage(404, 'x')).toBe('指定された問題は見つかりませんでした。')
+    expect(deleteQuestionErrorMessage(500, 'fallback')).toBe('fallback')
+  })
+})
