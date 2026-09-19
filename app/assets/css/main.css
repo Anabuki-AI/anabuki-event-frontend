@@ -596,6 +596,11 @@ h1 {
   height: 20px;
 }
 
+.ranking-skeleton-points {
+  width: 56px;
+  height: 20px;
+}
+
 .ranking-skeleton-list {
   margin-top: 0;
 }

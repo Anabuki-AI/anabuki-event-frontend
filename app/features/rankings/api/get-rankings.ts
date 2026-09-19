@@ -6,6 +6,7 @@ function toRankingEntry(entry: RankingEntryWire) {
     rank: entry.rank,
     participantId: String(entry.participant_id),
     displayName: entry.display_name,
+    totalPoints: entry.total_points,
   }
 }
 

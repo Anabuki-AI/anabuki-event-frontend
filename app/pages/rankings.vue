@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatMyRankingLine } from '~/features/rankings/components/MyRankingPanel'
-import { formatRank } from '~/features/rankings/components/RankingList'
+import { formatPoints, formatRank } from '~/features/rankings/components/RankingList'
 import { rankingMedalFor } from '~/features/rankings/components/RankingTopCards'
 import LoadingSkeleton from '~/components/LoadingSkeleton.vue'
 import { useRankings } from '~/features/rankings/composables/use-rankings'
@@ -78,6 +78,7 @@ const {
           <li v-for="index in 3" :key="index" class="ranking-card">
             <LoadingSkeleton class="ranking-skeleton-rank" />
             <LoadingSkeleton class="ranking-skeleton-name" />
+            <LoadingSkeleton class="ranking-skeleton-points" />
           </li>
         </ul>
         <ol class="ranking-list ranking-skeleton-list">
@@ -109,6 +110,9 @@ const {
             <p class="ranking-card-name">
               {{ entry.displayName }}
             </p>
+            <p class="ranking-card-points">
+              {{ formatPoints(entry.totalPoints) }}
+            </p>
           </li>
         </ul>
 
@@ -121,6 +125,7 @@ const {
           >
             <span class="ranking-list-rank">{{ formatRank(entry.rank) }}</span>
             <span class="ranking-list-name">{{ entry.displayName }}</span>
+            <span class="ranking-list-points">{{ formatPoints(entry.totalPoints) }}</span>
           </li>
         </ol>
       </template>

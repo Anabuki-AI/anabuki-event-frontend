@@ -7,11 +7,11 @@ import {
 describe('myRankingViewState', () => {
   it('prefers the loading state while fetching', () => {
     expect(myRankingViewState(null, '', true)).toBe('loading')
-    expect(myRankingViewState({ rank: 1, participantId: 1, displayName: 'alice' }, '', true)).toBe('loading')
+    expect(myRankingViewState({ rank: 1, participantId: '1', displayName: 'alice', totalPoints: 100 }, '', true)).toBe('loading')
   })
 
   it('reports the entry state when an entry exists', () => {
-    expect(myRankingViewState({ rank: 1, participantId: 1, displayName: 'alice' }, '', false)).toBe('entry')
+    expect(myRankingViewState({ rank: 1, participantId: '1', displayName: 'alice', totalPoints: 100 }, '', false)).toBe('entry')
   })
 
   it('reports the error state when loading finished without an entry', () => {
@@ -20,9 +20,9 @@ describe('myRankingViewState', () => {
 })
 
 describe('formatMyRankingLine', () => {
-  it('formats the entry as rank + display name (API returns no points)', () => {
-    const line = formatMyRankingLine({ rank: 256, participantId: 1, displayName: 'alice' })
+  it('formats the entry as rank + display name + total points', () => {
+    const line = formatMyRankingLine({ rank: 256, participantId: '1', displayName: 'alice', totalPoints: -50 })
 
-    expect(line).toBe('256位 あなた（alice さん）')
+    expect(line).toBe('256位 あなた（alice さん）・-50点')
   })
 })
