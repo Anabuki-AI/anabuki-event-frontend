@@ -59,7 +59,7 @@ export interface SubmitParticipantQuizAnswerResult {
 }
 
 export const CONFIDENCE_LEVEL_LABELS: Record<ConfidenceLevel, string> = {
-  low: 'Lv.1',
-  normal: 'Lv.2',
-  high: 'Lv.3',
+  low: 'なし',
+  normal: '普通',
+  high: 'あり',
 }
