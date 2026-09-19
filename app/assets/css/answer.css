@@ -675,3 +675,9 @@
     animation: none;
   }
 }
+
+/* 終了カード下の「ランキングを表示する」ボタン(既存 .primary-link を全幅化) */
+.answer-shell .answer-ranking-link {
+  width: 100%;
+  font-size: 1rem;
+}

@@ -156,6 +156,9 @@ onMounted(async () => {
 
       <section v-else-if="screen === 'finished'" class="answer-card" aria-live="polite">
         <ParticipantQuizFinishedPanel />
+        <NuxtLink class="primary-link answer-ranking-link" to="/rankings">
+          ランキングを表示する
+        </NuxtLink>
       </section>
 
       <section v-else-if="(screen === 'answer' || isEditingAnswer) && question" class="answer-card">
