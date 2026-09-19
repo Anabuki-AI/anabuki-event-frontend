@@ -95,15 +95,15 @@ describe('参加者クイズのレベル確定', () => {
     mockedSubmitAnswer.mockReset()
   })
 
-  it('Lv.1〜3を実倍率と対応付け、Lv未確定では解答を送れない', async () => {
+  it('自信度なし・普通・ありを実倍率と対応付け、Lv未確定では解答を送れない', async () => {
     const wrapper = mount(Harness)
     await flushPromises()
 
     const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
     expect((vm as unknown as { confidenceOptions: unknown }).confidenceOptions).toEqual([
-      { value: 'low', label: 'Lv.1', multiplier: '×0.50' },
-      { value: 'normal', label: 'Lv.2', multiplier: '×1.00' },
-      { value: 'high', label: 'Lv.3', multiplier: '×2.00' },
+      { value: 'low', label: 'なし', multiplier: '×0.50' },
+      { value: 'normal', label: '普通', multiplier: '×1.00' },
+      { value: 'high', label: 'あり', multiplier: '×2.00' },
     ])
     expect((vm as unknown as { isConfidenceLocked: boolean }).isConfidenceLocked).toBe(false)
     expect((vm as unknown as { canSubmit: boolean }).canSubmit).toBe(false)
@@ -143,7 +143,7 @@ describe('参加者クイズのレベル確定', () => {
 
     expect(mockedConfirmConfidence).not.toHaveBeenCalled()
     expect((vm as unknown as { isConfidenceConfirmOpen: boolean }).isConfidenceConfirmOpen).toBe(false)
-    expect((vm as unknown as { confidenceMessage: string }).confidenceMessage).toContain('Lv.1は選択できません')
+    expect((vm as unknown as { confidenceMessage: string }).confidenceMessage).toContain('自信度「なし」は選択できません')
     wrapper.unmount()
   })
 

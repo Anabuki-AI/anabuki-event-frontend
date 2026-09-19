@@ -202,14 +202,14 @@ onMounted(async () => {
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
             <template v-if="isLiveRelayQuestion">
-              ライブ問題は正解・不正解が未確定のため、Lv.1は選択できません。Lv.2とLv.3は送信まで自由に変更できます。
+              ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」と「あり」は送信まで自由に変更できます。
             </template>
             <template v-else>
-              Lv.2とLv.3は送信まで自由に変更できます。Lv.1は1度だけ選べて、不正解の選択肢を1つグレーアウトします。確定後は変更できません。
+              「普通」と「あり」は送信まで自由に変更できます。「なし」は1度だけ選べて、不正解の選択肢を1つグレーアウトします。確定後は変更できません。
             </template>
           </p>
           <p v-else class="confidence-help">
-            {{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}を確定済みです。レベルは変更できません。
+            {{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label }}を確定済みです。自信度は変更できません。
           </p>
           <div class="confidence-list">
             <button
@@ -237,7 +237,7 @@ onMounted(async () => {
 
         <div class="point-panel">
             <p class="point-summary">
-              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／レベル：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label ?? '未選択' }}
+              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／自信度：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label ?? '未選択' }}
             </p>
             <p v-if="isEditingAnswer" class="point-caption">
               受付済み：{{ savedChoiceText }}
@@ -249,7 +249,7 @@ onMounted(async () => {
               {{ selectedMultiplier }}
             </p>
             <p class="point-caption">
-              Lv.3で不正解の場合は、問題の配点の半分を減点します。
+              自信度「あり」で不正解の場合は、問題の配点の半分を減点します。
             </p>
           </div>
 
@@ -260,7 +260,7 @@ onMounted(async () => {
             {{ confidenceMessage }}
           </p>
           <p class="answer-note">
-            {{ isEditingAnswer ? '内容を確認して、変更を送信してください。' : '選択肢を選んで送信してください。レベルはLv.1確定後・解答後は変更できません。' }}
+            {{ isEditingAnswer ? '内容を確認して、変更を送信してください。' : '選択肢を選んで送信してください。自信度は「なし」確定後・解答後は変更できません。' }}
           </p>
 
           <div v-if="isEditingAnswer" class="answer-edit-actions">
@@ -293,12 +293,12 @@ onMounted(async () => {
 
         <div v-if="isConfidenceConfirmOpen" class="confidence-confirmation-backdrop" @click.self="cancelConfidenceSelection">
           <section class="confidence-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="lv1-confirm-title">
-            <h2 id="lv1-confirm-title">Lv.1を確定しますか？</h2>
+            <h2 id="lv1-confirm-title">自信度「なし」を確定しますか？</h2>
             <p v-if="selectedChoice">
               選択中の{{ selectedChoiceText }}を残して、他の不正解の選択肢を1つグレーアウトします。
             </p>
             <p v-else>
-              不正解の選択肢を1つグレーアウトします。確定するとレベルは変更できません。
+              不正解の選択肢を1つグレーアウトします。確定すると自信度は変更できません。
             </p>
             <div class="confidence-confirmation-actions">
               <button type="button" class="button-cancel" :disabled="isConfirmingConfidence" @click="cancelConfidenceSelection">いいえ</button>

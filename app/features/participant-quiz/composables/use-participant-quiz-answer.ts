@@ -170,7 +170,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     confidenceMessage.value = ''
     if (level === 'low' && isLiveRelayQuestion.value) {
-      confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、Lv.1は選択できません。Lv.2またはLv.3を選択してください。'
+      confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」または「あり」を選択してください。'
       pendingConfidenceLevel.value = undefined
       isConfidenceConfirmOpen.value = false
       return
@@ -204,7 +204,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     const currentQuestion = question.value
     if (!currentQuestion || isConfidenceLocked.value || isConfirmingConfidence.value) return
     if (level === 'low' && isLiveRelayQuestion.value) {
-      confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、Lv.1は選択できません。Lv.2またはLv.3を選択してください。'
+      confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」または「あり」を選択してください。'
       pendingConfidenceLevel.value = undefined
       isConfidenceConfirmOpen.value = false
       return
