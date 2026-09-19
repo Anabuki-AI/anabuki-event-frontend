@@ -13,10 +13,11 @@ const apiMocks = vi.hoisted(() => ({
   createQuestion: vi.fn(),
   updateQuestion: vi.fn(),
   deleteQuestion: vi.fn(),
+  bulkDeleteQuestions: vi.fn(),
   selectRelayQuestion: vi.fn(),
   resolveQuestionImageUrl: (url: string | null) => url,
 }))
-const { fetchQuestions, fetchConfidenceMultipliers, createQuestion, updateQuestion, deleteQuestion, selectRelayQuestion } = apiMocks
+const { fetchQuestions, fetchConfidenceMultipliers, createQuestion, updateQuestion, deleteQuestion, bulkDeleteQuestions, selectRelayQuestion } = apiMocks
 
 vi.mock('~/features/problems/api/client', () => apiMocks)
 
@@ -146,5 +147,95 @@ describe('問題管理の再取得と即時パッチ', () => {
     expect(wrapper.text()).toContain('失敗後も残る問題')
     expect(wrapper.find('.question-refresh-status.is-error').exists()).toBe(true)
     wrapper.unmount()
+  })
+})
+
+describe('問題管理の一括削除', () => {
+  beforeEach(() => {
+    fetchQuestions.mockReset()
+    fetchConfidenceMultipliers.mockReset()
+    bulkDeleteQuestions.mockReset()
+    fetchConfidenceMultipliers.mockResolvedValue(multipliers)
+  })
+
+  const list = () => [
+    makeQuestion({ id: 1, position: 1 }),
+    makeQuestion({ id: 2, position: 2, revealedAt: '2026-01-01T00:00:00.000Z', hasParticipantData: true }),
+    makeQuestion({ id: 3, position: 3 }),
+  ]
+
+  it('未選択の間は一括削除ボタンが無効で、選択すると有効になり件数が出る', async () => {
+    fetchQuestions.mockResolvedValue(list())
+    const wrapper = mountManagement()
+    await flushPromises()
+
+    const button = wrapper.find('.bulk-delete-button')
+    expect(button.attributes('disabled')).toBeDefined()
+    await wrapper.findAll('.question-select-checkbox')[0]!.setValue(true)
+    expect(button.attributes('disabled')).toBeUndefined()
+    expect(wrapper.find('.bulk-selected-count').text()).toContain('1 問を選択中')
+  })
+
+  it('すべて選択で全件を選び、もう一度で解除する', async () => {
+    fetchQuestions.mockResolvedValue(list())
+    const wrapper = mountManagement()
+    await flushPromises()
+
+    const selectAll = wrapper.find('.bulk-select-all input')
+    await selectAll.setValue(true)
+    expect(wrapper.find('.bulk-selected-count').text()).toContain('3 問を選択中')
+    await selectAll.setValue(false)
+    expect(wrapper.find('.bulk-selected-count').text()).toContain('0 問を選択中')
+  })
+
+  it('確認ダイアログで確認するまで削除せず、キャンセルでは削除しない', async () => {
+    fetchQuestions.mockResolvedValue(list())
+    const wrapper = mountManagement()
+    await flushPromises()
+
+    await wrapper.find('.bulk-select-all input').setValue(true)
+    await wrapper.find('.bulk-delete-button').trigger('click')
+    expect(bulkDeleteQuestions).not.toHaveBeenCalled()
+    expect(wrapper.find('.bulk-delete-warning').text()).toContain('3 問のうち 1 問')
+
+    await wrapper.find('.delete-dialog .button-cancel').trigger('click')
+    expect(bulkDeleteQuestions).not.toHaveBeenCalled()
+    expect(wrapper.find('.delete-dialog').exists()).toBe(false)
+  })
+
+  it('確認後に選択IDで削除し、一覧から除去して成功メッセージを出す', async () => {
+    fetchQuestions.mockResolvedValueOnce(list()).mockResolvedValue([makeQuestion({ id: 3, position: 1 })])
+    bulkDeleteQuestions.mockResolvedValue({ deletedCount: 2, deletedIds: [1, 2] })
+    const wrapper = mountManagement()
+    await flushPromises()
+
+    const boxes = wrapper.findAll('.question-select-checkbox')
+    await boxes[0]!.setValue(true)
+    await boxes[1]!.setValue(true)
+    await wrapper.find('.bulk-delete-button').trigger('click')
+    await wrapper.find('.delete-dialog .delete-button').trigger('click')
+    await flushPromises()
+
+    expect(bulkDeleteQuestions).toHaveBeenCalledWith([1, 2])
+    expect(wrapper.find('.delete-dialog').exists()).toBe(false)
+    expect(wrapper.findAll('.question-row')).toHaveLength(1)
+    expect(wrapper.text()).toContain('2問を削除しました。')
+    expect(wrapper.find('.bulk-selected-count').text()).toContain('0 問を選択中')
+  })
+
+  it('失敗時はダイアログを開いたままエラーを表示し、選択を保持する', async () => {
+    fetchQuestions.mockResolvedValue(list())
+    bulkDeleteQuestions.mockRejectedValue(Object.assign(new Error('boom'), { statusCode: 500 }))
+    const wrapper = mountManagement()
+    await flushPromises()
+
+    await wrapper.findAll('.question-select-checkbox')[0]!.setValue(true)
+    await wrapper.find('.bulk-delete-button').trigger('click')
+    await wrapper.find('.delete-dialog .delete-button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.delete-dialog .status-message.error').exists()).toBe(true)
+    expect(wrapper.findAll('.question-row')).toHaveLength(3)
+    expect(wrapper.find('.bulk-selected-count').text()).toContain('1 問を選択中')
   })
 })

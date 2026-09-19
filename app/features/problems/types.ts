@@ -50,6 +50,11 @@ export interface Question {
    * 戻っていても correctAnswer を変更できる。
    */
   revealedAt?: string | null
+  /**
+   * この問題に参加者の回答または自信度選択が1件でも記録されているか。
+   * 一括削除の確認ダイアログで「回答記録も消える」警告の対象数を数えるために使う。
+   */
+  hasParticipantData?: boolean
   /** 配点。この問題に正解した場合の基礎得点（自信度倍率を掛ける前の値）。 */
   points: number
   /**

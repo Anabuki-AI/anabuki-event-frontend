@@ -253,3 +253,19 @@
   .problems-header { align-items: flex-start; flex-direction: column; }
   .question-choices { grid-template-columns: 1fr; }
 }
+
+/* --- 一括削除(チェックボックス選択・ツールバー・確認ダイアログの警告) --- */
+.bulk-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.bulk-select-all { display: inline-flex; align-items: center; gap: 8px; color: #132238; font-size: 16px; font-weight: 700; cursor: pointer; }
+.bulk-select-all input,
+.question-select-checkbox { width: 18px; height: 18px; flex: 0 0 auto; accent-color: #1769c2; cursor: pointer; }
+.bulk-toolbar-actions { display: flex; align-items: center; gap: 12px; }
+.bulk-selected-count { margin: 0; color: #516176; font-size: 14px; }
+.bulk-delete-button { min-height: 38px; padding: 0 16px; border: 1px solid #a32b24; border-radius: 10px; color: #fff; background: #a32b24; font-size: 14px; font-weight: 750; }
+.bulk-delete-button:hover:not(:disabled) { background: #811f1a; }
+.bulk-delete-button:disabled { border-color: #c7d3e0; color: #8a97a8; background: #eef2f8; cursor: not-allowed; }
+.bulk-delete-warning { margin: 14px 0 0; padding: 12px 14px; border: 1px solid #e2bbb7; border-radius: 10px; color: #a32b24; background: #fff4f2; font-size: 14px; line-height: 1.7; }
+.bulk-delete-warning p { margin: 0; color: #a32b24; }
+.bulk-delete-warning-title { font-weight: 800; }
+.bulk-delete-warning ul { margin: 6px 0; padding-left: 20px; }
+.delete-dialog > .bulk-delete-warning p { color: #a32b24; }

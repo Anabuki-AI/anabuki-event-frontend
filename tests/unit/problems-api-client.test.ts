@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { request } from '~/lib/api/client'
 import {
+  bulkDeleteQuestions,
   createQuestion,
   deleteQuestion,
   fetchConfidenceMultipliers,
@@ -41,6 +42,16 @@ describe('問題管理API client', () => {
     await fetchQuestion(12)
     expect(mockedRequest).toHaveBeenNthCalledWith(1, '/admin/questions', { credentials: 'include' })
     expect(mockedRequest).toHaveBeenNthCalledWith(2, '/admin/questions/12', { credentials: 'include' })
+  })
+
+  it('一括削除はids付きのPOSTで送り、削除件数を返す', async () => {
+    mockedRequest.mockResolvedValueOnce({ deletedCount: 2, deletedIds: [3, 5] })
+    await expect(bulkDeleteQuestions([3, 5])).resolves.toEqual({ deletedCount: 2, deletedIds: [3, 5] })
+    expect(mockedRequest).toHaveBeenCalledWith('/admin/questions/bulk_destroy', {
+      method: 'POST',
+      credentials: 'include',
+      body: { ids: [3, 5] },
+    })
   })
 
   it('作成・更新・削除にバックエンド契約のHTTP methodとCookieを指定する', async () => {
