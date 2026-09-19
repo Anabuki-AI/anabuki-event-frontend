@@ -15,7 +15,7 @@ import QuestionDeleteDialog from '~/features/problems/components/QuestionDeleteD
 import QuestionPreviewModal from '~/features/problems/components/QuestionPreviewModal.vue'
 import QuestionAddModal from '~/features/problems/components/QuestionAddModal.vue'
 import QuestionEditModal from '~/features/problems/components/QuestionEditModal.vue'
-import { problemErrorMessage } from '~/features/problems/validation'
+import { deleteQuestionErrorMessage, problemErrorMessage } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
 import '~/assets/css/management.css'
@@ -108,7 +108,7 @@ async function confirmDelete() {
   }
   catch (error) {
     const apiError = toApiError(error)
-    deleteErrorMessage.value = problemErrorMessage(apiError.statusCode, apiError.message)
+    deleteErrorMessage.value = deleteQuestionErrorMessage(apiError.statusCode, apiError.message)
   }
   finally {
     isDeleting.value = false
