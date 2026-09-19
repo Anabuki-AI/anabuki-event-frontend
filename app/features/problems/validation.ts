@@ -15,6 +15,15 @@ export function problemErrorMessage(statusCode: number | undefined, fallback: st
 }
 
 /**
+ * 問題削除失敗時のメッセージ。バックエンドは出題中・公開済み・回答済みの問題の削除を
+ * 422で拒否するため、汎用の「入力内容を確認してください。」ではなく理由を明示する。
+ */
+export function deleteQuestionErrorMessage(statusCode: number | undefined, fallback: string): string {
+  if (statusCode === 422) return '現在出題中、またはすでに出題・回答されている問題は削除できません。'
+  return problemErrorMessage(statusCode, fallback)
+}
+
+/**
  * 制限時間(秒)の入力を検証する。空欄は「制限時間なし」として許可する。
  * 有効なら空文字列、無効なら理由を返す。
  */

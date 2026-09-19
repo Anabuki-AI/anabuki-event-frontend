@@ -77,6 +77,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
   const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked))
   const eliminatedChoice = computed(() => state.value?.question?.eliminated_choice ?? null)
+  const isLiveRelayQuestion = computed(() => state.value?.question?.is_live_relay_question === true)
 
   watch(() => question.value?.question_id, (questionId, previousQuestionId) => {
     if (!questionId || questionId === previousQuestionId) return
@@ -168,6 +169,13 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (isConfidenceLocked.value || isConfirmingConfidence.value) return
 
     confidenceMessage.value = ''
+    if (level === 'low' && isLiveRelayQuestion.value) {
+      confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、Lv.1は選択できません。Lv.2またはLv.3を選択してください。'
+      pendingConfidenceLevel.value = undefined
+      isConfidenceConfirmOpen.value = false
+      return
+    }
+
     pendingConfidenceLevel.value = level
     // Lv.1 は一方通行なので確認ダイアログを挟む。Lv.2/3 は送信まで自由に変更できる。
     if (level === 'low') {
@@ -195,6 +203,12 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   async function confirmConfidenceLevel(level: ConfidenceLevel) {
     const currentQuestion = question.value
     if (!currentQuestion || isConfidenceLocked.value || isConfirmingConfidence.value) return
+    if (level === 'low' && isLiveRelayQuestion.value) {
+      confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、Lv.1は選択できません。Lv.2またはLv.3を選択してください。'
+      pendingConfidenceLevel.value = undefined
+      isConfidenceConfirmOpen.value = false
+      return
+    }
 
     isConfirmingConfidence.value = true
     pendingConfidenceLevel.value = level
@@ -301,6 +315,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     lockedConfidenceLevel,
     isConfidenceLocked,
     eliminatedChoice,
+    isLiveRelayQuestion,
     selectedChoice,
     selectedChoiceText,
     selectedMultiplier,

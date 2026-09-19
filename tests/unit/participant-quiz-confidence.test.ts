@@ -56,6 +56,14 @@ const submittedState: ParticipantQuizState = {
   confidence_locked: true,
 }
 
+const liveRelayState: ParticipantQuizState = {
+  ...unlockedState,
+  question: {
+    ...unlockedState.question!,
+    is_live_relay_question: true,
+  },
+}
+
 const Harness = defineComponent({
   setup: () => useParticipantQuizAnswer({ onWaiting: vi.fn(), onUnauthorized: vi.fn() }),
   template: '<div />',
@@ -120,6 +128,22 @@ describe('参加者クイズのレベル確定', () => {
     expect((vm as unknown as { lockedConfidenceLevel: string }).lockedConfidenceLevel).toBe('low')
     expect((vm as unknown as { eliminatedChoice: string | null }).eliminatedChoice).toBe('C')
     expect((vm as unknown as { choices: { key: string, eliminated: boolean }[] }).choices.map(choice => choice.eliminated)).toEqual([false, false, true, false])
+    wrapper.unmount()
+  })
+
+  it('ライブ問題では正解・不正解が未確定のためLv.1を選択できない', async () => {
+    mockedFetchState.mockResolvedValue(liveRelayState)
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    expect((vm as unknown as { isLiveRelayQuestion: boolean }).isLiveRelayQuestion).toBe(true)
+
+    ;(vm as unknown as { selectConfidenceLevel: (level: 'low') => void }).selectConfidenceLevel('low')
+
+    expect(mockedConfirmConfidence).not.toHaveBeenCalled()
+    expect((vm as unknown as { isConfidenceConfirmOpen: boolean }).isConfidenceConfirmOpen).toBe(false)
+    expect((vm as unknown as { confidenceMessage: string }).confidenceMessage).toContain('Lv.1は選択できません')
     wrapper.unmount()
   })
 
