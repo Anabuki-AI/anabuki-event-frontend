@@ -5,6 +5,7 @@ import {
   deleteQuestion,
   fetchConfidenceMultipliers,
   fetchQuestions,
+  reorderQuestions,
   selectRelayQuestion,
 } from '~/features/problems/api/client'
 import { CHOICE_KEYS, CONFIDENCE_LEVEL_LABELS, CONFIDENCE_LEVELS, formatMultiplier } from '~/features/problems/constants'
@@ -40,6 +41,11 @@ const deletingQuestion = ref<Question | null>(null)
 const isDeleting = ref(false)
 const deleteErrorMessage = ref('')
 const selectedIds = ref<number[]>([])
+const draggedIds = ref<number[]>([])
+const dropTargetId = ref<number | null>(null)
+const isDropAfterTarget = ref(false)
+const isReordering = ref(false)
+const reorderErrorMessage = ref('')
 const isBulkDeleteDialogOpen = ref(false)
 const isBulkDeleting = ref(false)
 const bulkDeleteErrorMessage = ref('')
@@ -140,6 +146,71 @@ function toggleSelected(question: Question, checked: boolean) {
 
 function toggleSelectAll(checked: boolean) {
   selectedIds.value = checked ? questions.value.map(question => question.id) : []
+}
+
+function resetDrag() {
+  draggedIds.value = []
+  dropTargetId.value = null
+  isDropAfterTarget.value = false
+}
+
+function handleQuestionDragStart(event: DragEvent, question: Question) {
+  if (isReordering.value) {
+    event.preventDefault()
+    return
+  }
+
+  if (!selectedIds.value.includes(question.id)) selectedIds.value = [question.id]
+  draggedIds.value = selectedIds.value
+  event.dataTransfer?.setData('text/plain', String(question.id))
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+
+function handleQuestionDragOver(event: DragEvent, question: Question) {
+  if (draggedIds.value.length === 0 || draggedIds.value.includes(question.id)) return
+
+  event.preventDefault()
+  const row = event.currentTarget as HTMLElement
+  isDropAfterTarget.value = event.clientY > row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2
+  dropTargetId.value = question.id
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+}
+
+async function handleQuestionDrop(event: DragEvent, target: Question) {
+  event.preventDefault()
+  const movingIds = draggedIds.value
+  const insertAfter = dropTargetId.value === target.id && isDropAfterTarget.value
+  resetDrag()
+  if (movingIds.length === 0 || movingIds.includes(target.id) || isReordering.value) return
+
+  const moving = questions.value.filter(question => movingIds.includes(question.id))
+  const remaining = questions.value.filter(question => !movingIds.includes(question.id))
+  const targetIndex = remaining.findIndex(question => question.id === target.id)
+  const reordered = [
+    ...remaining.slice(0, targetIndex + (insertAfter ? 1 : 0)),
+    ...moving,
+    ...remaining.slice(targetIndex + (insertAfter ? 1 : 0)),
+  ]
+  if (reordered.every((question, index) => question.id === questions.value[index]?.id)) return
+
+  const previous = questions.value
+  isReordering.value = true
+  reorderErrorMessage.value = ''
+  questions.value = reordered.map((question, index) => ({ ...question, position: index + 1 }))
+  try {
+    questions.value = await reorderQuestions(reordered.map(question => question.id))
+  }
+  catch (error) {
+    questions.value = previous
+    const apiError = toApiError(error)
+    reorderErrorMessage.value = apiError.statusCode === 422
+      ? 'クイズ出題中、または一覧が更新されたため並べ替えできませんでした。'
+      : problemErrorMessage(apiError.statusCode, apiError.message)
+    void loadQuestions()
+  }
+  finally {
+    isReordering.value = false
+  }
 }
 
 function openBulkDeleteDialog() {
@@ -330,6 +401,7 @@ onMounted(() => {
       <p v-if="relaySelectionErrorMessage" class="status-message error" role="alert">
         中継問題の選択に失敗しました。{{ relaySelectionErrorMessage }}
       </p>
+      <p v-if="reorderErrorMessage" class="status-message error" role="alert">{{ reorderErrorMessage }}</p>
       <div v-if="isQuestionsRefreshing" class="question-refresh-status" role="status" aria-busy="true">
         問題一覧を更新中…
       </div>
@@ -381,11 +453,33 @@ onMounted(() => {
             @click="openBulkDeleteDialog"
           >一括削除</button>
         </div>
+        <p class="question-reorder-note">チェックした問題は、↕をドラッグしてまとめて移動できます。</p>
       </div>
       <div v-if="!isQuestionsLoading && questions.length > 0" class="question-list">
         <div class="question-rows">
-          <details v-for="question in questions" :key="question.id" class="question-row">
+          <details
+            v-for="question in questions"
+            :key="question.id"
+            class="question-row"
+            :class="{
+              'is-dragging': draggedIds.includes(question.id),
+              'is-drop-before': dropTargetId === question.id && !isDropAfterTarget,
+              'is-drop-after': dropTargetId === question.id && isDropAfterTarget,
+            }"
+            @dragover="handleQuestionDragOver($event, question)"
+            @drop="handleQuestionDrop($event, question)"
+          >
             <summary class="question-row-summary">
+              <span
+                class="question-drag-handle"
+                :class="{ 'is-disabled': isReordering }"
+                draggable="true"
+                :aria-label="`${formatQuestionPosition(question.position)}をドラッグして移動`"
+                role="img"
+                @click.stop
+                @dragstart="handleQuestionDragStart($event, question)"
+                @dragend="resetDrag"
+              >↕</span>
               <input
                 type="checkbox"
                 class="question-select-checkbox"

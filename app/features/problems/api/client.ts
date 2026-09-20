@@ -70,6 +70,15 @@ export function fetchQuestion(id: number): Promise<Question> {
   return request<Question>(`/admin/questions/${id}`, { credentials })
 }
 
+/** 問題の完全な並び順を保存し、位置を振り直した一覧を返す。 */
+export function reorderQuestions(questionIds: number[]): Promise<Question[]> {
+  return request<Question[]>('/admin/questions/reorder', {
+    method: 'PATCH',
+    credentials,
+    body: { questionIds },
+  })
+}
+
 export function createQuestion(payload: QuestionPayload): Promise<Question> {
   return request<Question>('/admin/questions', {
     method: 'POST',

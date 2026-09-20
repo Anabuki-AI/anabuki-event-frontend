@@ -14,10 +14,11 @@ const apiMocks = vi.hoisted(() => ({
   updateQuestion: vi.fn(),
   deleteQuestion: vi.fn(),
   bulkDeleteQuestions: vi.fn(),
+  reorderQuestions: vi.fn(),
   selectRelayQuestion: vi.fn(),
   resolveQuestionImageUrl: (url: string | null) => url,
 }))
-const { fetchQuestions, fetchConfidenceMultipliers, createQuestion, updateQuestion, deleteQuestion, bulkDeleteQuestions, selectRelayQuestion } = apiMocks
+const { fetchQuestions, fetchConfidenceMultipliers, createQuestion, updateQuestion, deleteQuestion, bulkDeleteQuestions, reorderQuestions, selectRelayQuestion } = apiMocks
 
 vi.mock('~/features/problems/api/client', () => apiMocks)
 
@@ -65,6 +66,7 @@ describe('問題管理の再取得と即時パッチ', () => {
     createQuestion.mockReset()
     updateQuestion.mockReset()
     deleteQuestion.mockReset()
+    reorderQuestions.mockReset()
     selectRelayQuestion.mockReset()
     fetchConfidenceMultipliers.mockResolvedValue(multipliers)
   })
@@ -155,6 +157,7 @@ describe('問題管理の一括削除', () => {
     fetchQuestions.mockReset()
     fetchConfidenceMultipliers.mockReset()
     bulkDeleteQuestions.mockReset()
+    reorderQuestions.mockReset()
     fetchConfidenceMultipliers.mockResolvedValue(multipliers)
   })
 
@@ -237,5 +240,41 @@ describe('問題管理の一括削除', () => {
     expect(wrapper.find('.delete-dialog .status-message.error').exists()).toBe(true)
     expect(wrapper.findAll('.question-row')).toHaveLength(3)
     expect(wrapper.find('.bulk-selected-count').text()).toContain('1 問を選択中')
+  })
+})
+
+describe('問題管理のドラッグ並べ替え', () => {
+  it('選択した複数問題をまとめてドラッグし、完全な新順序を保存する', async () => {
+    const questions = [
+      makeQuestion({ id: 1, position: 1, questionText: 'Q1' }),
+      makeQuestion({ id: 2, position: 2, questionText: 'Q2' }),
+      makeQuestion({ id: 3, position: 3, questionText: 'Q3' }),
+      makeQuestion({ id: 4, position: 4, questionText: 'Q4' }),
+    ]
+    fetchQuestions.mockResolvedValue(questions)
+    fetchConfidenceMultipliers.mockResolvedValue(multipliers)
+    reorderQuestions.mockResolvedValue([
+      makeQuestion({ id: 2, position: 1, questionText: 'Q2' }),
+      makeQuestion({ id: 4, position: 2, questionText: 'Q4' }),
+      makeQuestion({ id: 1, position: 3, questionText: 'Q1' }),
+      makeQuestion({ id: 3, position: 4, questionText: 'Q3' }),
+    ])
+    const wrapper = mountManagement()
+    await flushPromises()
+
+    const checkboxes = wrapper.findAll('.question-select-checkbox')
+    await checkboxes[0]!.setValue(true)
+    await checkboxes[2]!.setValue(true)
+    const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
+    const rows = wrapper.findAll('.question-row')
+    Object.assign(rows[3]!.element, { getBoundingClientRect: () => ({ top: 0, height: 20 }) })
+
+    await wrapper.findAll('.question-drag-handle')[0]!.trigger('dragstart', { dataTransfer })
+    await rows[3]!.trigger('dragover', { clientY: 15, dataTransfer })
+    await rows[3]!.trigger('drop', { dataTransfer })
+    await flushPromises()
+
+    expect(reorderQuestions).toHaveBeenCalledWith([2, 4, 1, 3])
+    expect(wrapper.findAll('.question-text').map(node => node.text())).toEqual(['Q2', 'Q4', 'Q1', 'Q3'])
   })
 })

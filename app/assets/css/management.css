@@ -109,6 +109,9 @@
   border-radius: 16px;
   background: #fff;
 }
+.question-row.is-dragging { opacity: 0.45; }
+.question-row.is-drop-before { box-shadow: 0 -3px 0 #1769c2; }
+.question-row.is-drop-after { box-shadow: 0 3px 0 #1769c2; }
 .question-row-summary {
   display: flex;
   align-items: center;
@@ -119,6 +122,20 @@
   list-style: none;
 }
 .question-row-summary::-webkit-details-marker { display: none; }
+.question-drag-handle {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 6px;
+  color: #516176;
+  cursor: grab;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  user-select: none;
+}
+.question-drag-handle:hover { color: #1769c2; background: #edeffa; }
+.question-drag-handle:active { cursor: grabbing; }
+.question-drag-handle.is-disabled { cursor: wait; opacity: 0.5; }
 .question-row-summary::after { margin-left: auto; color: #516176; content: '▸'; transition: transform 150ms ease; }
 .question-row[open] .question-row-summary::after { transform: rotate(90deg); }
 .question-row-summary:hover { background: rgb(23 105 194 / 4%); }
@@ -255,7 +272,8 @@
 }
 
 /* --- 一括削除(チェックボックス選択・ツールバー・確認ダイアログの警告) --- */
-.bulk-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.bulk-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.question-reorder-note { flex: 1 0 100%; margin: 0; color: #516176; font-size: 13px; }
 .bulk-select-all { display: inline-flex; align-items: center; gap: 8px; color: #132238; font-size: 16px; font-weight: 700; cursor: pointer; }
 .bulk-select-all input,
 .question-select-checkbox { width: 18px; height: 18px; flex: 0 0 auto; accent-color: #1769c2; cursor: pointer; }
