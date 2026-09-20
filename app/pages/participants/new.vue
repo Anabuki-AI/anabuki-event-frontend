@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
+import ParticipantPageLayout from '~/features/participants/components/ParticipantPageLayout.vue'
 import ParticipantRegistrationForm from '~/features/participants/components/ParticipantRegistrationForm.vue'
 import { ApiError } from '~/lib/api/error'
 
@@ -28,29 +29,13 @@ useSeoMeta({
 </script>
 
 <template>
-  <section class="form-card quiz-page">
-    <header class="quiz-header">
-      <p class="quiz-header-title">クイズ大会</p>
-      <p class="eyebrow">
-        Join the event
-      </p>
-      <NuxtLink
-        class="help-button"
-        to="/participants/help"
-        target="_blank"
-        rel="noopener"
-      >
-        ヘルプ
-      </NuxtLink>
-    </header>
-    <main class="page-shell">
-      <div v-if="isCheckingParticipant" class="participant-panel" role="status">
-        参加状態を確認しています…
-      </div>
-      <p v-else-if="guardError" class="status-message error" role="alert">
-        {{ guardError }}
-      </p>
-      <ParticipantRegistrationForm v-else />
-    </main>
-  </section>
+  <ParticipantPageLayout eyebrow="Join the event">
+    <div v-if="isCheckingParticipant" class="participant-panel" role="status">
+      参加状態を確認しています…
+    </div>
+    <p v-else-if="guardError" class="status-message error" role="alert">
+      {{ guardError }}
+    </p>
+    <ParticipantRegistrationForm v-else />
+  </ParticipantPageLayout>
 </template>
