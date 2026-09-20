@@ -70,4 +70,22 @@ describe('QuizCurrentQuestionCard', () => {
 
     expect(wrapper.find('.quiz-live-answer-selector').attributes('disabled')).toBeDefined()
   })
+
+  it('大会終了時は終了メッセージを表示する', () => {
+    const wrapper = mount(QuizCurrentQuestionCard, {
+      props: { state: { ...state, status: 'finished', phase: null, current: null } },
+    })
+
+    expect(wrapper.text()).toContain('クイズ大会は終了しました')
+    expect(wrapper.text()).not.toContain('公開中の問題はありません')
+  })
+
+  it('開始前は従来の待機文言を表示する', () => {
+    const wrapper = mount(QuizCurrentQuestionCard, {
+      props: { state: { ...state, status: 'waiting', phase: null, current: null } },
+    })
+
+    expect(wrapper.text()).toContain('公開中の問題はありません。')
+    expect(wrapper.text()).not.toContain('クイズ大会は終了しました')
+  })
 })
