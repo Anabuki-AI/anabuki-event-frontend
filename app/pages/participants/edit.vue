@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
+import ParticipantPageLayout from '~/features/participants/components/ParticipantPageLayout.vue'
 import { updateParticipantName } from '~/features/participants/api/update-participant-name'
 import type { Participant } from '~/features/participants/types'
 import { validateDisplayName } from '~/features/participants/validation'
@@ -65,55 +66,48 @@ onMounted(loadParticipant)
 </script>
 
 <template>
-  <main class="page-shell">
-    <section class="form-card quiz-page">
-      <header class="quiz-header">
-        <p class="quiz-header-title">クイズ大会</p>
-        <p class="eyebrow">Edit participant name</p>
-      </header>
-
-      <div v-if="isLoading" class="participant-panel" role="status">
-        参加情報を確認しています…
-      </div>
-      <p v-else-if="loadError" class="status-message error" role="alert">
-        {{ loadError }}
-      </p>
-      <form v-else class="user-form" novalidate @submit.prevent="handleSubmit">
-        <h1>名前を編集</h1>
-        <label>
-          <span>表示名</span>
-          <input
-            v-model.trim="displayName"
-            type="text"
-            name="displayName"
-            autocomplete="nickname"
-            maxlength="100"
-            :aria-invalid="Boolean(showError && displayNameError)"
-            aria-describedby="display-name-note"
-          >
-          <p
-            v-if="showError && displayNameError"
-            id="display-name-note"
-            class="field-note is-error"
-            role="alert"
-          >
-            {{ displayNameError }}
-          </p>
-        </label>
-        <p v-if="submitError" class="status-message error" role="alert">
-          {{ submitError }}
-        </p>
-        <button
-          type="submit"
-          class="submit-button"
-          :disabled="isSubmitting"
+  <ParticipantPageLayout eyebrow="Edit participant name">
+    <div v-if="isLoading" class="participant-panel" role="status">
+      参加情報を確認しています…
+    </div>
+    <p v-else-if="loadError" class="status-message error" role="alert">
+      {{ loadError }}
+    </p>
+    <form v-else class="user-form registration-form" novalidate @submit.prevent="handleSubmit">
+      <h1>名前を編集</h1>
+      <label>
+        <span>表示名</span>
+        <input
+          v-model.trim="displayName"
+          type="text"
+          name="displayName"
+          autocomplete="nickname"
+          maxlength="100"
+          :aria-invalid="Boolean(showError && displayNameError)"
+          aria-describedby="display-name-note"
         >
-          {{ isSubmitting ? '保存中…' : '保存する' }}
-        </button>
-        <NuxtLink class="back-link" to="/participants/waiting">
-          待機画面へ戻る
-        </NuxtLink>
-      </form>
-    </section>
-  </main>
+        <p
+          v-if="showError && displayNameError"
+          id="display-name-note"
+          class="field-note is-error"
+          role="alert"
+        >
+          {{ displayNameError }}
+        </p>
+      </label>
+      <p v-if="submitError" class="status-message error" role="alert">
+        {{ submitError }}
+      </p>
+      <button
+        type="submit"
+        class="submit-button"
+        :disabled="isSubmitting"
+      >
+        {{ isSubmitting ? '保存中…' : '保存する' }}
+      </button>
+      <NuxtLink class="back-link" to="/participants/waiting">
+        待機画面へ戻る
+      </NuxtLink>
+    </form>
+  </ParticipantPageLayout>
 </template>
