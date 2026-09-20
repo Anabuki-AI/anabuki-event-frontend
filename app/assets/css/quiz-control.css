@@ -300,6 +300,23 @@
   font-weight: 750;
 }
 
+.quiz-answer-explanation {
+  margin: 8px 0 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #132238;
+  background: #edeffa;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.quiz-answer-explanation-label {
+  margin-right: 8px;
+  color: #1769c2;
+  font-weight: 700;
+}
+
 .quiz-answer-banner {
   margin: 0;
   padding: 12px 16px;

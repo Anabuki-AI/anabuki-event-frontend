@@ -40,6 +40,7 @@ const {
   question,
   myAnswer,
   correctAnswer,
+  explanation,
   loadError,
   screen,
   choices,
@@ -408,6 +409,14 @@ onMounted(async () => {
           <p class="result-value">
             {{ correctAnswer }}{{ correctChoiceText ? `. ${correctChoiceText}` : '' }}
           </p>
+          <template v-if="explanation">
+            <p class="result-label">
+              解説
+            </p>
+            <p class="result-explanation">
+              {{ explanation }}
+            </p>
+          </template>
           <p class="result-label">
             あなたの解答
           </p>

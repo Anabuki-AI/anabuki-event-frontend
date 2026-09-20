@@ -91,7 +91,11 @@ function selectCorrectAnswer(choice: ChoiceKey) {
       正解は <strong>{{ currentQuestion.correct_answer }}</strong>：
       {{ currentQuestion.choices[currentQuestion.correct_answer] }}
     </p>
-    <p v-else class="quiz-answer-masked">
+    <p v-if="isAnswerVisible && currentQuestion.explanation" class="quiz-answer-explanation">
+      <span class="quiz-answer-explanation-label">解説</span>
+      {{ currentQuestion.explanation }}
+    </p>
+    <p v-if="!isAnswerVisible" class="quiz-answer-masked">
       正解は締め切り後に表示されます
     </p>
 

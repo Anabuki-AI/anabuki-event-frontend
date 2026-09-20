@@ -541,6 +541,14 @@
   font-weight: 700;
 }
 
+.answer-shell .result-explanation {
+  margin: 0 0 8px;
+  color: #132238;
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .answer-shell .result-value,
 .answer-shell .result-score,
 .answer-shell .total-score-panel strong {
