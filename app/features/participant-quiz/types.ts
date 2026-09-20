@@ -34,6 +34,8 @@ export interface ParticipantQuizState {
   my_answer: ParticipantQuizMyAnswer | null
   /** phase=revealed のときだけ文字列で返る。 */
   correct_answer: AnswerChoice | null
+  /** phase=revealed のときだけ返る問題の解説。未設定・未公開なら null。 */
+  explanation?: string | null
   confidence_multipliers?: { high: number; normal: number; low: number }
   /** 現在選択中の自信度。未選択なら null。 */
   confidence_level?: ConfidenceLevel | null
@@ -51,6 +53,8 @@ export interface ConfirmParticipantQuizConfidenceInput {
 export interface SubmitParticipantQuizAnswerInput {
   question_id: number
   choice: AnswerChoice
+  /** 解答後の再送時のみ。「普通」「あり」間の変更に使う(「なし」は変更不可)。 */
+  confidence_level?: ConfidenceLevel
 }
 
 /** POST /api/participant/quiz/answers のレスポンス(初回受付・再送後の my_answer)。 */

@@ -40,11 +40,13 @@ const {
   question,
   myAnswer,
   correctAnswer,
+  explanation,
   loadError,
   screen,
   choices,
   confidenceOptions,
   lockedConfidenceLevel,
+  activeConfidenceLevel,
   isConfidenceLocked,
   isLiveRelayQuestion,
   eliminatedChoice,
@@ -201,7 +203,10 @@ onMounted(async () => {
             自信度
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
-            <template v-if="isLiveRelayQuestion">
+            <template v-if="isEditingAnswer">
+              「普通」と「あり」は変更後の内容を送信するまで自由に変更できます。「なし」に変更することはできません。
+            </template>
+            <template v-else-if="isLiveRelayQuestion">
               ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」と「あり」は送信まで自由に変更できます。
             </template>
             <template v-else>
@@ -217,9 +222,9 @@ onMounted(async () => {
               :key="option.value"
               type="button"
               class="confidence-item"
-              :class="{ 'is-selected': lockedConfidenceLevel === option.value, 'is-pending': pendingConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
-              :aria-pressed="lockedConfidenceLevel === option.value || pendingConfidenceLevel === option.value"
-              :disabled="isConfidenceLocked || isConfirmingConfidence || (isLiveRelayQuestion && option.value === 'low')"
+              :class="{ 'is-selected': activeConfidenceLevel === option.value, 'is-pending': pendingConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
+              :aria-pressed="activeConfidenceLevel === option.value || pendingConfidenceLevel === option.value"
+              :disabled="isConfidenceLocked || isConfirmingConfidence || (isLiveRelayQuestion && option.value === 'low') || (isEditingAnswer && option.value === 'low')"
               @click="selectConfidenceLevel(option.value)"
             >
               <span class="confidence-name">
@@ -237,7 +242,7 @@ onMounted(async () => {
 
         <div class="point-panel">
             <p class="point-summary">
-              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／自信度：{{ confidenceOptions.find(option => option.value === lockedConfidenceLevel)?.label ?? '未選択' }}
+              {{ isEditingAnswer ? '変更後の選択' : '現在の選択' }}：{{ selectedChoiceText }}／自信度：{{ confidenceOptions.find(option => option.value === activeConfidenceLevel)?.label ?? '未選択' }}
             </p>
             <p v-if="isEditingAnswer" class="point-caption">
               受付済み：{{ savedChoiceText }}
@@ -260,7 +265,7 @@ onMounted(async () => {
             {{ confidenceMessage }}
           </p>
           <p class="answer-note">
-            {{ isEditingAnswer ? '内容を確認して、変更を送信してください。' : '選択肢を選んで送信してください。自信度は「なし」確定後・解答後は変更できません。' }}
+            {{ isEditingAnswer ? '内容を確認して、変更を送信してください。' : '選択肢を選んで送信してください。自信度は「なし」確定後は変更できません。' }}
           </p>
 
           <div v-if="isEditingAnswer" class="answer-edit-actions">
@@ -408,6 +413,14 @@ onMounted(async () => {
           <p class="result-value">
             {{ correctAnswer }}{{ correctChoiceText ? `. ${correctChoiceText}` : '' }}
           </p>
+          <template v-if="explanation">
+            <p class="result-label">
+              解説
+            </p>
+            <p class="result-explanation">
+              {{ explanation }}
+            </p>
+          </template>
           <p class="result-label">
             あなたの解答
           </p>
