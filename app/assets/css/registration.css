@@ -142,7 +142,7 @@ button {
 
 /* 画面全体: カードを最外側とし、ヘッダー+コンテンツを縦に積む。
    上下左右に余白を確保し、画面いっぱいに張らない */
-.quiz-page {
+.form-card.quiz-page:not(.waiting-card) {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -161,7 +161,7 @@ button {
   border-bottom: 3px solid #1769c2; /* メインカラーの下線でヘッダーとの境目を明示 */
 }
 
-.quiz-header-title {
+.form-card.quiz-page:not(.waiting-card) .quiz-header-title {
   margin: 0 0 10px;
   color: #1769c2; /* eyebrow(Create account)と統一 */
   font-size: clamp(1.05rem, 3vw, 1.3rem);
