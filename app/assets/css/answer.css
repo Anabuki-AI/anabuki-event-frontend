@@ -549,6 +549,13 @@
   white-space: pre-wrap;
 }
 
+.answer-shell .result-explanation-empty {
+  margin: 0 0 8px;
+  color: #132238;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
 .answer-shell .result-value,
 .answer-shell .result-score,
 .answer-shell .total-score-panel strong {
