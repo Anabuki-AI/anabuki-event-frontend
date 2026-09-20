@@ -76,6 +76,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const question = computed(() => state.value?.question)
   const myAnswer = computed(() => state.value?.my_answer ?? null)
   const correctAnswer = computed(() => state.value?.correct_answer ?? null)
+  const explanation = computed(() => state.value?.explanation?.trim() || null)
   const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
   // 「なし」(low)は確定後に変更不可。それ以外は再選択(編集)中だけ下書きとして変更できる。
   const canEditConfidenceDraft = computed(() => Boolean(isEditingAnswer.value
@@ -332,6 +333,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     question,
     myAnswer,
     correctAnswer,
+    explanation,
     isLoading,
     loadError,
     screen,

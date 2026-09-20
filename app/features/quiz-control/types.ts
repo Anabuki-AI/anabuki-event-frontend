@@ -22,6 +22,8 @@ export interface OperatorQuizCurrentQuestion {
    */
   live_correct_answer_confirmed?: boolean
   correct_answer: ChoiceKey
+  /** 問題の解説。未設定なら null。 */
+  explanation?: string | null
   answered_count: number
   /** 0〜1 の小数。 */
   answered_rate: number
