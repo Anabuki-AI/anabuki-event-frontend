@@ -421,6 +421,9 @@ onMounted(async () => {
               {{ explanation }}
             </p>
           </template>
+          <p v-else class="result-explanation-empty">
+            解説は登録されていません
+          </p>
           <p class="result-label">
             あなたの解答
           </p>
