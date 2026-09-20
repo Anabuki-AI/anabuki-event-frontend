@@ -1,8 +1,11 @@
-import { ALLOWED_IMAGE_TYPES, IMAGE_MAX_BYTES, TIME_LIMIT_SECONDS_MAX } from './constants'
+import { IMAGE_MAX_BYTES, IMAGE_SOURCE_MAX_BYTES, TIME_LIMIT_SECONDS_MAX } from './constants'
+import { isImageFile } from './imageConversion'
 
 export function validateImageFile(file: File): string {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return 'WEBP形式の画像ファイルを選択してください'
-  if (file.size > IMAGE_MAX_BYTES) return '画像ファイルは5MB以下にしてください'
+  if (!isImageFile(file)) return '画像ファイルを選択してください'
+  // WEBPはそのまま送信するので5MB以下。それ以外は変換後に5MB以下かを検証する。
+  if (file.type === 'image/webp' && file.size > IMAGE_MAX_BYTES) return '画像ファイルは5MB以下にしてください'
+  if (file.size > IMAGE_SOURCE_MAX_BYTES) return '画像ファイルは30MB以下にしてください'
   return ''
 }
 
