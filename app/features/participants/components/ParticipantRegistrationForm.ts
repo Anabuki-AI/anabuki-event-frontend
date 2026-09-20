@@ -55,7 +55,12 @@ export function setupParticipantRegistrationForm() {
       await navigateTo('/participants/waiting')
     }
     catch (error) {
-      submitErrorMessage.value = toApiError(error).message
+      const apiError = toApiError(error)
+      if (apiError.statusCode === 409) {
+        await navigateTo('/participants/waiting')
+        return
+      }
+      submitErrorMessage.value = apiError.message
     }
     finally {
       isSubmitting.value = false

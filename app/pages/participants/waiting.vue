@@ -111,6 +111,12 @@ onMounted(async () => {
         <div class="waiting-header-actions">
           <NuxtLink
             class="help-button"
+            to="/participants/edit"
+          >
+            戻る
+          </NuxtLink>
+          <NuxtLink
+            class="help-button"
             to="/participants/help"
           >
             ヘルプ
