@@ -4,6 +4,7 @@ import { createQuestion } from '~/features/problems/api/client'
 import type { QuestionPayload } from '~/features/problems/api/client'
 import type { Question } from '~/features/problems/types'
 import { QUESTION_POINTS_DEFAULT, QUESTION_POINTS_MAX, QUESTION_POINTS_MIN } from '~/features/problems/constants'
+import { ImageConversionError, convertImageToWebp } from '~/features/problems/imageConversion'
 import { problemErrorMessage, validateImageFile, validatePointsInput } from '~/features/problems/validation'
 import { toApiError } from '~/lib/api/error'
 import '~/assets/css/question-add.css'
@@ -43,8 +44,16 @@ const imageErrorMessage = ref('')
 const isImageDragOver = ref(false)
 let imageDragDepth = 0
 
-function applyImageFile(file: File) {
-  const error = validateImageFile(file)
+async function applyImageFile(originalFile: File) {
+  let error = validateImageFile(originalFile)
+  let file = originalFile
+  if (!error) {
+    try {
+      file = await convertImageToWebp(originalFile)
+    } catch (e) {
+      error = e instanceof ImageConversionError ? e.message : '画像の変換に失敗しました'
+    }
+  }
   if (error) {
     imageErrorMessage.value = error
     return
@@ -61,7 +70,7 @@ function handleImageChange(event: Event) {
   const file = input.files?.[0] ?? null
   if (!file) return
 
-  applyImageFile(file)
+  void applyImageFile(file)
   input.value = ''
 }
 
@@ -91,7 +100,7 @@ function handleImageDrop(event: DragEvent) {
 
   const file = event.dataTransfer?.files?.[0] ?? null
   if (!file) return
-  applyImageFile(file)
+  void applyImageFile(file)
 }
 
 const canSave = computed<boolean>(
@@ -232,14 +241,14 @@ onUnmounted(() => {
             <input
               class="question-add-file-input"
               type="file"
-              accept="image/webp"
+              accept="image/*"
               :disabled="isSaving"
               @change="handleImageChange"
             >
             <div class="question-add-dropzone-content">
               <p class="question-add-dropzone-text">ここに画像をドラック＆ドロップまたはクリックして選択</p>
               <p class="question-add-dropzone-hint">
-                対応形式：WEBP、最大サイズ：5MB
+                対応形式：画像ファイル全般（自動でWEBPに変換されます）、最大サイズ：5MB
               </p>
             </div>
           </div>
