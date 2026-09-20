@@ -134,6 +134,18 @@ function selectCorrectAnswer(choice: ChoiceKey) {
     </fieldset>
   </article>
 
+  <article v-else-if="phase === 'FINISHED'" class="quiz-question-card is-empty is-finished">
+    <p class="quiz-question-empty-icon" aria-hidden="true">
+      🏁
+    </p>
+    <p class="quiz-question-text">
+      クイズ大会は終了しました
+    </p>
+    <p class="quiz-answer-masked">
+      全 {{ state.question_count }} 問の出題が完了しました。
+    </p>
+  </article>
+
   <article v-else class="quiz-question-card is-empty">
     <p class="quiz-question-empty-icon" aria-hidden="true">
       🕒

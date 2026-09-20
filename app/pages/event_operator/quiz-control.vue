@@ -246,7 +246,7 @@ const revealBlockedReason = computed(() => {
               @finish="finish"
             />
             <QuizCurrentQuestionCard :state="state" :is-acting="isActing" @correct-answer="setCorrectAnswer" />
-            <QuizNextQuestionPreview :next-question="state.next_question ?? null" />
+            <QuizNextQuestionPreview v-if="phase !== 'FINISHED'" :next-question="state.next_question ?? null" />
           </div>
         </div>
 
