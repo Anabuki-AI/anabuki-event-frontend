@@ -58,6 +58,8 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const submittedForQuestionId = ref<number>()
   const isEditingAnswer = ref(false)
   const pendingConfidenceLevel = ref<ConfidenceLevel>()
+  // 再選択(編集)中の自信度の下書き。送信するまで受付済みの自信度は変わらない。
+  const draftConfidenceLevel = ref<ConfidenceLevel>()
   const isConfidenceConfirmOpen = ref(false)
   const isConfirmingConfidence = ref(false)
   const confidenceMessage = ref('')
@@ -75,7 +77,13 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const myAnswer = computed(() => state.value?.my_answer ?? null)
   const correctAnswer = computed(() => state.value?.correct_answer ?? null)
   const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
-  const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked))
+  // 「なし」(low)は確定後に変更不可。それ以外は再選択(編集)中だけ下書きとして変更できる。
+  const canEditConfidenceDraft = computed(() => Boolean(isEditingAnswer.value
+    && myAnswer.value
+    && myAnswer.value.confidence_level !== 'low'
+    && lockedConfidenceLevel.value !== 'low'))
+  const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked) && !canEditConfidenceDraft.value)
+  const activeConfidenceLevel = computed(() => (canEditConfidenceDraft.value ? draftConfidenceLevel.value : undefined) ?? lockedConfidenceLevel.value)
   const eliminatedChoice = computed(() => state.value?.question?.eliminated_choice ?? null)
   const isLiveRelayQuestion = computed(() => state.value?.question?.is_live_relay_question === true)
 
@@ -88,6 +96,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     submittedForQuestionId.value = undefined
     isEditingAnswer.value = false
     pendingConfidenceLevel.value = undefined
+    draftConfidenceLevel.value = undefined
     isConfidenceConfirmOpen.value = false
     isConfirmingConfidence.value = false
     confidenceMessage.value = ''
@@ -104,6 +113,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     isEditingAnswer.value = false
     selectedChoice.value = undefined
+    draftConfidenceLevel.value = undefined
   })
 
   const choices = computed(() => {
@@ -129,8 +139,8 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   }))
 
   const selectedMultiplier = computed(() => {
-    if (!lockedConfidenceLevel.value) return '—'
-    return confidenceOptions.value.find(option => option.value === lockedConfidenceLevel.value)?.multiplier ?? '—'
+    if (!activeConfidenceLevel.value) return '—'
+    return confidenceOptions.value.find(option => option.value === activeConfidenceLevel.value)?.multiplier ?? '—'
   })
 
   const selectedChoiceText = computed(() => {
@@ -140,10 +150,11 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
   const savedChoice = computed(() => myAnswer.value?.choice ?? null)
   const isAnswerWindowOpen = computed(() => state.value?.phase === 'answering' || state.value?.phase === 'closing')
-  const hasDraftChange = computed(() => Boolean(isEditingAnswer.value && selectedChoice.value && selectedChoice.value !== savedChoice.value))
+  const hasDraftChange = computed(() => Boolean(isEditingAnswer.value && selectedChoice.value && (selectedChoice.value !== savedChoice.value
+    || (canEditConfidenceDraft.value && activeConfidenceLevel.value !== myAnswer.value?.confidence_level))))
 
   const canSubmit = computed(() => (screen.value === 'answer' || isEditingAnswer.value)
-    && Boolean(lockedConfidenceLevel.value)
+    && Boolean(activeConfidenceLevel.value)
     && Boolean(selectedChoice.value)
     && selectedChoice.value !== eliminatedChoice.value
     && !isSubmitting.value
@@ -153,6 +164,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (!myAnswer.value || !isAnswerWindowOpen.value || isSubmitting.value) return
 
     selectedChoice.value = myAnswer.value.choice
+    draftConfidenceLevel.value = myAnswer.value.confidence_level
     isEditingAnswer.value = true
     submissionMessage.value = ''
   }
@@ -162,6 +174,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     isEditingAnswer.value = false
     selectedChoice.value = undefined
+    draftConfidenceLevel.value = undefined
     submissionMessage.value = ''
   }
 
@@ -169,6 +182,15 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     if (isConfidenceLocked.value || isConfirmingConfidence.value) return
 
     confidenceMessage.value = ''
+    if (canEditConfidenceDraft.value) {
+      // 解答後の変更は下書きのみ。「なし」への変更は不可(除外選択肢が確定できない)。
+      if (level === 'low') {
+        confidenceMessage.value = '解答後は自信度を「なし」に変更できません。「普通」または「あり」を選択してください。'
+        return
+      }
+      draftConfidenceLevel.value = level
+      return
+    }
     if (level === 'low' && isLiveRelayQuestion.value) {
       confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」または「あり」を選択してください。'
       pendingConfidenceLevel.value = undefined
@@ -257,6 +279,9 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
       const result = await submitParticipantQuizAnswer({
         question_id: currentQuestion.question_id,
         choice: selectedChoice.value,
+        ...(canEditConfidenceDraft.value && activeConfidenceLevel.value && activeConfidenceLevel.value !== myAnswer.value?.confidence_level
+          ? { confidence_level: activeConfidenceLevel.value }
+          : {}),
       })
       submittedForQuestionId.value = currentQuestion.question_id
       isEditingAnswer.value = false
@@ -313,6 +338,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     choices,
     confidenceOptions,
     lockedConfidenceLevel,
+    activeConfidenceLevel,
     isConfidenceLocked,
     eliminatedChoice,
     isLiveRelayQuestion,
