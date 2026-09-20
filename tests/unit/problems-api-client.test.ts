@@ -8,6 +8,7 @@ import {
   fetchConfidenceMultipliers,
   fetchQuestion,
   fetchQuestions,
+  reorderQuestions,
   selectRelayQuestion,
   updateConfidenceMultiplier,
   updateQuestion,
@@ -51,6 +52,18 @@ describe('問題管理API client', () => {
       method: 'POST',
       credentials: 'include',
       body: { ids: [3, 5] },
+    })
+  })
+
+  it('並べ替えは全問題IDをPATCHで送る', async () => {
+    mockedRequest.mockResolvedValueOnce([])
+
+    await reorderQuestions([3, 1, 2])
+
+    expect(mockedRequest).toHaveBeenCalledWith('/admin/questions/reorder', {
+      method: 'PATCH',
+      credentials: 'include',
+      body: { questionIds: [3, 1, 2] },
     })
   })
 
