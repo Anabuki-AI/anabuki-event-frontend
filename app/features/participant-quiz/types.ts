@@ -53,6 +53,8 @@ export interface ConfirmParticipantQuizConfidenceInput {
 export interface SubmitParticipantQuizAnswerInput {
   question_id: number
   choice: AnswerChoice
+  /** 解答後の再送時のみ。「普通」「あり」間の変更に使う(「なし」は変更不可)。 */
+  confidence_level?: ConfidenceLevel
 }
 
 /** POST /api/participant/quiz/answers のレスポンス(初回受付・再送後の my_answer)。 */

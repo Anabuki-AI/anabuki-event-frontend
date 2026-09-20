@@ -267,6 +267,81 @@ describe('参加者クイズのレベル確定', () => {
     wrapper.unmount()
   })
 
+  it('解答後の再選択中は自信度を「普通」と「あり」の間で変更でき、送信で反映する', async () => {
+    mockedFetchState.mockResolvedValue(submittedState)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: { choice: 'B', confidence_level: 'high' } })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const vm = wrapper.vm as unknown as ReturnType<typeof useParticipantQuizAnswer>
+    const api = vm as unknown as {
+      beginAnswerEditing: () => void
+      selectConfidenceLevel: (level: 'low' | 'normal' | 'high') => void
+      isConfidenceLocked: boolean
+      activeConfidenceLevel: string
+      hasDraftChange: boolean
+      canSubmit: boolean
+      submitAnswer: () => Promise<void>
+      lockedConfidenceLevel: string
+    }
+    expect(api.isConfidenceLocked).toBe(true)
+    api.beginAnswerEditing()
+    expect(api.isConfidenceLocked).toBe(false)
+
+    api.selectConfidenceLevel('high')
+    expect(mockedConfirmConfidence).not.toHaveBeenCalled()
+    expect(api.activeConfidenceLevel).toBe('high')
+    expect(api.lockedConfidenceLevel).toBe('normal')
+    expect(api.hasDraftChange).toBe(true)
+
+    await api.submitAnswer()
+    expect(mockedSubmitAnswer).toHaveBeenCalledWith({ question_id: 12, choice: 'B', confidence_level: 'high' })
+    expect(api.lockedConfidenceLevel).toBe('high')
+    expect(api.isConfidenceLocked).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('自信度「なし」で解答済みなら再選択中でも自信度を変更できない', async () => {
+    mockedFetchState.mockResolvedValue({
+      ...lowLockedState,
+      answered: true,
+      my_answer: { choice: 'B', confidence_level: 'low' },
+    })
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const api = wrapper.vm as unknown as {
+      beginAnswerEditing: () => void
+      selectConfidenceLevel: (level: 'low' | 'normal' | 'high') => void
+      isConfidenceLocked: boolean
+      activeConfidenceLevel: string
+    }
+    api.beginAnswerEditing()
+    expect(api.isConfidenceLocked).toBe(true)
+    api.selectConfidenceLevel('high')
+    expect(api.activeConfidenceLevel).toBe('low')
+    wrapper.unmount()
+  })
+
+  it('解答後の再選択中に「なし」へは変更できない', async () => {
+    mockedFetchState.mockResolvedValue(submittedState)
+    const wrapper = mount(Harness)
+    await flushPromises()
+
+    const api = wrapper.vm as unknown as {
+      beginAnswerEditing: () => void
+      selectConfidenceLevel: (level: 'low' | 'normal' | 'high') => void
+      activeConfidenceLevel: string
+      isConfidenceConfirmOpen: boolean
+    }
+    api.beginAnswerEditing()
+    api.selectConfidenceLevel('low')
+    expect(api.activeConfidenceLevel).toBe('normal')
+    expect(api.isConfidenceConfirmOpen).toBe(false)
+    expect(mockedConfirmConfidence).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
   it('変更送信の通信失敗では元の受付済み回答を保持する', async () => {
     mockedFetchState.mockResolvedValue(submittedState)
     mockedSubmitAnswer.mockRejectedValueOnce(new Error('offline'))
