@@ -74,6 +74,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const question = computed(() => state.value?.question)
   const myAnswer = computed(() => state.value?.my_answer ?? null)
   const correctAnswer = computed(() => state.value?.correct_answer ?? null)
+  const explanation = computed(() => state.value?.explanation?.trim() || null)
   const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
   const isConfidenceLocked = computed(() => Boolean(state.value?.confidence_locked))
   const eliminatedChoice = computed(() => state.value?.question?.eliminated_choice ?? null)
@@ -307,6 +308,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
     question,
     myAnswer,
     correctAnswer,
+    explanation,
     isLoading,
     loadError,
     screen,
