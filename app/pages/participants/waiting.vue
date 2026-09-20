@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useParticipantQuizState } from '~/features/participant-quiz/composables/use-participant-quiz-state'
-import { deleteParticipantSession } from '~/features/participants/api/delete-participant-session'
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
 import { useParticipantPresence } from '~/features/participants/composables/use-participant-presence'
 import type { Participant } from '~/features/participants/types'
@@ -17,26 +16,6 @@ useSeoMeta({
 const participant = ref<Participant>()
 const participantError = ref('')
 const isRedirecting = ref(false)
-const isLoggingOut = ref(false)
-const logoutError = ref('')
-
-async function handleLogout() {
-  if (isLoggingOut.value) return
-  isLoggingOut.value = true
-  logoutError.value = ''
-  try {
-    await deleteParticipantSession()
-  }
-  catch (error) {
-    // 401/403 はすでにログアウト済みなので登録へ進んでよい
-    if (!(error instanceof ApiError) || ![401, 403].includes(error.statusCode ?? 0)) {
-      isLoggingOut.value = false
-      logoutError.value = 'ログアウトできませんでした。通信状況を確認して再度お試しください。'
-      return
-    }
-  }
-  await navigateTo('/participants/new')
-}
 
 function redirectToRegistration() {
   if (isRedirecting.value) return
@@ -121,20 +100,8 @@ onMounted(async () => {
           >
             ヘルプ
           </NuxtLink>
-          <button
-            type="button"
-            class="help-button"
-            :disabled="isLoggingOut"
-            @click="handleLogout"
-          >
-            {{ isLoggingOut ? 'ログアウト中…' : 'ログアウト' }}
-          </button>
         </div>
       </div>
-
-      <p v-if="logoutError" class="status-message error" role="alert">
-        {{ logoutError }}
-      </p>
 
       <p v-if="participantError" class="status-message error" role="alert">
         {{ participantError }}
