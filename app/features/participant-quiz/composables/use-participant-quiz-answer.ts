@@ -78,7 +78,7 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   const correctAnswer = computed(() => state.value?.correct_answer ?? null)
   const explanation = computed(() => state.value?.explanation?.trim() || null)
   const lockedConfidenceLevel = computed(() => state.value?.confidence_level ?? null)
-  // 「なし」(low)は確定後に変更不可。それ以外は再選択(編集)中だけ下書きとして変更できる。
+  // 「なし」(low)で解答済みの場合は変更不可。それ以外は再選択(編集)中だけ下書きとして変更できる。
   const canEditConfidenceDraft = computed(() => Boolean(isEditingAnswer.value
     && myAnswer.value
     && myAnswer.value.confidence_level !== 'low'
@@ -184,9 +184,16 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
 
     confidenceMessage.value = ''
     if (canEditConfidenceDraft.value) {
-      // 解答後の変更は下書きのみ。「なし」への変更は不可(除外選択肢が確定できない)。
+      // 解答後の変更は下書きのみ。通常問題なら「なし」にも変更できるが、送信時に一方通行で確定するため確認を挟む。
       if (level === 'low') {
-        confidenceMessage.value = '解答後は自信度を「なし」に変更できません。「普通」または「あり」を選択してください。'
+        if (isLiveRelayQuestion.value) {
+          confidenceMessage.value = 'ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」または「あり」を選択してください。'
+          pendingConfidenceLevel.value = undefined
+          isConfidenceConfirmOpen.value = false
+          return
+        }
+        pendingConfidenceLevel.value = level
+        isConfidenceConfirmOpen.value = true
         return
       }
       draftConfidenceLevel.value = level
@@ -219,6 +226,14 @@ export function useParticipantQuizAnswer(options: UseParticipantQuizAnswerOption
   async function confirmPendingConfidenceSelection() {
     const level = pendingConfidenceLevel.value
     if (!level) return
+
+    if (canEditConfidenceDraft.value && level === 'low') {
+      draftConfidenceLevel.value = level
+      pendingConfidenceLevel.value = undefined
+      isConfidenceConfirmOpen.value = false
+      confidenceMessage.value = ''
+      return
+    }
 
     await confirmConfidenceLevel(level)
   }

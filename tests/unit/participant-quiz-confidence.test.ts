@@ -323,22 +323,34 @@ describe('参加者クイズのレベル確定', () => {
     wrapper.unmount()
   })
 
-  it('解答後の再選択中に「なし」へは変更できない', async () => {
+  it('解答後の通常問題では再選択中に「なし」へ変更でき、送信で反映する', async () => {
     mockedFetchState.mockResolvedValue(submittedState)
+    mockedSubmitAnswer.mockResolvedValueOnce({ my_answer: { choice: 'B', confidence_level: 'low' } })
     const wrapper = mount(Harness)
     await flushPromises()
 
     const api = wrapper.vm as unknown as {
       beginAnswerEditing: () => void
       selectConfidenceLevel: (level: 'low' | 'normal' | 'high') => void
+      confirmPendingConfidenceSelection: () => Promise<void>
       activeConfidenceLevel: string
       isConfidenceConfirmOpen: boolean
+      hasDraftChange: boolean
+      submitAnswer: () => Promise<void>
     }
     api.beginAnswerEditing()
     api.selectConfidenceLevel('low')
     expect(api.activeConfidenceLevel).toBe('normal')
-    expect(api.isConfidenceConfirmOpen).toBe(false)
+    expect(api.isConfidenceConfirmOpen).toBe(true)
     expect(mockedConfirmConfidence).not.toHaveBeenCalled()
+
+    await api.confirmPendingConfidenceSelection()
+    expect(api.activeConfidenceLevel).toBe('low')
+    expect(api.isConfidenceConfirmOpen).toBe(false)
+    expect(api.hasDraftChange).toBe(true)
+
+    await api.submitAnswer()
+    expect(mockedSubmitAnswer).toHaveBeenCalledWith({ question_id: 12, choice: 'B', confidence_level: 'low' })
     wrapper.unmount()
   })
 

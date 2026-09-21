@@ -204,7 +204,7 @@ onMounted(async () => {
           </p>
           <p v-if="!isConfidenceLocked" class="confidence-help">
             <template v-if="isEditingAnswer">
-              「普通」と「あり」は変更後の内容を送信するまで自由に変更できます。「なし」に変更することはできません。
+              通常問題では「なし」にも変更できます。送信すると不正解の選択肢を1つグレーアウトし、以後の自信度変更はできません。
             </template>
             <template v-else-if="isLiveRelayQuestion">
               ライブ問題は正解・不正解が未確定のため、自信度「なし」は選択できません。「普通」と「あり」は送信まで自由に変更できます。
@@ -224,7 +224,7 @@ onMounted(async () => {
               class="confidence-item"
               :class="{ 'is-selected': activeConfidenceLevel === option.value, 'is-pending': pendingConfidenceLevel === option.value, 'is-locked': isConfidenceLocked }"
               :aria-pressed="activeConfidenceLevel === option.value || pendingConfidenceLevel === option.value"
-              :disabled="isConfidenceLocked || isConfirmingConfidence || (isLiveRelayQuestion && option.value === 'low') || (isEditingAnswer && option.value === 'low')"
+              :disabled="isConfidenceLocked || isConfirmingConfidence || (isLiveRelayQuestion && option.value === 'low')"
               @click="selectConfidenceLevel(option.value)"
             >
               <span class="confidence-name">
@@ -298,8 +298,11 @@ onMounted(async () => {
 
         <div v-if="isConfidenceConfirmOpen" class="confidence-confirmation-backdrop" @click.self="cancelConfidenceSelection">
           <section class="confidence-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="lv1-confirm-title">
-            <h2 id="lv1-confirm-title">自信度「なし」を確定しますか？</h2>
-            <p v-if="selectedChoice">
+            <h2 id="lv1-confirm-title">自信度「なし」を{{ isEditingAnswer ? '選択' : '確定' }}しますか？</h2>
+            <p v-if="isEditingAnswer">
+              この内容で変更を送信すると、選択中の{{ selectedChoiceText }}を残して、他の不正解の選択肢を1つグレーアウトします。送信後は自信度を変更できません。
+            </p>
+            <p v-else-if="selectedChoice">
               選択中の{{ selectedChoiceText }}を残して、他の不正解の選択肢を1つグレーアウトします。
             </p>
             <p v-else>
