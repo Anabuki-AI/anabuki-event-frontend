@@ -2,6 +2,8 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { CHOICE_KEYS, PHASE_LABELS } from '~/features/quiz-control/types'
 import { useProjectorQuiz } from '~/features/projector/use-projector-quiz'
+import { useFloatingReactions } from '~/features/projector/use-floating-reactions'
+import FloatingReactions from '~/features/projector/components/FloatingReactions.vue'
 import { resolveApiImageUrl } from '~/lib/api/image'
 import '~/assets/css/projector.css'
 
@@ -14,6 +16,10 @@ const { state, phase, isLoading, errorMessage, isAnswerVisible } = useProjectorQ
 // 開始前(waiting)は current が残っていても問題を出さない(先出し防止)
 const question = computed(() => (phase.value === 'IDLE' ? null : state.value?.current ?? null))
 const imageUrl = computed(() => resolveApiImageUrl(question.value?.image_url ?? null))
+
+// 待機中(IDLE)のときだけ、参加者のリアクションを画面下から浮かべる
+const isWaiting = computed(() => phase.value === 'IDLE')
+const { floaters, remove: removeFloater } = useFloatingReactions(isWaiting)
 
 // スクロール禁止の固定レイアウト。内容がはみ出す間 --projector-scale を縮めて必ず1画面に収める。
 const shell = ref<HTMLElement | null>(null)
@@ -85,5 +91,6 @@ const idleMessage = computed(() => {
         {{ idleMessage }}
       </p>
     </section>
+    <FloatingReactions v-if="isWaiting" :items="floaters" @remove="removeFloater" />
   </main>
 </template>
