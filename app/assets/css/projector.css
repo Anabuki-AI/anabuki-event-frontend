@@ -1,0 +1,63 @@
+/*
+ * 大画面(プロジェクター)用。PC・横長のみ対応。スマホ対応は不要。
+ * スクロールさせない固定レイアウト: 全寸法は --u (ビューポート基準の単位 × --projector-scale) で表す。
+ * --projector-scale は projector.vue が内容が収まるまで自動で縮める(長文対策)。
+ */
+.projector-shell {
+  --u: calc(min(1vh, 0.5625vw) * 0.83 * var(--projector-scale, 1)); /* 0.83 = 全体を一回り小さくする係数 */
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  padding: calc(2.6 * var(--u)) calc(5.9 * var(--u));
+  background: #edeffa;
+  color: #132238;
+  display: flex;
+  flex-direction: column;
+  gap: calc(1.8 * var(--u));
+  box-sizing: border-box;
+}
+.projector-head { display: flex; align-items: center; gap: calc(2.2 * var(--u)); flex: none; }
+.projector-number {
+  font-size: calc(4 * var(--u)); font-weight: 700; color: #fff; background: #1769c2;
+  padding: calc(0.5 * var(--u)) calc(2.6 * var(--u)); border-radius: 999px;
+}
+.projector-status { font-size: calc(2.6 * var(--u)); color: #1769c2; font-weight: 700; }
+.projector-error { font-size: max(16px, calc(2 * var(--u))); color: #b3261e; margin-left: auto; }
+.projector-card {
+  background: #fff; border-radius: calc(2.2 * var(--u)); padding: calc(2.6 * var(--u)) calc(5.2 * var(--u));
+  box-shadow: 0 4px 24px rgba(19, 34, 56, 0.08);
+  display: flex; flex-direction: column; gap: calc(2.2 * var(--u)); flex: 1 1 auto; min-height: 0;
+  box-sizing: border-box;
+}
+.projector-question { font-size: calc(4.8 * var(--u)); line-height: 1.4; font-weight: 700; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* 画像は残り高さを吸収して縮む。比率は object-fit で維持(歪ませない) */
+.projector-image { flex: 1 1 0; min-height: calc(14 * var(--u)); max-width: 100%; object-fit: contain; align-self: center; }
+.projector-choices {
+  list-style: none; margin: 0; padding: 0; flex: none;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(2 * var(--u));
+}
+.projector-choice {
+  display: flex; align-items: center; gap: calc(2.2 * var(--u));
+  font-size: calc(3.7 * var(--u)); line-height: 1.35;
+  padding: calc(1.5 * var(--u)) calc(2.6 * var(--u)); border: calc(0.35 * var(--u)) solid #c9d3ec; border-radius: calc(1.8 * var(--u));
+  overflow-wrap: anywhere;
+}
+.projector-choice > span:last-child { min-width: 0; }
+.projector-choice-key {
+  flex: none; width: calc(6.2 * var(--u)); height: calc(6.2 * var(--u)); border-radius: 50%;
+  background: #1769c2; color: #fff; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.projector-choice.is-correct { border-color: #1b8a3a; background: #e6f6ea; }
+.projector-choice.is-correct .projector-choice-key { background: #1b8a3a; }
+.projector-choice.is-dimmed { opacity: 0.45; }
+.projector-answer { flex: none; font-size: calc(4 * var(--u)); font-weight: 700; margin: 0; color: #1b8a3a; overflow-wrap: anywhere; }
+.projector-explanation { flex: none; font-size: calc(3 * var(--u)); line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.projector-explanation-label {
+  display: inline-block; margin-right: calc(1.4 * var(--u)); padding: calc(0.2 * var(--u)) calc(1.6 * var(--u)); border-radius: calc(0.8 * var(--u));
+  background: #1769c2; color: #fff; font-size: calc(2.3 * var(--u)); font-weight: 700;
+}
+.projector-message {
+  margin: auto; font-size: calc(5.2 * var(--u)); font-weight: 700; text-align: center;
+}

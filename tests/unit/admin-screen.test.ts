@@ -87,10 +87,12 @@ describe('運営者メイン画面', () => {
     expect(backLinks).toHaveLength(0)
   })
 
-  it('管理機能へのリンクを3件表示する', () => {
+  it('管理機能へのリンクを3件と大画面表示リンクを表示する', () => {
     const wrapper = mountAdminScreen()
 
-    expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(3)
+    expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(4)
+    const projector = wrapper.find('a[href="/event_operator/projector"]')
+    expect(projector.attributes('target')).toBe('_blank')
   })
 
   it('サイドバーは初期状態で展開表示になっている', () => {
