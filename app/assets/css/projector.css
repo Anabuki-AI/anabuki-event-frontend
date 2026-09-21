@@ -59,5 +59,6 @@
   background: #1769c2; color: #fff; font-size: calc(2.3 * var(--u)); font-weight: 700;
 }
 .projector-message {
-  margin: auto; font-size: calc(5.2 * var(--u)); font-weight: 700; text-align: center;
+  /* 待機・終了・読み込み中などの中央メッセージ(5.2 → 9: 約1.7倍) */
+  margin: auto; font-size: calc(9 * var(--u)); font-weight: 700; text-align: center; overflow-wrap: anywhere;
 }
