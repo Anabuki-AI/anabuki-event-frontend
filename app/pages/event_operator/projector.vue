@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { CHOICE_KEYS, PHASE_LABELS } from '~/features/quiz-control/types'
 import { useProjectorQuiz } from '~/features/projector/use-projector-quiz'
 import { resolveApiImageUrl } from '~/lib/api/image'
@@ -13,6 +13,28 @@ useSeoMeta({
 const { state, phase, isLoading, errorMessage, isAnswerVisible } = useProjectorQuiz()
 const question = computed(() => state.value?.current ?? null)
 const imageUrl = computed(() => resolveApiImageUrl(question.value?.image_url ?? null))
+
+// スクロール禁止の固定レイアウト。内容がはみ出す間 --projector-scale を縮めて必ず1画面に収める。
+const shell = ref<HTMLElement | null>(null)
+const MIN_SCALE = 0.3
+async function fitToViewport() {
+  await nextTick()
+  const el = shell.value
+  if (!el) return
+  let scale = 1
+  el.style.setProperty('--projector-scale', String(scale))
+  while (scale > MIN_SCALE && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) {
+    scale = Math.round(scale * 0.95 * 1000) / 1000
+    el.style.setProperty('--projector-scale', String(scale))
+  }
+}
+watch(state, () => void fitToViewport(), { deep: true })
+onMounted(() => {
+  void fitToViewport()
+  window.addEventListener('resize', fitToViewport)
+})
+onUnmounted(() => window.removeEventListener('resize', fitToViewport))
+
 const idleMessage = computed(() => {
   if (isLoading.value) return '読み込み中…'
   if (phase.value === 'FINISHED') return 'クイズ大会は終了しました'
@@ -21,7 +43,7 @@ const idleMessage = computed(() => {
 </script>
 
 <template>
-  <main class="projector-shell">
+  <main ref="shell" class="projector-shell">
     <header class="projector-head">
       <span v-if="question" class="projector-number">Q{{ question.position }}</span>
       <span v-if="phase && question" class="projector-status">{{ PHASE_LABELS[phase] }}</span>
@@ -32,7 +54,7 @@ const idleMessage = computed(() => {
       <p class="projector-question">
         {{ question.question_text }}
       </p>
-      <img v-if="imageUrl" class="projector-image" :src="imageUrl" alt="">
+      <img v-if="imageUrl" class="projector-image" :src="imageUrl" alt="" @load="fitToViewport">
       <ul class="projector-choices">
         <li
           v-for="key in CHOICE_KEYS"
