@@ -1,0 +1,51 @@
+/* 大画面(プロジェクター)用。PC・横長のみ対応。スマホ対応は不要。 */
+.projector-shell {
+  min-height: 100vh;
+  padding: 40px 64px;
+  background: #edeffa;
+  color: #132238;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  box-sizing: border-box;
+}
+.projector-head { display: flex; align-items: center; gap: 24px; }
+.projector-number {
+  font-size: 44px; font-weight: 700; color: #fff; background: #1769c2;
+  padding: 6px 28px; border-radius: 999px;
+}
+.projector-status { font-size: 28px; color: #1769c2; font-weight: 700; }
+.projector-error { font-size: 18px; color: #b3261e; margin-left: auto; }
+.projector-card {
+  background: #fff; border-radius: 24px; padding: 40px 56px;
+  box-shadow: 0 4px 24px rgba(19, 34, 56, 0.08);
+  display: flex; flex-direction: column; gap: 32px; flex: 1;
+}
+.projector-question { font-size: 52px; line-height: 1.5; font-weight: 700; margin: 0; white-space: pre-wrap; }
+.projector-image { max-height: 32vh; max-width: 100%; object-fit: contain; align-self: center; }
+.projector-choices {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+.projector-choice {
+  display: flex; align-items: center; gap: 24px;
+  font-size: 40px; line-height: 1.4;
+  padding: 24px 32px; border: 4px solid #c9d3ec; border-radius: 20px;
+}
+.projector-choice-key {
+  flex: none; width: 72px; height: 72px; border-radius: 50%;
+  background: #1769c2; color: #fff; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.projector-choice.is-correct { border-color: #1b8a3a; background: #e6f6ea; }
+.projector-choice.is-correct .projector-choice-key { background: #1b8a3a; }
+.projector-choice.is-dimmed { opacity: 0.45; }
+.projector-answer { font-size: 44px; font-weight: 700; margin: 0; color: #1b8a3a; }
+.projector-explanation { font-size: 34px; line-height: 1.6; margin: 0; white-space: pre-wrap; }
+.projector-explanation-label {
+  display: inline-block; margin-right: 16px; padding: 2px 18px; border-radius: 8px;
+  background: #1769c2; color: #fff; font-size: 26px; font-weight: 700;
+}
+.projector-message {
+  margin: auto; font-size: 56px; font-weight: 700; text-align: center;
+}

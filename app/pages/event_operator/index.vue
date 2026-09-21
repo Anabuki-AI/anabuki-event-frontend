@@ -78,6 +78,14 @@ const {
           </span>
           <span class="admin-menu-arrow" aria-hidden="true">→</span>
         </NuxtLink>
+        <a class="admin-menu-item" href="/event_operator/projector" target="_blank" rel="noopener">
+          <span class="admin-menu-icon" aria-hidden="true">📽️</span>
+          <span class="admin-menu-body">
+            <span class="admin-menu-label">大画面表示（新しいタブ）</span>
+            <span class="admin-menu-description">プロジェクター等に映す問題画面を開きます。正解発表後は正解と解説も表示されます。</span>
+          </span>
+          <span class="admin-menu-arrow" aria-hidden="true">↗</span>
+        </a>
       </nav>
     </section>
   </main>
