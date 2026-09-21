@@ -61,3 +61,47 @@
 .projector-message {
   margin: auto; font-size: calc(5.2 * var(--u)); font-weight: 700; text-align: center;
 }
+
+/*
+ * 待機中のリアクション浮遊演出(調整値は features/projector/floating-reactions.ts の FLOAT_CONFIG)。
+ * transform / opacity のみをアニメーションし、レイヤーは pointer-events:none で他表示を邪魔しない。
+ */
+.reaction-float-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+.reaction-float {
+  position: absolute;
+  bottom: 0;
+  left: var(--rf-left);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: reaction-float-rise var(--rf-duration) ease-out var(--rf-delay) 1 both;
+}
+.reaction-float-emoji {
+  display: block;
+  font-size: var(--rf-size);
+  line-height: 1;
+  transform: translateX(-50%);
+  animation: reaction-float-sway calc(var(--rf-duration) / 2) ease-in-out var(--rf-delay) 2 both;
+}
+/* 画面下から中央付近(下から約48%)まで上昇し、後半でフェードアウト */
+@keyframes reaction-float-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  10% { opacity: 1; }
+  65% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--rf-drift), -48vh, 0); }
+}
+/* 横揺れ + 軽い拡大縮小 */
+@keyframes reaction-float-sway {
+  0% { transform: translateX(-50%) scale(0.6); }
+  25% { transform: translateX(calc(-50% + var(--rf-sway))) scale(1.1); }
+  75% { transform: translateX(calc(-50% - var(--rf-sway))) scale(0.95); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reaction-float-emoji { animation: none; }
+}
