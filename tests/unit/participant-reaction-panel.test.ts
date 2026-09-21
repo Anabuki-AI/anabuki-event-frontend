@@ -38,18 +38,18 @@ function deferred<T>() {
 }
 
 describe('participant reaction route allowlist', () => {
-  it.each(['/', '/help', '/rankings', '/participants/waiting', '/participants/edit', '/participants/help', '/participants/help/'])('allows %s', (path) => {
+  it.each(['/', '/help', '/rankings', '/participants/waiting', '/participants/edit', '/participants/help', '/participants/help/', '/users/answer', '/users/answer/'])('allows %s', (path) => {
     expect(allowsParticipantReactions(path)).toBe(true)
   })
-  it.each(['/users/answer', '/users/answer/', '/participants/new', '/admin', '/operator', '/event_operator/projector', '/unknown', '/participants/waiting/extra'])('excludes %s', (path) => {
+  it.each(['/participants/new', '/admin', '/operator', '/event_operator/projector', '/unknown', '/participants/waiting/extra'])('excludes %s', (path) => {
     expect(allowsParticipantReactions(path)).toBe(false)
   })
-  it.each(['answering', 'answered', 'revealed', 'finished'])('never checks the answer page session in %s state', async () => {
+  it('checks the answer page session and shows the panel for a signed-in participant', async () => {
     route.value.path = '/users/answer'
     wrapper = mount(ParticipantReactionHost)
     await flushPromises()
-    expect(getParticipant).not.toHaveBeenCalled()
-    expect(wrapper.find('aside').exists()).toBe(false)
+    expect(getParticipant).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('aside').exists()).toBe(true)
   })
 })
 
@@ -89,7 +89,8 @@ describe('participant reaction session', () => {
     expect(wrapper.find('aside').exists()).toBe(true)
     route.value.path = '/users/answer'
     await nextTick()
-    expect(wrapper.find('aside').exists()).toBe(false)
+    await flushPromises()
+    expect(wrapper.find('aside').exists()).toBe(true)
   })
   it('rechecks between allowed routes and resets the expanded panel', async () => {
     wrapper = mount(ParticipantReactionHost)

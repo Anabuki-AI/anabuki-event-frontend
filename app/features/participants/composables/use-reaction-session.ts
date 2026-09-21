@@ -4,6 +4,7 @@ import { getCurrentParticipant } from '../api/get-current-participant'
 const allowedPaths = new Set([
   '/', '/help', '/rankings',
   '/participants/waiting', '/participants/edit', '/participants/help',
+  '/users/answer',
 ])
 
 export function allowsParticipantReactions(path: string): boolean {
