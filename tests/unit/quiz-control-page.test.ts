@@ -108,7 +108,7 @@ describe('クイズ出題管理画面の問題別制限時間', () => {
 
   it('すべての確認画面で参加者データが永久削除されることを明示し、RESET不一致ではAPIを呼ばない', async () => {
     const { wrapper, reset } = mountQuizControlPage(60)
-    const deletionWarning = '参加者登録情報（プロフィール）、参加者セッション、リアクション、回答、自信度選択、問題の公開履歴は永久に削除され、元に戻せません。'
+    const deletionWarning = '参加者登録情報（プロフィール）、参加者セッション、回答、自信度選択、問題の公開履歴は永久に削除され、元に戻せません。'
 
     await wrapper.find('.quiz-reset-button').trigger('click')
     expect(wrapper.find('[role="dialog"]').text()).toContain(deletionWarning)
@@ -138,7 +138,6 @@ describe('クイズ出題管理画面の問題別制限時間', () => {
       affected_rows: {
         participants: 50,
         participant_sessions: 50,
-        participant_reactions: 45,
         participant_answers: 300,
         confidence_selections: 300,
         question_reveals: 12,
@@ -150,7 +149,6 @@ describe('クイズ出題管理画面の問題別制限時間', () => {
     expect(receipt.text()).toContain('操作ID: operation-1')
     expect(receipt.text()).toContain('参加者登録情報（プロフィール）50件')
     expect(receipt.text()).toContain('参加者セッション50件')
-    expect(receipt.text()).toContain('リアクション45件')
     expect(receipt.text()).toContain('回答300件')
     expect(receipt.text()).toContain('自信度選択300件')
     wrapper.unmount()

@@ -49,7 +49,6 @@ export interface OperatorQuizResetOperation {
   started_at: string
   completed_at: string
   affected_rows: {
-    participant_reactions: number
     participant_answers: number
     confidence_selections: number
     participant_sessions: number

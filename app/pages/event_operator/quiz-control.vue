@@ -40,7 +40,7 @@ const {
 } = useQuizControl()
 
 const RESET_CONFIRMATION = 'RESET'
-const RESET_DELETION_WARNING = '参加者登録情報（プロフィール）、参加者セッション、リアクション、回答、自信度選択、問題の公開履歴は永久に削除され、元に戻せません。'
+const RESET_DELETION_WARNING = '参加者登録情報（プロフィール）、参加者セッション、回答、自信度選択、問題の公開履歴は永久に削除され、元に戻せません。'
 const RESET_PRESERVED_DATA = '問題データ、添付ファイル、倍率などの設定は削除されません。'
 const isResetImpactModalOpen = ref(false)
 const isResetInputModalOpen = ref(false)
@@ -205,7 +205,6 @@ const revealBlockedReason = computed(() => {
           <dl class="quiz-reset-receipt-counts">
             <div><dt>参加者登録情報（プロフィール）</dt><dd>{{ resetOperation.affected_rows.participants }}件</dd></div>
             <div><dt>参加者セッション</dt><dd>{{ resetOperation.affected_rows.participant_sessions }}件</dd></div>
-            <div><dt>リアクション</dt><dd>{{ resetOperation.affected_rows.participant_reactions }}件</dd></div>
             <div><dt>回答</dt><dd>{{ resetOperation.affected_rows.participant_answers }}件</dd></div>
             <div><dt>自信度選択</dt><dd>{{ resetOperation.affected_rows.confidence_selections }}件</dd></div>
             <div><dt>問題の公開履歴</dt><dd>{{ resetOperation.affected_rows.question_reveals }}件</dd></div>

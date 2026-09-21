@@ -184,7 +184,6 @@ describe('useQuizControl', () => {
         started_at: '2026-09-30T00:00:00.000000Z',
         completed_at: '2026-09-30T00:00:00.025000Z',
         affected_rows: {
-          participant_reactions: 0,
           participant_answers: 0,
           confidence_selections: 0,
           participant_sessions: 0,
@@ -229,7 +228,6 @@ describe('useQuizControl', () => {
         started_at: '2026-09-30T00:00:00.000000Z',
         completed_at: '2026-09-30T00:00:00.025000Z',
         affected_rows: {
-          participant_reactions: 0,
           participant_answers: 0,
           confidence_selections: 0,
           participant_sessions: 0,

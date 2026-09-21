@@ -13,7 +13,6 @@ const typeOptions = (Object.keys(auditLogTypeLabels) as AuditLogType[]).map(type
 const resetDetailFields = [
   ['participantsDeleted', '参加者'],
   ['participantSessionsDeleted', '参加者セッション'],
-  ['participantReactionsDeleted', 'リアクション'],
   ['participantAnswersDeleted', '回答'],
   ['confidenceSelectionsDeleted', '自信度選択'],
   ['questionRevealsReset', '問題の公開履歴'],

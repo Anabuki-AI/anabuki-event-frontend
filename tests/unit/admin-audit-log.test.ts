@@ -48,7 +48,6 @@ describe('audit log contract parsing', () => {
         detail: {
           participantsDeleted: 50,
           participantSessionsDeleted: 50,
-          participantReactionsDeleted: 45,
           participantAnswersDeleted: 300,
           confidenceSelectionsDeleted: 300,
           questionRevealsReset: 12,
@@ -153,7 +152,6 @@ describe('audit log panel presentation', () => {
         detail: {
           participantsDeleted: 50,
           participantSessionsDeleted: 50,
-          participantReactionsDeleted: 45,
           participantAnswersDeleted: 300,
           confidenceSelectionsDeleted: 300,
           questionRevealsReset: 12,
