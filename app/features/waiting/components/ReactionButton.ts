@@ -1,8 +1,7 @@
 import type { ReactionOption } from '../types'
 
 /**
- * リアクションボタンの定義(旧ReactionButton.vueのscript)。
- * テンプレートはpages/users/waiting.vueに統合済み。
+ * 参加者共通スタンプパネルで使う8種のリアクション定義。
  * 絵文字のみ表示。labelはスクリーンリーダー用のaria-labelに使う。
  */
 export const reactionOptions: ReactionOption[] = [

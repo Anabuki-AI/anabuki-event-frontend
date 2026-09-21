@@ -4,7 +4,6 @@ import { useParticipantQuizState } from '~/features/participant-quiz/composables
 import { getCurrentParticipant } from '~/features/participants/api/get-current-participant'
 import { useParticipantPresence } from '~/features/participants/composables/use-participant-presence'
 import type { Participant } from '~/features/participants/types'
-import { reactionOptions } from '~/features/waiting/components/ReactionButton'
 import { setupWaitingRoom } from '~/features/waiting/components/WaitingRoom'
 import { ApiError } from '~/lib/api/error'
 
@@ -48,7 +47,7 @@ const waitingMessage = computed(() => {
 })
 
 const { participantCount, totalParticipantCount } = useParticipantPresence()
-const { isCountUpdated, lastReactedEmoji, handleReact } = setupWaitingRoom(participantCount)
+const { isCountUpdated } = setupWaitingRoom(participantCount)
 
 onMounted(async () => {
   try {
@@ -131,24 +130,6 @@ onMounted(async () => {
         <span class="waiting-note-line waiting-note-emphasis">問題が公開されると、画面が自動的に切り替わります。</span>
       </p>
 
-      <div class="reaction-section">
-        <h2 class="reaction-title">
-          リアクション
-        </h2>
-        <div class="reaction-bar">
-          <button
-            v-for="option in reactionOptions"
-            :key="option.emoji"
-            type="button"
-            class="reaction-button"
-            :class="{ 'is-reacted': lastReactedEmoji === option.emoji }"
-            :aria-label="`${option.label}リアクションを送る`"
-            @click="handleReact(option.emoji)"
-          >
-            <span class="reaction-emoji" aria-hidden="true">{{ option.emoji }}</span>
-          </button>
-        </div>
-      </div>
     </section>
   </main>
 </template>
