@@ -11,7 +11,8 @@ useSeoMeta({
 })
 
 const { state, phase, isLoading, errorMessage, isAnswerVisible } = useProjectorQuiz()
-const question = computed(() => state.value?.current ?? null)
+// 開始前(waiting)は current が残っていても問題を出さない(先出し防止)
+const question = computed(() => (phase.value === 'IDLE' ? null : state.value?.current ?? null))
 const imageUrl = computed(() => resolveApiImageUrl(question.value?.image_url ?? null))
 
 // スクロール禁止の固定レイアウト。内容がはみ出す間 --projector-scale を縮めて必ず1画面に収める。
@@ -37,6 +38,7 @@ onUnmounted(() => window.removeEventListener('resize', fitToViewport))
 
 const idleMessage = computed(() => {
   if (isLoading.value) return '読み込み中…'
+  if (errorMessage.value && !state.value) return '接続を確認しています…'
   if (phase.value === 'FINISHED') return 'クイズ大会は終了しました'
   return 'まもなく問題を表示します'
 })

@@ -23,7 +23,7 @@
   padding: calc(0.5 * var(--u)) calc(2.6 * var(--u)); border-radius: 999px;
 }
 .projector-status { font-size: calc(2.6 * var(--u)); color: #1769c2; font-weight: 700; }
-.projector-error { font-size: max(14px, calc(1.7 * var(--u))); color: #b3261e; margin-left: auto; }
+.projector-error { font-size: max(16px, calc(2 * var(--u))); color: #b3261e; margin-left: auto; }
 .projector-card {
   background: #fff; border-radius: calc(2.2 * var(--u)); padding: calc(2.6 * var(--u)) calc(5.2 * var(--u));
   box-shadow: 0 4px 24px rgba(19, 34, 56, 0.08);
