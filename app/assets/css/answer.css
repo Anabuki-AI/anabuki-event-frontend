@@ -174,7 +174,7 @@
 /* 問題番号「Q1」と出題対象を同じ行に並べる */
 .answer-shell .question-meta {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
@@ -187,11 +187,18 @@
   letter-spacing: 0.08em;
 }
 
+/* 大画面(.projector-target-audience)と同じアウトラインバッジの見た目に合わせる。
+   フォントサイズ・paddingはスマホ表示に合わせたこれまでのサイズのまま変更しない。 */
 .answer-shell .question-target-audience {
   margin: 0;
-  color: #516176;
+  color: #1769c2;
   font-size: 0.8125rem;
   font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #1769c2;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
 }
 
 .answer-shell .question-text {
