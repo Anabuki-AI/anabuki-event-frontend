@@ -123,7 +123,7 @@ const idleMessage = computed(() => {
       <p class="projector-ranking-title">
         最終結果
       </p>
-      <p v-if="rankingTopTen.length === 0" class="projector-message projector-ranking-empty">
+      <p v-if="rankingTopTen.length === 0" class="projector-ranking-empty">
         {{ rankingErrorMessage ? 'ランキングを取得できませんでした' : 'ランキングを集計しています…' }}
       </p>
       <ol v-else class="projector-ranking-list">
