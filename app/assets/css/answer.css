@@ -200,6 +200,8 @@
   font-size: 1.0625rem;
   font-weight: 700;
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* 問題文の下に表示する画像（任意）。スマホ画面で見やすいよう、
