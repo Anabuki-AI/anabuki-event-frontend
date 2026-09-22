@@ -16,6 +16,7 @@ const { state, phase, isLoading, errorMessage, isAnswerVisible } = useProjectorQ
 // 開始前(waiting)は current が残っていても問題を出さない(先出し防止)
 const question = computed(() => (phase.value === 'IDLE' ? null : state.value?.current ?? null))
 const imageUrl = computed(() => resolveApiImageUrl(question.value?.image_url ?? null))
+const hasImage = computed(() => Boolean(imageUrl.value))
 
 // 待機中(IDLE)のときだけ、参加者のリアクションを画面下から浮かべる
 const isWaiting = computed(() => phase.value === 'IDLE')
@@ -36,6 +37,9 @@ async function fitToViewport() {
   }
 }
 watch(state, () => void fitToViewport(), { deep: true })
+// isAnswerVisible は state から派生する値だが、切り替わりタイミングで再フィットが漏れないよう明示的にも監視する。
+// (正解・解説が追加表示された直後にクリップされたまま残るのを防ぐ)
+watch(isAnswerVisible, () => void fitToViewport())
 onMounted(() => {
   void fitToViewport()
   window.addEventListener('resize', fitToViewport)
@@ -51,7 +55,7 @@ const idleMessage = computed(() => {
 </script>
 
 <template>
-  <main ref="shell" class="projector-shell">
+  <main ref="shell" class="projector-shell" :class="{ 'is-message': !question }">
     <header class="projector-head">
       <span v-if="question" class="projector-number">Q{{ question.position }}</span>
       <span v-if="phase && question" class="projector-status">{{ PHASE_LABELS[phase] }}</span>
@@ -63,7 +67,7 @@ const idleMessage = computed(() => {
         {{ question.question_text }}
       </p>
       <img v-if="imageUrl" class="projector-image" :src="imageUrl" alt="" @load="fitToViewport">
-      <ul class="projector-choices">
+      <ul class="projector-choices" :class="{ 'has-image': hasImage }">
         <li
           v-for="key in CHOICE_KEYS"
           :key="key"
