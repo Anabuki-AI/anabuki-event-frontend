@@ -28,21 +28,26 @@
 }
 .projector-status { font-size: calc(2.6 * var(--u)); color: #1769c2; font-weight: 700; }
 /*
- * 出題対象バッジ。問題番号(塗りつぶし)・フェーズラベル(プレーンテキスト)と区別できるよう
- * アウトライン形式にする。補足情報の位置づけのため、他のヘッダー要素より控えめなサイズ。
- * 大画面のため --u で通常は大きく表示しつつ、縮小時も判読できる下限(14px)を確保する。
+ * ヘッダー右側グループ(出題対象・通信エラー)。個々の要素ではなくこのラッパーに
+ * margin-left: auto を付けることで、両方が同時に表示されても(通信エラー再試行中に
+ * 出題対象も出ている場合など)分割されず必ずヘッダー行の右端にまとまって並ぶ。
+ */
+.projector-head-right { display: flex; align-items: center; gap: calc(2.2 * var(--u)); margin-left: auto; }
+/*
+ * 出題対象バッジ。問題番号(塗りつぶし)と区別できるようアウトライン形式にしつつ、
+ * 視認性のため問題番号(.projector-number)と同じ大きさで表示する。
  */
 .projector-target-audience {
-  font-size: max(14px, calc(1.8 * var(--u)));
+  font-size: calc(3.5 * var(--u));
   font-weight: 700;
   color: #1769c2;
   background: #fff;
   border: calc(0.15 * var(--u)) solid #1769c2;
   border-radius: 999px;
-  padding: calc(0.3 * var(--u)) calc(1.8 * var(--u));
+  padding: calc(0.5 * var(--u)) calc(2.6 * var(--u));
   white-space: nowrap;
 }
-.projector-error { font-size: max(16px, calc(2 * var(--u))); color: #b3261e; margin-left: auto; }
+.projector-error { font-size: max(16px, calc(2 * var(--u))); color: #b3261e; }
 .projector-card {
   background: #fff; border-radius: calc(2.2 * var(--u)); padding: calc(2.6 * var(--u)) calc(5.2 * var(--u));
   box-shadow: 0 4px 24px rgba(19, 34, 56, 0.08);
