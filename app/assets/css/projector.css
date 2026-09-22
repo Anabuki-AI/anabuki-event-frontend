@@ -34,18 +34,20 @@
  */
 .projector-head-right { display: flex; align-items: center; gap: calc(2.2 * var(--u)); margin-left: auto; }
 /*
- * 出題対象バッジ。問題番号(塗りつぶし)と区別できるようアウトライン形式にしつつ、
- * 視認性のため問題番号(.projector-number, 3.5u)に近いサイズで表示する。
- * 同一サイズだと大きすぎるとのフィードバックがあったため、一回り小さい3uにしている。
+ * 出題対象バッジ。問題番号(塗りつぶし)と区別できるようアウトライン形式にする。
+ * サイズは複数回のフィードバックを経て調整済み: 当初の補足バッジサイズ(1.8u)→
+ * 問題番号と同サイズ(3.5u、大きすぎ)→一回り小さく(3u、まだ大きすぎ)→
+ * 現在は2.4u(フルHD・scale=1相当で概算21.5px。問題番号3.5u=約31.4pxよりはっきり小さく、
+ * フェーズラベル2.6u=約23.3pxとほぼ同等かわずかに小さい)。
  */
 .projector-target-audience {
-  font-size: calc(3 * var(--u));
+  font-size: calc(2.4 * var(--u));
   font-weight: 700;
   color: #1769c2;
   background: #fff;
-  border: calc(0.15 * var(--u)) solid #1769c2;
+  border: calc(0.12 * var(--u)) solid #1769c2;
   border-radius: 999px;
-  padding: calc(0.45 * var(--u)) calc(2.2 * var(--u));
+  padding: calc(0.36 * var(--u)) calc(1.75 * var(--u));
   white-space: nowrap;
 }
 .projector-error { font-size: max(16px, calc(2 * var(--u))); color: #b3261e; }
