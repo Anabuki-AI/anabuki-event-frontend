@@ -198,6 +198,57 @@
 }
 
 /*
+ * 大会終了後、最終問題の答え表示の次に映る最終結果(1〜10位)。projector-card を流用。
+ * ランキングは question なし(= is-message)扱いだが、db117f0 が「メッセージ画面は
+ * 短い1行テキストしか持たない」前提で container-type: inline-size を
+ * .projector-shell.is-message .projector-card に限定した際、ランキングの
+ * 可変長リスト(1〜10位、最大10件)はその前提から外れる。containment が付いたままだと
+ * リストがカードからはみ出しても .projector-shell の scrollHeight に伝わらず、
+ * fitToViewport() が検知できないまま見切れる(db117f0 が問題カードで修正したのと
+ * 同じ種類のクリッピングバグ)。ランキングカードだけ containment を解除する。
+ */
+.projector-shell.is-message .projector-card.projector-ranking {
+  container-type: normal;
+}
+.projector-ranking-title {
+  margin: 0; flex: none; text-align: center; font-weight: 700; color: #1769c2;
+  font-size: calc(4.4 * var(--u));
+}
+/*
+ * container-type を解除したため cqw は使えない(クエリコンテナ不在で 0 になる)。
+ * 上の .projector-message (idle等の1行メッセージ)とは独立させ、--u ベースで
+ * 素直にサイズを決める。短文(最大16文字程度)なので折り返しも許容する。
+ */
+.projector-ranking-empty {
+  margin: auto; text-align: center; font-weight: 700;
+  font-size: calc(3.6 * var(--u)); line-height: 1.4;
+}
+.projector-ranking-list {
+  list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; gap: calc(1 * var(--u));
+}
+.projector-ranking-item {
+  display: flex; align-items: center; gap: calc(2.2 * var(--u));
+  padding: calc(1.1 * var(--u)) calc(2.6 * var(--u));
+  border-radius: calc(1.6 * var(--u));
+  background: #edeffa;
+}
+.projector-ranking-item.is-top { background: #dce7fa; }
+.projector-ranking-rank {
+  flex: none; width: calc(7.4 * var(--u)); text-align: center;
+  font-size: calc(3.2 * var(--u)); font-weight: 700; color: #fff;
+  background: #1769c2; border-radius: 999px; padding: calc(0.4 * var(--u)) 0;
+}
+.projector-ranking-item.is-top .projector-ranking-rank { background: #0f4f8f; }
+.projector-ranking-name {
+  flex: 1 1 auto; min-width: 0; font-size: calc(3.2 * var(--u)); font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.projector-ranking-points {
+  flex: none; font-size: calc(3.2 * var(--u)); font-weight: 700; color: #1769c2;
+}
+
+/*
  * 待機中のリアクション浮遊演出(調整値は features/projector/floating-reactions.ts の FLOAT_CONFIG)。
  * transform / opacity のみをアニメーションし、レイヤーは pointer-events:none で他表示を邪魔しない。
  */

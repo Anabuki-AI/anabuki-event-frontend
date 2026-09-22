@@ -165,9 +165,14 @@ onMounted(async () => {
 
       <section v-else-if="(screen === 'answer' || isEditingAnswer) && question" class="answer-card">
         <div class="question-panel">
-          <p class="question-number">
-            Q{{ question.position }}
-          </p>
+          <div class="question-meta">
+            <p class="question-number">
+              Q{{ question.position }}
+            </p>
+            <p v-if="question.target_audience" class="question-target-audience">
+              {{ question.target_audience }}
+            </p>
+          </div>
           <p class="question-text">
             {{ question.question_text }}
           </p>
@@ -325,9 +330,14 @@ onMounted(async () => {
         <h2>解答を受け付けました</h2>
         <div v-if="question" class="answer-review">
           <div class="question-panel">
-            <p class="question-number">
-              Q{{ question.position }}
-            </p>
+            <div class="question-meta">
+              <p class="question-number">
+                Q{{ question.position }}
+              </p>
+              <p v-if="question.target_audience" class="question-target-audience">
+                {{ question.target_audience }}
+              </p>
+            </div>
             <p class="question-text">
               {{ question.question_text }}
             </p>
@@ -382,9 +392,14 @@ onMounted(async () => {
         <h2>解答受付は終了しました</h2>
         <div v-if="question && myAnswer" class="answer-review">
           <div class="question-panel">
-            <p class="question-number">
-              Q{{ question.position }}
-            </p>
+            <div class="question-meta">
+              <p class="question-number">
+                Q{{ question.position }}
+              </p>
+              <p v-if="question.target_audience" class="question-target-audience">
+                {{ question.target_audience }}
+              </p>
+            </div>
             <p class="question-text">
               {{ question.question_text }}
             </p>

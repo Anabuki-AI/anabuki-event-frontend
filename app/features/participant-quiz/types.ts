@@ -9,6 +9,8 @@ export interface ParticipantQuizQuestion {
   question_id: number
   position: number
   question_text: string
+  /** 出題対象。未設定なら null。問題番号と同じ行の反対側に表示する。 */
+  target_audience: string | null
   /** 常に4択すべて。Lv.1で除外された選択肢は eliminated_choice で示され、グレーアウト表示する。 */
   choices: Record<AnswerChoice, string>
   /** Lv.1（low）確定時にサーバーが選んだ不正解の選択肢。未確定/他レベルでは null。 */
