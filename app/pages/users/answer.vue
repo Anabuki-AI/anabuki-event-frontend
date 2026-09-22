@@ -170,7 +170,7 @@ onMounted(async () => {
               Q{{ question.position }}
             </p>
             <p v-if="question.target_audience" class="question-target-audience">
-              {{ question.target_audience }}
+              対象：{{ question.target_audience }}
             </p>
           </div>
           <p class="question-text">
@@ -335,7 +335,7 @@ onMounted(async () => {
                 Q{{ question.position }}
               </p>
               <p v-if="question.target_audience" class="question-target-audience">
-                {{ question.target_audience }}
+                対象：{{ question.target_audience }}
               </p>
             </div>
             <p class="question-text">
@@ -397,7 +397,7 @@ onMounted(async () => {
                 Q{{ question.position }}
               </p>
               <p v-if="question.target_audience" class="question-target-audience">
-                {{ question.target_audience }}
+                対象：{{ question.target_audience }}
               </p>
             </div>
             <p class="question-text">
