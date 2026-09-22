@@ -140,7 +140,10 @@
 .question-row[open] .question-row-summary::after { transform: rotate(90deg); }
 .question-row-summary:hover { background: rgb(23 105 194 / 4%); }
 .question-id { flex: 0 0 auto; color: #1769c2; font-weight: 800; }
-.question-text {
+/* nuxt.config.ts の css 配列でこのファイルはアプリ全体に読み込まれるため、"question-text"
+   のような汎用的なクラス名は他ページ(参加者の解答画面など)と衝突しうる。1行クランプ表示は
+   この一覧行(.question-row-summary)専用の見た目なのでスコープする。 */
+.question-row-summary .question-text {
   display: -webkit-box;
   overflow: hidden;
   flex: 1;
