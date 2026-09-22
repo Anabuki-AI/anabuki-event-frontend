@@ -25,6 +25,25 @@ function formatResetCount(entry: AuditLogEntry, key: string) {
   const value = entry.detail[key]
   return typeof value === 'number' ? `${value}件` : '—'
 }
+
+// 名前審査(Jev)や参加者削除の判断材料となるdetailを、行を開かずに読める
+// ひとこと要約にする。detail値が欠けている記録でも落ちないよう逐項目ガードする。
+function entryDetailSummary(entry: AuditLogEntry): string | null {
+  const displayName = typeof entry.detail.displayName === 'string' ? entry.detail.displayName : '—'
+  if (entry.type === 'DISPLAY_NAME_REJECTED') {
+    const probability = typeof entry.detail.probability === 'number' ? entry.detail.probability.toFixed(2) : '—'
+    const threshold = typeof entry.detail.threshold === 'number' ? entry.detail.threshold.toFixed(2) : '—'
+    return `表示名「${displayName}」を拒否（確率 ${probability} / 閾値 ${threshold}）`
+  }
+  if (entry.type === 'DISPLAY_NAME_MODERATION_FAILED') {
+    const outcome = entry.detail.failClosed === true ? 'fail-closed で拒否' : 'fail-open で登録を許可'
+    return `表示名「${displayName}」の審査に失敗（${outcome}）`
+  }
+  if (entry.type === 'PARTICIPANT_DELETED') {
+    return `表示名「${displayName}」を削除`
+  }
+  return null
+}
 const totalPages = computed(() => Math.max(1, Math.ceil(props.state.totalEntries.value / props.state.perPage)))
 const rangeStart = computed(() => (props.state.totalEntries.value === 0 ? 0 : (props.state.page.value - 1) * props.state.perPage + 1))
 const rangeEnd = computed(() => Math.min(props.state.page.value * props.state.perPage, props.state.totalEntries.value))
@@ -79,7 +98,7 @@ function apply() {
                   <li v-for="[key, label] in resetDetailFields" :key="key">{{ label }}: {{ formatResetCount(entry, key) }}</li>
                 </ul>
               </div>
-              <span v-else>—</span>
+              <span v-else>{{ entryDetailSummary(entry) ?? '—' }}</span>
             </td>
             <td>{{ formatConsoleDate(entry.occurredAt) }}</td>
           </tr>

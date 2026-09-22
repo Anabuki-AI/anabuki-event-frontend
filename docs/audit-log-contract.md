@@ -68,6 +68,9 @@ type AuditLogType =
   | 'OPERATOR_ACCESS_GRANTED'
   | 'OPERATOR_ACCESS_REVOKED'
   | 'TOURNAMENT_RESET'
+  | 'PARTICIPANT_DELETED'
+  | 'DISPLAY_NAME_REJECTED'
+  | 'DISPLAY_NAME_MODERATION_FAILED'
 ```
 
 Rules:
@@ -108,6 +111,9 @@ Derived from the current admin-facing routes and flows. Each entry is written by
 | `OPERATOR_ACCESS_GRANTED` | `PATCH /api/admin/operator-identities/:id` with manager access enabled |
 | `OPERATOR_ACCESS_REVOKED` | `PATCH /api/admin/operator-identities/:id` with manager access revoked |
 | `TOURNAMENT_RESET` | `POST /api/operator/quiz/reset` succeeds with exact confirmation `RESET` |
+| `PARTICIPANT_DELETED` | `DELETE /api/operator/participants/:id` removes a participant (cascades to their sessions/answers); `detail.displayName` keeps the removed name |
+| `DISPLAY_NAME_REJECTED` | a registration or rename is rejected because display-name moderation (Jev) flags it; `detail` carries `displayName`, `probability`, `threshold` |
+| `DISPLAY_NAME_MODERATION_FAILED` | the moderation provider could not be reached; `detail.displayName` plus `failClosed` (whether the name was let through or rejected by policy) |
 
 Deliberately out of scope for phase 1 (candidates for a later contract, listed so C2 can leave room):
 

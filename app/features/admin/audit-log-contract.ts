@@ -17,6 +17,9 @@ export type AuditLogType =
   | 'OPERATOR_ACCESS_GRANTED'
   | 'OPERATOR_ACCESS_REVOKED'
   | 'TOURNAMENT_RESET'
+  | 'PARTICIPANT_DELETED'
+  | 'DISPLAY_NAME_REJECTED'
+  | 'DISPLAY_NAME_MODERATION_FAILED'
 
 const AUDIT_LOG_TYPES = [
   'ADMIN_LOGIN_SUCCEEDED', 'ADMIN_LOGGED_OUT', 'ADMIN_ACCESS_EXCHANGED',
@@ -24,6 +27,7 @@ const AUDIT_LOG_TYPES = [
   'CONFIDENCE_MULTIPLIER_UPDATED', 'ACCESS_REQUEST_APPROVED', 'ACCESS_REQUEST_REJECTED',
   'MANAGEMENT_ACCESS_REVOKED', 'OPERATOR_ACCESS_GRANTED', 'OPERATOR_ACCESS_REVOKED',
   'TOURNAMENT_RESET',
+  'PARTICIPANT_DELETED', 'DISPLAY_NAME_REJECTED', 'DISPLAY_NAME_MODERATION_FAILED',
 ] as const satisfies readonly AuditLogType[]
 
 export interface AuditLogEntry {
@@ -61,6 +65,9 @@ export const auditLogTypeLabels: Record<AuditLogType, string> = {
   OPERATOR_ACCESS_GRANTED: 'オペレーター権限の付与',
   OPERATOR_ACCESS_REVOKED: 'オペレーター権限の取消',
   TOURNAMENT_RESET: 'クイズ大会のリセット',
+  PARTICIPANT_DELETED: '参加者の削除',
+  DISPLAY_NAME_REJECTED: '不適切な表示名の拒否',
+  DISPLAY_NAME_MODERATION_FAILED: '表示名審査の失敗',
 }
 
 function record(value: unknown): value is Record<string, unknown> {

@@ -364,6 +364,7 @@ onMounted(() => {
         <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/quiz-control">出題管理</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/management">問題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/participants">参加者管理</NuxtLink>
       </nav>
     </aside>
 

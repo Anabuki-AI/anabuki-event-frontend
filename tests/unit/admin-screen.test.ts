@@ -80,6 +80,15 @@ describe('運営者メイン画面', () => {
     expect(wrapper.findAll('.admin-menu-item--disabled')).toHaveLength(0)
   })
 
+  it('参加者管理へのリンクが /event_operator/participants へ遷移する', () => {
+    const wrapper = mountAdminScreen()
+
+    const link = wrapper.findAll('a.admin-menu-item').find((a) => a.text().includes('参加者管理'))
+    expect(link).toBeDefined()
+    expect(link!.attributes('href')).toBe('/event_operator/participants')
+    expect(link!.text()).toContain('登録済みの参加者を確認、削除できます。')
+  })
+
   it('ホームへ戻るリンクは表示しない', () => {
     const wrapper = mountAdminScreen()
 
@@ -87,10 +96,10 @@ describe('運営者メイン画面', () => {
     expect(backLinks).toHaveLength(0)
   })
 
-  it('管理機能へのリンクを3件と大画面表示リンクを表示する', () => {
+  it('管理機能へのリンクを4件と大画面表示リンクを表示する', () => {
     const wrapper = mountAdminScreen()
 
-    expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(4)
+    expect(wrapper.findAll('a.admin-menu-item')).toHaveLength(5)
     const projector = wrapper.find('a[href="/event_operator/projector"]')
     expect(projector.attributes('target')).toBe('_blank')
   })

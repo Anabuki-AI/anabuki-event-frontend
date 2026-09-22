@@ -39,6 +39,7 @@ const {
         <NuxtLink class="admin-sidebar-link" to="/event_operator/voting-rate">投票率ページ</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/quiz-control">出題管理</NuxtLink>
         <NuxtLink class="admin-sidebar-link" to="/event_operator/management">問題管理</NuxtLink>
+        <NuxtLink class="admin-sidebar-link" to="/event_operator/participants">参加者管理</NuxtLink>
       </nav>
     </aside>
 
@@ -75,6 +76,14 @@ const {
           <span class="admin-menu-body">
             <span class="admin-menu-label">問題管理</span>
             <span class="admin-menu-description">登録済みの問題を確認、追加、編集、削除できます。</span>
+          </span>
+          <span class="admin-menu-arrow" aria-hidden="true">→</span>
+        </NuxtLink>
+        <NuxtLink class="admin-menu-item" to="/event_operator/participants">
+          <span class="admin-menu-icon" aria-hidden="true">👥</span>
+          <span class="admin-menu-body">
+            <span class="admin-menu-label">参加者管理</span>
+            <span class="admin-menu-description">登録済みの参加者を確認、削除できます。</span>
           </span>
           <span class="admin-menu-arrow" aria-hidden="true">→</span>
         </NuxtLink>
