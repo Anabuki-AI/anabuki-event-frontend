@@ -1,5 +1,7 @@
 /*
- * 大画面(プロジェクター)用。PC・横長のみ対応。スマホ対応は不要。
+ * 大画面(プロジェクター)用。PC・タブレット対応、スマホ対応は不要。
+ * 通常は横長(16:9想定)フルスクリーン。半面表示などで縦長寄りになった場合は
+ * 下方の @media (max-aspect-ratio: 5/4) ブロックがレイアウトを切り替える。
  * スクロールさせない固定レイアウト: 全寸法は --u (ビューポート基準の単位 × --projector-scale) で表す。
  * --projector-scale は projector.vue が内容が収まるまで自動で縮める(長文対策)。
  */
@@ -61,6 +63,24 @@
 .projector-message {
   /* 待機・終了・読み込み中などの中央メッセージ(5.2 → 9 → 11) */
   margin: auto; font-size: calc(11 * var(--u)); font-weight: 700; text-align: center; overflow-wrap: anywhere;
+}
+
+/*
+ * 半面表示など縦長寄り(横:縦がおおむね5:4以下)になったときだけ適用。
+ * 既存の横長(デフォルト)スタイルは一切変更しない。
+ * デフォルトの --u は横幅基準(0.5625vw)で決まるため、縦長では横幅に強く制約されて
+ * 縦の余白を活かせず小さくなりすぎる。縦長では選択肢を1列積みにする分、縦方向に
+ * 余裕があり横方向にも余裕が出るため、縦横どちらもバランスよく使う係数に変更し、
+ * その領域(半面)にちゃんと収まるサイズへ調整する。はみ出す場合の縮小は
+ * 既存の fitToViewport (--projector-scale) がそのまま面倒を見る。
+ */
+@media (max-aspect-ratio: 5/4) {
+  .projector-shell {
+    --u: calc(min(1.3vh, 2.2vw) * var(--projector-scale, 1));
+  }
+  .projector-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /*
