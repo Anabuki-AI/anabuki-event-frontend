@@ -7,6 +7,7 @@ import QuizPhasePanel from '~/features/quiz-control/components/QuizPhasePanel.vu
 import QuizCurrentQuestionCard from '~/features/quiz-control/components/QuizCurrentQuestionCard.vue'
 import QuizTimerPanel from '~/features/quiz-control/components/QuizTimerPanel.vue'
 import QuizNextQuestionPreview from '~/features/quiz-control/components/QuizNextQuestionPreview.vue'
+import QuizRelayQuestionPanel from '~/features/quiz-control/components/QuizRelayQuestionPanel.vue'
 import { useQuizControl } from '~/features/quiz-control/useQuizControl'
 import { useQuizClock } from '~/features/quiz-control/useQuizClock'
 import { setupAdminSidebar } from '~/features/admin/components/AdminSidebar'
@@ -246,6 +247,11 @@ const revealBlockedReason = computed(() => {
             />
             <QuizCurrentQuestionCard :state="state" :is-acting="isActing" @correct-answer="setCorrectAnswer" />
             <QuizNextQuestionPreview v-if="phase !== 'FINISHED'" :next-question="state.next_question ?? null" />
+            <!-- 問題管理へ移らずに中継問題の「今回出題する1問」をここで選べる -->
+            <QuizRelayQuestionPanel
+              :current-question-id="state.current?.question_id ?? null"
+              @changed="refresh"
+            />
           </div>
         </div>
 
