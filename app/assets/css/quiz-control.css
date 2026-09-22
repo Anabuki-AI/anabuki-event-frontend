@@ -870,6 +870,65 @@
   line-height: 1.6;
 }
 
+/* ===== 中継問題の選択(QuizRelayQuestionPanel) =====
+ * 問題管理へ移らずに出題管理内で「今回出題する1問」を選ぶための補助パネル。
+ * 見た目は次の問題プレビュー(quiz-next-preview)系を踏襲して控えめに。 */
+
+.quiz-relay-panel {
+  display: grid;
+  gap: 10px;
+  padding: 16px 20px;
+  border: 1px dashed rgb(19 34 56 / 16%);
+  border-radius: 16px;
+  background: #edeffa;
+}
+
+.quiz-relay-panel-title {
+  margin: 0;
+  color: #516176;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quiz-relay-panel-note {
+  margin: 0;
+  color: #a3661b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.quiz-relay-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quiz-relay-item {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.quiz-relay-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-relay-text {
+  flex: 1 1 160px;
+  color: #132238;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .quiz-reset-receipt-counts {
     grid-template-columns: minmax(0, 1fr);
