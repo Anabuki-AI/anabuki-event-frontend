@@ -243,9 +243,15 @@
 }
 .projector-ranking-item.is-top { background: #dce7fa; }
 .projector-ranking-rank {
-  flex: none; width: calc(7.4 * var(--u)); text-align: center;
+  /*
+   * 上位10件は必ず1〜10位("10位"は数字2桁)なので、固定 width だと "10位" だけ
+   * 折り返して縦2行になり円形が崩れる(1〜9位は "N位" の2文字で収まっていた)。
+   * min-width + white-space: nowrap にして、1桁のときは従来と同じ見た目(7.4u)を
+   * 保ちつつ、"10位" のときだけ内容に合わせて横に広がる(角丸pill)ようにする。
+   */
+  flex: none; min-width: calc(7.4 * var(--u)); text-align: center; white-space: nowrap;
   font-size: calc(3.2 * var(--u)); font-weight: 700; color: #fff;
-  background: #1769c2; border-radius: 999px; padding: calc(0.4 * var(--u)) 0;
+  background: #1769c2; border-radius: 999px; padding: calc(0.4 * var(--u)) calc(0.6 * var(--u));
 }
 .projector-ranking-item.is-top .projector-ranking-rank { background: #0f4f8f; }
 .projector-ranking-name {
