@@ -17,9 +17,9 @@ const { state, phase, isLoading, errorMessage, isAnswerVisible } = useProjectorQ
 const question = computed(() => (phase.value === 'IDLE' ? null : state.value?.current ?? null))
 const imageUrl = computed(() => resolveApiImageUrl(question.value?.image_url ?? null))
 
-// 待機中(IDLE)のときだけ、参加者のリアクションを画面下から浮かべる
-const isWaiting = computed(() => phase.value === 'IDLE')
-const { floaters, remove: removeFloater } = useFloatingReactions(isWaiting)
+// 待機中(IDLE)・問題表示中・正解表示中は、参加者のリアクションを画面下から浮かべる(終了後は表示しない)
+const showReactions = computed(() => !!phase.value && phase.value !== 'FINISHED')
+const { floaters, remove: removeFloater } = useFloatingReactions(showReactions)
 
 // スクロール禁止の固定レイアウト。内容がはみ出す間 --projector-scale を縮めて必ず1画面に収める。
 const shell = ref<HTMLElement | null>(null)
@@ -91,6 +91,6 @@ const idleMessage = computed(() => {
         {{ idleMessage }}
       </p>
     </section>
-    <FloatingReactions v-if="isWaiting" :items="floaters" @remove="removeFloater" />
+    <FloatingReactions v-if="showReactions" :items="floaters" @remove="removeFloater" />
   </main>
 </template>
