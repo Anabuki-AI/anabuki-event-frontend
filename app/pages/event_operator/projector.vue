@@ -62,12 +62,12 @@ const idleMessage = computed(() => {
       <span v-if="errorMessage" class="projector-error" role="alert">通信エラー：再試行中です</span>
     </header>
 
-    <section v-if="question" class="projector-card">
+    <section v-if="question" class="projector-card" :class="{ 'has-image': hasImage }">
       <p class="projector-question">
         {{ question.question_text }}
       </p>
       <img v-if="imageUrl" class="projector-image" :src="imageUrl" alt="" @load="fitToViewport">
-      <ul class="projector-choices" :class="{ 'has-image': hasImage }">
+      <ul class="projector-choices">
         <li
           v-for="key in CHOICE_KEYS"
           :key="key"
