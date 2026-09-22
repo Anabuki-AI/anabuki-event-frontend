@@ -87,6 +87,32 @@
 .projector-card.has-image .projector-choice-key {
   width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u));
 }
+/*
+ * 画像あり + 正解発表中(選択肢+正解+解説+画像が全部揃う、最もコンテンツが多い
+ * 組み合わせ)は、fitToViewport の --projector-scale 縮小だけでは MIN_SCALE の下限に
+ * 先に到達してしまい、選択肢の下側がカードからはみ出すことがある。この組み合わせの
+ * ときだけ画像の優先度を下げ(min-heightを大きく下げる)、質問文・選択肢・正解・解説を
+ * さらにコンパクトにして、必要な高さの絶対量そのものを減らす。
+ * 画像なし、または正解発表前(選択肢のみ)には一切影響しない。
+ */
+.projector-card.has-image.is-revealed { gap: calc(1 * var(--u)); }
+.projector-card.has-image.is-revealed .projector-question {
+  font-size: calc(2.6 * var(--u)); line-height: 1.2;
+}
+.projector-card.has-image.is-revealed .projector-image {
+  min-height: calc(8 * var(--u));
+}
+.projector-card.has-image.is-revealed .projector-choices { gap: calc(0.7 * var(--u)); }
+.projector-card.has-image.is-revealed .projector-choice {
+  gap: calc(0.8 * var(--u));
+  font-size: calc(1.7 * var(--u)); line-height: 1.2;
+  padding: calc(0.45 * var(--u)) calc(1 * var(--u));
+}
+.projector-card.has-image.is-revealed .projector-choice-key {
+  width: calc(2.8 * var(--u)); height: calc(2.8 * var(--u));
+}
+.projector-card.has-image.is-revealed .projector-answer { font-size: calc(3.2 * var(--u)); }
+.projector-card.has-image.is-revealed .projector-explanation { font-size: calc(2.4 * var(--u)); line-height: 1.4; }
 .projector-answer { flex: none; font-size: calc(4 * var(--u)); font-weight: 700; margin: 0; color: #1b8a3a; overflow-wrap: anywhere; }
 .projector-explanation { flex: none; font-size: calc(3 * var(--u)); line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .projector-explanation-label {
