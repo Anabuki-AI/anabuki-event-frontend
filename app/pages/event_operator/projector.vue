@@ -134,7 +134,7 @@ const idleMessage = computed(() => {
           v-for="entry in rankingTopTen"
           :key="entry.participantId"
           class="projector-ranking-item"
-          :class="{ 'is-top': entry.rank <= 3 }"
+          :class="{ 'is-top': entry.rank <= 3, [`is-rank-${entry.rank}`]: entry.rank <= 3 }"
         >
           <span class="projector-ranking-rank">{{ entry.rank }}位</span>
           <span class="projector-ranking-name">{{ entry.displayName }}</span>

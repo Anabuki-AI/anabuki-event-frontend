@@ -254,6 +254,18 @@
   background: #1769c2; border-radius: 999px; padding: calc(0.4 * var(--u)) calc(0.6 * var(--u));
 }
 .projector-ranking-item.is-top .projector-ranking-rank { background: #0f4f8f; }
+/*
+ * 1〜3位は金・銀・銅を基調にした配色にする(is-top の青系より優先させるため
+ * このブロックを後に置く)。行の背景は薄いトーン、バッジは白文字が読める
+ * 濃さに調整。得点(青文字)・氏名(既定の文字色)はどのトーンでも
+ * 十分なコントラストを保てるため変更しない。
+ */
+.projector-ranking-item.is-rank-1 { background: #fff3cd; }
+.projector-ranking-item.is-rank-1 .projector-ranking-rank { background: #b8860b; }
+.projector-ranking-item.is-rank-2 { background: #eef1f4; }
+.projector-ranking-item.is-rank-2 .projector-ranking-rank { background: #8a94a1; }
+.projector-ranking-item.is-rank-3 { background: #f5e0cd; }
+.projector-ranking-item.is-rank-3 .projector-ranking-rank { background: #b3652f; }
 .projector-ranking-name {
   flex: 1 1 auto; min-width: 0; font-size: calc(3.2 * var(--u)); font-weight: 700;
   overflow-wrap: anywhere;
