@@ -9,6 +9,7 @@
     "directory": "./.output/public"
   },
   "vars": {
-    "NUXT_BACKEND_ORIGIN": "https://api.anabuki-event.com"
+    "NUXT_BACKEND_ORIGIN": "https://api.anabuki-event.com",
+    "NUXT_PUBLIC_ADMIN_AUDIT_LOG_ENABLED": "true"
   }
 }
