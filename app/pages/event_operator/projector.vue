@@ -24,16 +24,34 @@ const { floaters, remove: removeFloater } = useFloatingReactions(showReactions)
 
 // スクロール禁止の固定レイアウト。内容がはみ出す間 --projector-scale を縮めて必ず1画面に収める。
 const shell = ref<HTMLElement | null>(null)
-const MIN_SCALE = 0.3
+// 画像+長文+長い解説のような最も詰め込まれるケースでも収まりきるよう、
+// 通常の 0.3 よりわずかに低い下限にしている(文字が読めなくなるほどではない範囲で確認済み)。
+const MIN_SCALE = 0.22
+// ちょうど収まった(scrollHeight <= clientHeight になった)瞬間に止めると、正解文言などが
+// カード下端ぎりぎりに張り付いて見える。ただし scrollHeight は「内容がボックスより小さい」
+// ケースでは常に clientHeight に張り付く(≒ box未満には下がらない)ため、
+// scrollHeight と clientHeight を比率で比較して「余裕を測る」ことはできない
+// (縮小が一切不要なケースまで誤って縮み続けてしまう)。
+// そのため、実際に縮小が必要だった場合に限り、収まった後でさらに数段階だけ
+// 追加で縮めることで、下に呼吸できる余白を作る。
+const FIT_MARGIN_STEPS = 1
 async function fitToViewport() {
   await nextTick()
   const el = shell.value
   if (!el) return
   let scale = 1
+  let shrunk = false
   el.style.setProperty('--projector-scale', String(scale))
   while (scale > MIN_SCALE && (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)) {
     scale = Math.round(scale * 0.95 * 1000) / 1000
     el.style.setProperty('--projector-scale', String(scale))
+    shrunk = true
+  }
+  if (shrunk) {
+    for (let i = 0; i < FIT_MARGIN_STEPS && scale > MIN_SCALE; i++) {
+      scale = Math.round(scale * 0.95 * 1000) / 1000
+      el.style.setProperty('--projector-scale', String(scale))
+    }
   }
 }
 watch(state, () => void fitToViewport(), { deep: true })
@@ -62,7 +80,11 @@ const idleMessage = computed(() => {
       <span v-if="errorMessage" class="projector-error" role="alert">通信エラー：再試行中です</span>
     </header>
 
-    <section v-if="question" class="projector-card" :class="{ 'has-image': hasImage }">
+    <section
+      v-if="question"
+      class="projector-card"
+      :class="{ 'has-image': hasImage, 'is-revealed': isAnswerVisible }"
+    >
       <p class="projector-question">
         {{ question.question_text }}
       </p>
