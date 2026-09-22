@@ -84,8 +84,10 @@ const idleMessage = computed(() => {
     <header class="projector-head">
       <span v-if="question" class="projector-number">Q{{ question.position }}</span>
       <span v-if="phase && question" class="projector-status">{{ PHASE_LABELS[phase] }}</span>
-      <span v-if="question?.target_audience" class="projector-target-audience">対象：{{ question.target_audience }}</span>
-      <span v-if="errorMessage" class="projector-error" role="alert">通信エラー：再試行中です</span>
+      <div class="projector-head-right">
+        <span v-if="question?.target_audience" class="projector-target-audience">対象：{{ question.target_audience }}</span>
+        <span v-if="errorMessage" class="projector-error" role="alert">通信エラー：再試行中です</span>
+      </div>
     </header>
 
     <section
