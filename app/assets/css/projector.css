@@ -11,7 +11,8 @@
   height: 100dvh;
   width: 100vw;
   overflow: hidden;
-  padding: calc(2.6 * var(--u)) calc(5.9 * var(--u));
+  /* 外枠(ラベンダー部分)は控えめに: カード側に多くの面積を渡す */
+  padding: calc(1.8 * var(--u)) calc(4.2 * var(--u));
   background: #edeffa;
   color: #132238;
   display: flex;
@@ -21,7 +22,8 @@
 }
 .projector-head { display: flex; align-items: center; gap: calc(2.2 * var(--u)); flex: none; }
 .projector-number {
-  font-size: calc(4 * var(--u)); font-weight: 700; color: #fff; background: #1769c2;
+  /* 4u → 3.5u: 少しだけ控えめに */
+  font-size: calc(3.5 * var(--u)); font-weight: 700; color: #fff; background: #1769c2;
   padding: calc(0.5 * var(--u)) calc(2.6 * var(--u)); border-radius: 999px;
 }
 .projector-status { font-size: calc(2.6 * var(--u)); color: #1769c2; font-weight: 700; }
@@ -31,8 +33,6 @@
   box-shadow: 0 4px 24px rgba(19, 34, 56, 0.08);
   display: flex; flex-direction: column; gap: calc(2.2 * var(--u)); flex: 1 1 auto; min-height: 0;
   box-sizing: border-box;
-  /* .projector-message のフォントを cqw (カード幅基準) で決めるためのクエリコンテナ。 */
-  container-type: inline-size;
 }
 .projector-question { font-size: calc(4.8 * var(--u)); line-height: 1.4; font-weight: 700; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 /*
@@ -98,9 +98,9 @@
    * 待機・終了・読み込み中などの中央メッセージ(5.2 → 9 → 11)。
    * --u ベースの calc(11 * var(--u)) だとフルスクリーンでは収まっても、縦長(半面)側で
    * --u が横幅に対して相対的に大きくなる組み合わせだと1行に収まらず折り返してしまう。
-   * カード幅(cqw、.projector-card の container-type: inline-size 基準)に対する
-   * 相対値と比較して小さい方を採用し、想定される文言(最長12文字程度)がどの縦横比でも
-   * 必ず1行に収まるようにする。
+   * カード幅(cqw、直下の .projector-shell.is-message .projector-card の
+   * container-type: inline-size 基準)に対する相対値と比較して小さい方を採用し、
+   * 想定される文言(最長12文字程度)がどの縦横比でも必ず1行に収まるようにする。
    */
   margin: auto; font-size: min(calc(11 * var(--u)), 7cqw); font-weight: 700; text-align: center;
   white-space: nowrap; overflow-wrap: anywhere;
@@ -111,7 +111,21 @@
  * 出題中・正解発表画面の背景(ラベンダー)は対象外。
  */
 .projector-shell.is-message { background: #fff; }
-.projector-shell.is-message .projector-card { box-shadow: none; }
+.projector-shell.is-message .projector-card {
+  box-shadow: none;
+  /*
+   * .projector-message を cqw で1行に収める専用のクエリコンテナ。
+   * これはメッセージ画面(質問・選択肢・正解・解説を含まない)専用に限定すること。
+   * 以前は .projector-card 全体に無条件でつけていたが、container-type: inline-size は
+   * (container-type:size を指定していなくても) layout containment を伴うため、
+   * 出題・正解発表カードに付けると内部コンテンツのオーバーフローが
+   * .projector-shell の scrollHeight に伝わらなくなり、fitToViewport() の
+   * 「はみ出したら--projector-scaleを縮める」判定が正しく働かなくなる
+   * (= 正解・解説がカード内で実際には収まっていないのに検知できず、
+   * 画面の一番下で見切れる)。そのため出題・正解発表カードには付けない。
+   */
+  container-type: inline-size;
+}
 
 /*
  * 半面表示など縦長寄り(横:縦がおおむね5:4以下)になったときだけ適用。
