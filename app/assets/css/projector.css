@@ -40,11 +40,24 @@
  * 割り当てた領域いっぱいまで使わせたうえで、object-fit:contain で比率を保ったまま
  * 収める(align-self:center 任せの自動サイズ計算だと、レプレースド要素特有の挙動で
  * 意図したより小さく描画されることがあるため)。
+ * flex-grow の比率自体は(縦方向で伸びられる兄弟がこれ1つしかないため)効果がない。
+ * 本当に効くのは他の兄弟(質問文・選択肢・カードのgap)が確保する高さを減らすこと
+ * なので、それは下の .projector-card.has-image 側で行う。min-height は「画像が
+ * ある問題では最低限これくらいは確保する」という下駄として少し高めに設定。
  */
 .projector-image {
-  flex: 1 1 0; min-height: calc(14 * var(--u)); min-width: 0;
+  flex: 1 1 0; min-height: calc(18 * var(--u)); min-width: 0;
   width: 100%; max-width: 100%;
   object-fit: contain;
+}
+/*
+ * 画像付きの問題は画像を「主役」にする: 質問文・選択肢・カード内の余白を
+ * 一回り(前回よりさらに)コンパクトにして、浮いた縦スペースを画像の
+ * flex-grow に譲る(画像なしの問題 = .has-image が付かない場合は無関係)。
+ */
+.projector-card.has-image { gap: calc(1.4 * var(--u)); }
+.projector-card.has-image .projector-question {
+  font-size: calc(3.2 * var(--u)); line-height: 1.25;
 }
 .projector-choices {
   list-style: none; margin: 0; padding: 0; flex: none;
@@ -65,18 +78,14 @@
 .projector-choice.is-correct { border-color: #1b8a3a; background: #e6f6ea; }
 .projector-choice.is-correct .projector-choice-key { background: #1b8a3a; }
 .projector-choice.is-dimmed { opacity: 0.45; }
-/*
- * 画像付きの問題は選択肢を一回り小さくして、その分の高さを画像に譲る
- * (画像なしの問題には一切影響しない)。
- */
-.projector-choices.has-image { gap: calc(1.3 * var(--u)); }
-.projector-choices.has-image .projector-choice {
-  gap: calc(1.5 * var(--u));
-  font-size: calc(2.7 * var(--u)); line-height: 1.3;
-  padding: calc(0.9 * var(--u)) calc(1.8 * var(--u));
+.projector-card.has-image .projector-choices { gap: calc(1 * var(--u)); }
+.projector-card.has-image .projector-choice {
+  gap: calc(1.1 * var(--u));
+  font-size: calc(2.1 * var(--u)); line-height: 1.25;
+  padding: calc(0.6 * var(--u)) calc(1.3 * var(--u));
 }
-.projector-choices.has-image .projector-choice-key {
-  width: calc(4.6 * var(--u)); height: calc(4.6 * var(--u));
+.projector-card.has-image .projector-choice-key {
+  width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u));
 }
 .projector-answer { flex: none; font-size: calc(4 * var(--u)); font-weight: 700; margin: 0; color: #1b8a3a; overflow-wrap: anywhere; }
 .projector-explanation { flex: none; font-size: calc(3 * var(--u)); line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
