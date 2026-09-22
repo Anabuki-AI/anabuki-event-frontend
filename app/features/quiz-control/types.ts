@@ -24,6 +24,8 @@ export interface OperatorQuizCurrentQuestion {
   correct_answer: ChoiceKey
   /** 問題の解説。未設定なら null。 */
   explanation?: string | null
+  /** 出題対象。未設定/任意項目のため null もありうる。 */
+  target_audience?: string | null
   answered_count: number
   /** 0〜1 の小数。 */
   answered_rate: number
@@ -41,6 +43,8 @@ export interface OperatorNextQuestion {
   question_text: string
   choices: Record<ChoiceKey, string>
   image_url: string | null
+  /** 出題対象。未設定/任意項目のため null もありうる。 */
+  target_audience?: string | null
 }
 
 /** POST /api/operator/quiz/reset が返す完了済みリセットの受付票。 */
