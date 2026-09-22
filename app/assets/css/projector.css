@@ -86,14 +86,14 @@
 }
 .projector-message {
   /*
-   * 待機・終了・読み込み中などの中央メッセージ。
-   * --u ベースの calc(9 * var(--u)) だとフルスクリーンでは収まっても、縦長(半面)側で
+   * 待機・終了・読み込み中などの中央メッセージ(5.2 → 9 → 11)。
+   * --u ベースの calc(11 * var(--u)) だけだとフルスクリーンでは収まっても、縦長(半面)側で
    * --u が横幅に対して相対的に大きくなる組み合わせだと1行に収まらず折り返してしまう。
    * カード幅(cqw、.projector-card の container-type: inline-size 基準)に対する
-   * 相対値と比較して小さい方を採用し、想定される文言(最長12文字程度)がどの縦横比でも
-   * 必ず1行に収まるようにする。
+   * 相対値と比較して小さい方を採用することで、通常のフルスクリーンでは11u分の大きさを
+   * 保ちつつ、想定される文言(最長12文字程度)がどの縦横比でも必ず1行に収まるようにする。
    */
-  margin: auto; font-size: min(calc(9 * var(--u)), 7cqw); font-weight: 700; text-align: center;
+  margin: auto; font-size: min(calc(11 * var(--u)), 7cqw); font-weight: 700; text-align: center;
   white-space: nowrap; overflow-wrap: anywhere;
 }
 /*
