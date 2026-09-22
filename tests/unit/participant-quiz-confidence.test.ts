@@ -26,6 +26,7 @@ const unlockedState: ParticipantQuizState = {
     question_id: 12,
     position: 2,
     question_text: '問題文',
+    target_audience: null,
     choices: { A: 'A', B: 'B', C: 'C', D: 'D' },
     eliminated_choice: null,
     image_url: null,
