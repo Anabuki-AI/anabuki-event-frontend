@@ -51,6 +51,15 @@
   object-fit: contain;
 }
 /*
+ * 画像あり(正解発表前)のとき、質問文が長く複数行になると
+ * 画像のmin-height(18u)+質問文+選択肢4つの合計が収まりきらず、
+ * 選択肢の下側(2行目=C・D)がカードからはみ出すことがあった。
+ * 画像の下駄を少し下げ、選択肢ももう一段階コンパクトにして余裕を作る。
+ */
+.projector-card.has-image .projector-image {
+  min-height: calc(15 * var(--u));
+}
+/*
  * 画像付きの問題は画像を「主役」にする: 質問文・選択肢・カード内の余白を
  * 一回り(前回よりさらに)コンパクトにして、浮いた縦スペースを画像の
  * flex-grow に譲る(画像なしの問題 = .has-image が付かない場合は無関係)。
@@ -78,14 +87,14 @@
 .projector-choice.is-correct { border-color: #1b8a3a; background: #e6f6ea; }
 .projector-choice.is-correct .projector-choice-key { background: #1b8a3a; }
 .projector-choice.is-dimmed { opacity: 0.45; }
-.projector-card.has-image .projector-choices { gap: calc(1 * var(--u)); }
+.projector-card.has-image .projector-choices { gap: calc(0.8 * var(--u)); }
 .projector-card.has-image .projector-choice {
-  gap: calc(1.1 * var(--u));
-  font-size: calc(2.1 * var(--u)); line-height: 1.25;
-  padding: calc(0.6 * var(--u)) calc(1.3 * var(--u));
+  gap: calc(0.9 * var(--u));
+  font-size: calc(1.9 * var(--u)); line-height: 1.2;
+  padding: calc(0.5 * var(--u)) calc(1.1 * var(--u));
 }
 .projector-card.has-image .projector-choice-key {
-  width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u));
+  width: calc(3.2 * var(--u)); height: calc(3.2 * var(--u));
 }
 /*
  * 画像あり + 正解発表中(選択肢+正解+解説+画像が全部揃う、最もコンテンツが多い
@@ -112,9 +121,11 @@
   width: calc(2.8 * var(--u)); height: calc(2.8 * var(--u));
 }
 .projector-card.has-image.is-revealed .projector-answer { font-size: calc(3.2 * var(--u)); }
-.projector-card.has-image.is-revealed .projector-explanation { font-size: calc(2.4 * var(--u)); line-height: 1.4; }
+/* 通常側(3u→2.6u)と同じ比率で少し控えめに(2.4u→2.1u) */
+.projector-card.has-image.is-revealed .projector-explanation { font-size: calc(2.1 * var(--u)); line-height: 1.4; }
 .projector-answer { flex: none; font-size: calc(4 * var(--u)); font-weight: 700; margin: 0; color: #1b8a3a; overflow-wrap: anywhere; }
-.projector-explanation { flex: none; font-size: calc(3 * var(--u)); line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* 3u → 2.6u: カード枠に収まりきらないケースがあったため少し控えめに */
+.projector-explanation { flex: none; font-size: calc(2.6 * var(--u)); line-height: 1.5; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .projector-explanation-label {
   display: inline-block; margin-right: calc(1.4 * var(--u)); padding: calc(0.2 * var(--u)) calc(1.6 * var(--u)); border-radius: calc(0.8 * var(--u));
   background: #1769c2; color: #fff; font-size: calc(2.3 * var(--u)); font-weight: 700;
