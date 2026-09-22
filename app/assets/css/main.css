@@ -157,33 +157,6 @@ h1 {
   color: #1769c2;
 }
 
-/* ===== ホーム画面のアクション ===== */
-
-.home-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.home-secondary-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 0 22px;
-  border: 1px solid rgb(23 105 194 / 32%);
-  border-radius: 14px;
-  color: #1769c2;
-  font-weight: 750;
-  text-decoration: none;
-  transition: transform 150ms ease, background 150ms ease;
-}
-
-.home-secondary-link:hover {
-  background: rgb(23 105 194 / 8%);
-  transform: translateY(-1px);
-}
-
 /* ===== 運営者メイン画面 ===== */
 
 /* デザイン規約の背景色(#edeffa)は運営者ページにのみ上書きする
@@ -440,34 +413,200 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   .ui-skeleton { animation: none; }
+  .home-hero-mark { animation: none; }
 }
 
-/* ===== ランキング画面 ===== */
+/* ===== ホーム画面 ===== */
+
+/* 縦並びレイアウト: ヒーロー→参加の流れ→オペレーターリンクを中央カラムで積む */
+.home-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* メインカラー基調のヒーローパネル。装飾の?はイベントのクイズらしさを出す */
+.home-hero {
+  position: relative;
+  width: min(100%, 680px);
+  padding: clamp(32px, 8vw, 56px);
+  border-radius: 28px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 85% 15%, rgb(255 255 255 / 22%), transparent 42%),
+    radial-gradient(circle at 10% 90%, rgb(79 153 231 / 55%), transparent 48%),
+    linear-gradient(150deg, #1769c2 0%, #0f57a4 58%, #0a3d78 100%);
+  box-shadow: 0 24px 80px rgb(34 75 120 / 30%);
+}
+
+.home-hero-mark {
+  position: absolute;
+  font-size: clamp(7rem, 24vw, 12rem);
+  font-weight: 900;
+  line-height: 1;
+  color: rgb(255 255 255 / 10%);
+  pointer-events: none;
+  user-select: none;
+  animation: home-mark-float 9s ease-in-out infinite;
+}
+
+.home-hero-mark-left {
+  top: -24px;
+  left: -18px;
+  transform: rotate(-14deg);
+}
+
+.home-hero-mark-right {
+  right: -14px;
+  bottom: -40px;
+  transform: rotate(16deg);
+  animation-delay: -4.5s;
+}
+
+@keyframes home-mark-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -14px; }
+}
+
+.home-eyebrow {
+  position: relative;
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 72%);
+}
+
+.home-title {
+  position: relative;
+  margin: 0;
+  font-size: clamp(2.4rem, 9vw, 4.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.home-copy {
+  position: relative;
+  max-width: 46ch;
+  margin: 18px 0 0;
+  line-height: 1.8;
+  color: rgb(255 255 255 / 82%);
+}
 
 .home-actions {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.home-primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 26px;
+  border-radius: 999px;
+  color: #1769c2;
+  background: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgb(6 35 68 / 30%);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.home-primary-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgb(6 35 68 / 38%);
 }
 
 .home-secondary-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  padding: 0 22px;
-  border: 1px solid rgb(23 105 194 / 32%);
-  border-radius: 14px;
-  color: #1769c2;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1.5px solid rgb(255 255 255 / 55%);
+  border-radius: 999px;
+  color: #fff;
   font-weight: 750;
   text-decoration: none;
   transition: transform 150ms ease, background 150ms ease;
 }
 
 .home-secondary-link:hover {
-  background: rgb(23 105 194 / 8%);
+  background: rgb(255 255 255 / 14%);
   transform: translateY(-1px);
 }
+
+/* 参加の流れ: モバイルは縦積み、広い画面で3カラム */
+.home-steps {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 680px);
+}
+
+.home-step {
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid rgb(19 34 56 / 8%);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 12px 40px rgb(34 75 120 / 10%);
+}
+
+.home-step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff;
+  background: #1769c2;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.home-step-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.home-step-copy {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #516176;
+}
+
+@media (width >= 640px) {
+  .home-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.home-footer-link {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.home-footer-link a {
+  color: #516176;
+  text-decoration: none;
+  border-bottom: 1px solid rgb(23 105 194 / 35%);
+}
+
+.home-footer-link a:hover {
+  color: #1769c2;
+}
+
+/* ===== ランキング画面 ===== */
 
 /* スマホ専用: 基準幅は375px級、対応端末はスマホのみ(CLAUDE_FRONT.md)。
    PC等の広い画面でもスマホ幅のまま収まるよう、コンテンツに上限幅を置く */
@@ -1185,6 +1324,31 @@ h1 {
     padding-bottom: calc(12px + env(safe-area-inset-bottom));
     /* カードのmax-height計算と揃える: 上下中央寄せは行わず上から積む */
     place-items: start center;
+  }
+
+  .home-shell {
+    justify-content: flex-start;
+    padding-top: 16px;
+  }
+
+  .home-hero {
+    padding: 28px 20px;
+    border-radius: 22px;
+  }
+
+  /* スマホではCTAを全幅にしてタップしやすくする */
+  .home-actions {
+    flex-direction: column;
+  }
+
+  .home-primary-link,
+  .home-secondary-link {
+    width: 100%;
+  }
+
+  .home-step {
+    padding: 16px;
+    border-radius: 18px;
   }
 
   .form-card,
