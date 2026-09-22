@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { fetchQuestions, selectRelayQuestion } from '~/features/problems/api/client'
+import { fetchQuestions } from '~/features/problems/api/client'
 import { toApiError } from '~/lib/api/error'
 import type { Question } from '~/features/problems/types'
 
@@ -9,23 +9,13 @@ const props = defineProps<{
   currentQuestionId: number | null
 }>()
 
-const emit = defineEmits<{
-  /** 選択状態が変わったので出題管理の state を再取得してほしい。 */
-  changed: []
-}>()
-
 const questions = ref<Question[]>([])
-const relaySelectionSavingId = ref<number | null>(null)
 const errorMessage = ref('')
 
 const relayQuestions = computed(() =>
   questions.value
     .filter(question => question.isRelayQuestion)
     .sort((left, right) => left.position - right.position),
-)
-
-const hasSelection = computed(() =>
-  relayQuestions.value.some(question => question.isSelectedRelayQuestion || question.isLiveQuestion),
 )
 
 async function loadRelayQuestions() {
@@ -47,41 +37,6 @@ function relayBadgeText(question: Question): string {
   return '中継問題'
 }
 
-function patchQuestion(question: Question) {
-  const currentIndex = questions.value.findIndex(item => item.id === question.id)
-  const patchedQuestions = questions.value.map((item) => {
-    if (item.id === question.id) return question
-    if (question.isRelayQuestion && question.isSelectedRelayQuestion && item.isRelayQuestion) {
-      return { ...item, isSelectedRelayQuestion: false }
-    }
-    return item
-  })
-
-  if (currentIndex === -1) patchedQuestions.push(question)
-  questions.value = patchedQuestions.sort((left, right) => left.position - right.position)
-}
-
-async function toggleRelaySelection(question: Question) {
-  if (relaySelectionSavingId.value !== null) return
-
-  relaySelectionSavingId.value = question.id
-  errorMessage.value = ''
-  try {
-    const savedQuestion = await selectRelayQuestion(question, !question.isSelectedRelayQuestion)
-    patchQuestion(savedQuestion)
-    // 選択の影響は全中継問題に及ぶので、レスポンスを即時反映しつつ全件を裏で取り直す
-    void loadRelayQuestions()
-    emit('changed')
-  }
-  catch (error) {
-    const apiError = toApiError(error)
-    errorMessage.value = apiError.message
-  }
-  finally {
-    relaySelectionSavingId.value = null
-  }
-}
-
 watch(() => props.currentQuestionId, () => {
   void loadRelayQuestions()
 })
@@ -90,12 +45,12 @@ onMounted(loadRelayQuestions)
 </script>
 
 <template>
-  <section v-if="relayQuestions.length" class="quiz-relay-panel" aria-label="中継問題の選択">
+  <section v-if="relayQuestions.length" class="quiz-relay-panel" aria-label="中継問題の状態">
     <p class="quiz-relay-panel-title">
-      中継問題の選択
+      中継問題
     </p>
-    <p v-if="!hasSelection" class="quiz-relay-panel-note">
-      今回出題する中継問題を1問選んでください。選択した問題だけ出題中に正解を確定できます。
+    <p class="quiz-relay-panel-info">
+      中継問題は出題されると自動で選択状態になり、出題中に正解を確定できます。
     </p>
     <p v-if="errorMessage" class="status-message error" role="alert">
       {{ errorMessage }}
@@ -114,20 +69,6 @@ onMounted(loadRelayQuestions)
               'is-revealed': !question.isLiveQuestion && !question.isSelectedRelayQuestion && !!question.revealedAt,
             }"
           >{{ relayBadgeText(question) }}</span>
-        </div>
-        <div class="relay-selection-row">
-          <button
-            type="button"
-            class="relay-select-toggle"
-            :class="{ 'is-selected': question.isSelectedRelayQuestion }"
-            :disabled="relaySelectionSavingId !== null"
-            @click="toggleRelaySelection(question)"
-          >
-            {{ question.isSelectedRelayQuestion ? '今回の出題の選択を解除' : '今回の出題として選択' }}
-          </button>
-          <p v-if="question.isLiveQuestion" class="relay-selection-note is-live">
-            この問題は現在ライブ出題中です。「出題管理」の正解パネルで正解を確定してください。
-          </p>
         </div>
       </li>
     </ul>

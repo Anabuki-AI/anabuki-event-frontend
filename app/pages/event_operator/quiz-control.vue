@@ -247,11 +247,8 @@ const revealBlockedReason = computed(() => {
             />
             <QuizCurrentQuestionCard :state="state" :is-acting="isActing" @correct-answer="setCorrectAnswer" />
             <QuizNextQuestionPreview v-if="phase !== 'FINISHED'" :next-question="state.next_question ?? null" />
-            <!-- 問題管理へ移らずに中継問題の「今回出題する1問」をここで選べる -->
-            <QuizRelayQuestionPanel
-              :current-question-id="state.current?.question_id ?? null"
-              @changed="refresh"
-            />
+            <!-- 登録済み中継問題とその出題状態をこの画面で確認できる(選択は自動) -->
+            <QuizRelayQuestionPanel :current-question-id="state.current?.question_id ?? null" />
           </div>
         </div>
 

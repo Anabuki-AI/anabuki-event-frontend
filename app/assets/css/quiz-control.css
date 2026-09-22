@@ -870,8 +870,8 @@
   line-height: 1.6;
 }
 
-/* ===== 中継問題の選択(QuizRelayQuestionPanel) =====
- * 問題管理へ移らずに出題管理内で「今回出題する1問」を選ぶための補助パネル。
+/* ===== 中継問題の状態(QuizRelayQuestionPanel) =====
+ * 登録済み中継問題の出題状態を出題管理内で確認するための補助パネル。
  * 見た目は次の問題プレビュー(quiz-next-preview)系を踏襲して控えめに。 */
 
 .quiz-relay-panel {
@@ -892,9 +892,9 @@
   text-transform: uppercase;
 }
 
-.quiz-relay-panel-note {
+.quiz-relay-panel-info {
   margin: 0;
-  color: #a3661b;
+  color: #516176;
   font-size: 13px;
   line-height: 1.6;
 }
