@@ -35,16 +35,17 @@
 .projector-head-right { display: flex; align-items: center; gap: calc(2.2 * var(--u)); margin-left: auto; }
 /*
  * 出題対象バッジ。問題番号(塗りつぶし)と区別できるようアウトライン形式にしつつ、
- * 視認性のため問題番号(.projector-number)と同じ大きさで表示する。
+ * 視認性のため問題番号(.projector-number, 3.5u)に近いサイズで表示する。
+ * 同一サイズだと大きすぎるとのフィードバックがあったため、一回り小さい3uにしている。
  */
 .projector-target-audience {
-  font-size: calc(3.5 * var(--u));
+  font-size: calc(3 * var(--u));
   font-weight: 700;
   color: #1769c2;
   background: #fff;
   border: calc(0.15 * var(--u)) solid #1769c2;
   border-radius: 999px;
-  padding: calc(0.5 * var(--u)) calc(2.6 * var(--u));
+  padding: calc(0.45 * var(--u)) calc(2.2 * var(--u));
   white-space: nowrap;
 }
 .projector-error { font-size: max(16px, calc(2 * var(--u))); color: #b3261e; }
