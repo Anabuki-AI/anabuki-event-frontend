@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { CHOICE_KEYS, PHASE_LABELS } from '~/features/quiz-control/types'
 import { useProjectorQuiz } from '~/features/projector/use-projector-quiz'
+import { useProjectorRanking } from '~/features/projector/use-projector-ranking'
 import { useFloatingReactions } from '~/features/projector/use-floating-reactions'
 import FloatingReactions from '~/features/projector/components/FloatingReactions.vue'
 import { resolveApiImageUrl } from '~/lib/api/image'
@@ -21,6 +22,10 @@ const hasImage = computed(() => Boolean(imageUrl.value))
 // 待機中(IDLE)・問題表示中・正解表示中は、参加者のリアクションを画面下から浮かべる(終了後は表示しない)
 const showReactions = computed(() => !!phase.value && phase.value !== 'FINISHED')
 const { floaters, remove: removeFloater } = useFloatingReactions(showReactions)
+
+// 大会終了かつ次の問題が無い(=最終結果)ときだけ、終了メッセージの代わりにランキングを表示する
+const showRanking = computed(() => phase.value === 'FINISHED' && !question.value)
+const { topTen: rankingTopTen, errorMessage: rankingErrorMessage } = useProjectorRanking(showRanking)
 
 // スクロール禁止の固定レイアウト。内容がはみ出す間 --projector-scale を縮めて必ず1画面に収める。
 const shell = ref<HTMLElement | null>(null)
@@ -58,16 +63,18 @@ watch(state, () => void fitToViewport(), { deep: true })
 // isAnswerVisible は state から派生する値だが、切り替わりタイミングで再フィットが漏れないよう明示的にも監視する。
 // (正解・解説が追加表示された直後にクリップされたまま残るのを防ぐ)
 watch(isAnswerVisible, () => void fitToViewport())
+// ランキング取得完了時も再フィットする(取得中→表示のタイミングでクリップされたまま残るのを防ぐ)
+watch(rankingTopTen, () => void fitToViewport())
 onMounted(() => {
   void fitToViewport()
   window.addEventListener('resize', fitToViewport)
 })
 onUnmounted(() => window.removeEventListener('resize', fitToViewport))
 
+// 「FINISHED かつ 問題なし」は showRanking が必ず true になるため、ここには来ない(最終結果はランキング表示に置き換え済み)。
 const idleMessage = computed(() => {
   if (isLoading.value) return '読み込み中…'
   if (errorMessage.value && !state.value) return '接続を確認しています…'
-  if (phase.value === 'FINISHED') return 'クイズ大会は終了しました'
   return 'まもなく問題を表示します'
 })
 </script>
@@ -111,6 +118,26 @@ const idleMessage = computed(() => {
           <span class="projector-explanation-label">解説</span>{{ question.explanation }}
         </p>
       </template>
+    </section>
+    <section v-else-if="showRanking" class="projector-card projector-ranking">
+      <p class="projector-ranking-title">
+        最終結果
+      </p>
+      <p v-if="rankingTopTen.length === 0" class="projector-ranking-empty">
+        {{ rankingErrorMessage ? 'ランキングを取得できませんでした' : 'ランキングを集計しています…' }}
+      </p>
+      <ol v-else class="projector-ranking-list">
+        <li
+          v-for="entry in rankingTopTen"
+          :key="entry.participantId"
+          class="projector-ranking-item"
+          :class="{ 'is-top': entry.rank <= 3 }"
+        >
+          <span class="projector-ranking-rank">{{ entry.rank }}位</span>
+          <span class="projector-ranking-name">{{ entry.displayName }}</span>
+          <span class="projector-ranking-points">{{ entry.totalPoints }}点</span>
+        </li>
+      </ol>
     </section>
     <section v-else class="projector-card">
       <p class="projector-message">
