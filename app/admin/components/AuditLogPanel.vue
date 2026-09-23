@@ -26,7 +26,20 @@ function formatResetCount(entry: AuditLogEntry, key: string) {
   return typeof value === 'number' ? `${value}件` : '—'
 }
 
-// 名前審査(Jev)や参加者削除の判断材料となるdetailを、行を開かずに読める
+// 参加者本人操作の detail は backend の confidence_level 表記（low/normal/high）
+// をそのまま持つため、参加者側画面と同じ日本語語彙に揃えて表示する。
+const CONFIDENCE_LEVEL_JA: Record<string, string> = { low: 'なし', normal: '普通', high: 'あり' }
+function confidenceLevelJa(value: unknown): string {
+  return typeof value === 'string' && value in CONFIDENCE_LEVEL_JA ? CONFIDENCE_LEVEL_JA[value]! : '—'
+}
+function str(entry: AuditLogEntry, key: string): string {
+  return typeof entry.detail[key] === 'string' ? entry.detail[key] as string : '—'
+}
+function num(entry: AuditLogEntry, key: string): string {
+  return typeof entry.detail[key] === 'number' ? String(entry.detail[key]) : '—'
+}
+
+// 各種行動ログ・大会運営ログの判断材料となるdetailを、行を開かずに読める
 // ひとこと要約にする。detail値が欠けている記録でも落ちないよう逐項目ガードする。
 function entryDetailSummary(entry: AuditLogEntry): string | null {
   const displayName = typeof entry.detail.displayName === 'string' ? entry.detail.displayName : '—'
@@ -41,6 +54,41 @@ function entryDetailSummary(entry: AuditLogEntry): string | null {
   }
   if (entry.type === 'PARTICIPANT_DELETED') {
     return `表示名「${displayName}」を削除`
+  }
+  if (entry.type === 'PARTICIPANT_REGISTERED') {
+    return `表示名「${displayName}」で登録`
+  }
+  if (entry.type === 'PARTICIPANT_DISPLAY_NAME_CHANGED') {
+    return `表示名を「${str(entry, 'previousDisplayName')}」から「${displayName}」に変更`
+  }
+  if (entry.type === 'ANSWER_SUBMITTED') {
+    return `問題${num(entry, 'questionId')}に${str(entry, 'choice')}で回答（自信度: ${confidenceLevelJa(entry.detail.confidenceLevel)} / ${num(entry, 'awardedPoints')}点）`
+  }
+  if (entry.type === 'ANSWER_CHANGED') {
+    return `問題${num(entry, 'questionId')}の回答を${str(entry, 'previousChoice')}→${str(entry, 'choice')}に変更（${num(entry, 'previousAwardedPoints')}点→${num(entry, 'awardedPoints')}点）`
+  }
+  if (entry.type === 'CONFIDENCE_LEVEL_SELECTED') {
+    return `問題${num(entry, 'questionId')}で自信度「${confidenceLevelJa(entry.detail.confidenceLevel)}」を選択`
+  }
+  if (entry.type === 'CONFIDENCE_LEVEL_CHANGED') {
+    return `問題${num(entry, 'questionId')}の自信度を${confidenceLevelJa(entry.detail.previousConfidenceLevel)}→${confidenceLevelJa(entry.detail.confidenceLevel)}に変更`
+  }
+  if (entry.type === 'QUESTION_PUBLISHED') {
+    const relay = entry.detail.isRelayQuestion === true ? '（中継問題）' : ''
+    return `${num(entry, 'position')}問目を公開${relay}`
+  }
+  if (entry.type === 'LIVE_CORRECT_ANSWER_UPDATED') {
+    return `中継正解を${str(entry, 'correctAnswer')}に設定`
+  }
+  if (entry.type === 'ANSWER_WINDOW_CLOSED') {
+    const reason = entry.detail.reason
+    return `締切理由: ${reason === 'operator_requested' ? '運営による手動締切' : reason === 'time_limit_expired' ? '制限時間の経過' : '—'}`
+  }
+  if (entry.type === 'ANSWER_REVEALED') {
+    return typeof entry.detail.correctAnswer === 'string' ? `正解「${entry.detail.correctAnswer}」を公開` : '正解を公開（正解未設定）'
+  }
+  if (entry.type === 'QUIZ_FINISHED') {
+    return typeof entry.detail.finishedElapsedSeconds === 'number' ? `経過時間: ${entry.detail.finishedElapsedSeconds}秒` : null
   }
   return null
 }

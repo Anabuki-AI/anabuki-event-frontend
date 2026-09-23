@@ -60,6 +60,18 @@ describe('audit log contract parsing', () => {
     })
     expect(page.entries[0]?.operationId).toBe('operation-1')
   })
+  it('accepts the widened participant-activity and operator event types', () => {
+    const page = parseAuditLogPage({
+      entries: [
+        { ...validEntry, type: 'ANSWER_SUBMITTED', detail: { participantId: 'p-1', questionId: 1, choice: 'A', confidenceLevel: 'high', awardedPoints: 20 } },
+        { ...validEntry, type: 'OPERATOR_LOGGED_OUT', detail: {} },
+      ],
+      page: 1,
+      perPage: 50,
+      totalEntries: 2,
+    })
+    expect(page.entries.map(entry => entry.type)).toEqual(['ANSWER_SUBMITTED', 'OPERATOR_LOGGED_OUT'])
+  })
   it('rejects unknown or malformed event data instead of dropping or labeling it', () => {
     expect(() => parseAuditLogPage({ entries: [{ ...validEntry, type: 'MYSTERY_EVENT' }], page: 1, perPage: 50, totalEntries: 1 })).toThrow()
     expect(() => parseAuditLogPage({ entries: [{ ...validEntry, occurredAt: 'not-a-date' }], page: 1, perPage: 50, totalEntries: 1 })).toThrow()
@@ -170,6 +182,33 @@ describe('audit log panel presentation', () => {
     expect(wrapper.text()).toContain('参加者: 50件')
     expect(wrapper.text()).toContain('回答: 300件')
     expect(wrapper.text()).toContain('staff@example.test')
+  })
+  it('labels and summarizes the newly widened participant-activity and operator event types', async () => {
+    api.page.mockResolvedValue({
+      entries: [
+        { ...validEntry, id: '1', type: 'PARTICIPANT_REGISTERED', actorEmail: null, targetType: 'PARTICIPANT', targetId: 'p-1', detail: { displayName: 'たろう', gender: 'male', ageGroup: '10s', studentType: 'student' } },
+        { ...validEntry, id: '2', type: 'ANSWER_CHANGED', actorEmail: null, targetType: 'PARTICIPANT_ANSWER', targetId: 'a-1', detail: { participantId: 'p-1', questionId: 3, previousChoice: 'A', choice: 'B', previousConfidenceLevel: 'normal', confidenceLevel: 'high', previousAwardedPoints: 10, awardedPoints: 20 } },
+        { ...validEntry, id: '3', type: 'CONFIDENCE_LEVEL_CHANGED', actorEmail: null, targetType: 'PARTICIPANT_QUIZ_CONFIDENCE_SELECTION', targetId: 'c-1', detail: { participantId: 'p-1', questionId: 3, previousConfidenceLevel: 'normal', confidenceLevel: 'high', eliminatedChoice: 'C' } },
+        { ...validEntry, id: '4', type: 'ANSWER_WINDOW_CLOSED', targetType: 'QUESTION', targetId: '3', detail: { reason: 'time_limit_expired' } },
+        { ...validEntry, id: '5', type: 'OPERATOR_LOGIN_SUCCEEDED', targetType: null, targetId: null, detail: {} },
+      ],
+      page: 1,
+      perPage: 50,
+      totalEntries: 5,
+    })
+    renderPanel(true)
+    await state.load()
+    await flushPromises()
+    expect(wrapper.text()).toContain('参加者の登録')
+    expect(wrapper.text()).toContain('表示名「たろう」で登録')
+    expect(wrapper.text()).toContain('回答の変更')
+    expect(wrapper.text()).toContain('問題3の回答をA→Bに変更（10点→20点）')
+    expect(wrapper.text()).toContain('自信度の変更')
+    expect(wrapper.text()).toContain('問題3の自信度を普通→ありに変更')
+    expect(wrapper.text()).toContain('回答締切')
+    expect(wrapper.text()).toContain('制限時間の経過')
+    expect(wrapper.text()).toContain('運営ログイン成功')
+    expect(wrapper.text()).toContain('（システム）')
   })
   it('never renders an empty page as proof that nothing ever happened', async () => {
     api.page.mockResolvedValue({ entries: [], page: 1, perPage: 50, totalEntries: 0 })
