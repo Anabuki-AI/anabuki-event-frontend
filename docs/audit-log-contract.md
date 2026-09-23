@@ -71,13 +71,29 @@ type AuditLogType =
   | 'PARTICIPANT_DELETED'
   | 'DISPLAY_NAME_REJECTED'
   | 'DISPLAY_NAME_MODERATION_FAILED'
+  | 'PARTICIPANT_REGISTERED'
+  | 'PARTICIPANT_DISPLAY_NAME_CHANGED'
+  | 'PARTICIPANT_LOGGED_OUT'
+  | 'ANSWER_SUBMITTED'
+  | 'ANSWER_CHANGED'
+  | 'CONFIDENCE_LEVEL_SELECTED'
+  | 'CONFIDENCE_LEVEL_CHANGED'
+  | 'QUIZ_STARTED'
+  | 'QUESTION_PUBLISHED'
+  | 'LIVE_CORRECT_ANSWER_UPDATED'
+  | 'ANSWER_WINDOW_CLOSE_REQUESTED'
+  | 'ANSWER_WINDOW_CLOSED'
+  | 'ANSWER_REVEALED'
+  | 'QUIZ_FINISHED'
+  | 'OPERATOR_LOGIN_SUCCEEDED'
+  | 'OPERATOR_LOGGED_OUT'
 ```
 
 Rules:
 
 - `type` is a closed union. Adding a value requires a contract update before the frontend can label it; unknown values received at runtime must fail validation and render the fetch-failed state, not an empty table.
 - The backend supplies the enum; the frontend owns the Japanese label mapping (操作内容 column). The backend must not return pre-localized human text as the primary identifier.
-- `actorEmail` is always present for admin-initiated events. Operator-session events are out of scope for phase 1 (see below).
+- `actorEmail` is always present for admin- and operator-initiated events (`OPERATOR_LOGIN_SUCCEEDED` / `OPERATOR_LOGGED_OUT` and the operator-driven quiz-progression events below). It is `null` for participant-initiated events (`PARTICIPANT_*`, `ANSWER_*`, `CONFIDENCE_LEVEL_*`) and for system-driven events with no human actor (`QUIZ_STARTED`, `ANSWER_WINDOW_CLOSED` when triggered by time-limit expiry) — those identify their subject via `targetType`/`targetId` and `detail` instead.
 - `detail` may include small, safe context (e.g. `questionId`, `level`, `requestId`). It must never include participant personal data beyond what is already shown elsewhere, file contents, image blobs, or any secret.
 
 ## Error responses
@@ -92,9 +108,9 @@ Errors reuse the existing backend shape `{ "error": "<message>" }`.
 | Backend not yet deployed / endpoint absent | 404 or proxy failure | Feature-unavailable state, identical in tone to the current 未連携 state; never presented as "0 件" |
 | Backend unavailable / timeout / invalid schema | failure | Fetch-failed panel + manual retry; never claim "エラー0件" |
 
-## Events to record (phase 1 scope)
+## Events to record
 
-Derived from the current admin-facing routes and flows. Each entry is written by the backend **after** the action succeeds; failed attempts are intentionally not logged in phase 1.
+Derived from the current admin/operator-facing routes and participant flows. Each entry is written by the backend **after** the action succeeds; failed attempts are intentionally not logged (except moderation-failure events, which record the failure itself as the event).
 
 | Event type | Trigger (existing implementation) |
 |---|---|
@@ -114,11 +130,27 @@ Derived from the current admin-facing routes and flows. Each entry is written by
 | `PARTICIPANT_DELETED` | `DELETE /api/operator/participants/:id` removes a participant (cascades to their sessions/answers); `detail.displayName` keeps the removed name |
 | `DISPLAY_NAME_REJECTED` | a registration or rename is rejected because display-name moderation (Jev) flags it; `detail` carries `displayName`, `probability`, `threshold` |
 | `DISPLAY_NAME_MODERATION_FAILED` | the moderation provider could not be reached; `detail.displayName` plus `failClosed` (whether the name was let through or rejected by policy) |
+| `PARTICIPANT_REGISTERED` | a participant registration succeeds; `targetType` `PARTICIPANT`; `detail` carries `displayName`, `gender`, `ageGroup`, `studentType`; `actorEmail`/`actorGoogleSub` are `null` (participants have no admin identity) |
+| `PARTICIPANT_DISPLAY_NAME_CHANGED` | a participant's display-name change actually changes the value (no-op resubmissions are not logged); `detail` carries `previousDisplayName`, `displayName` |
+| `PARTICIPANT_LOGGED_OUT` | a participant explicitly deletes their session; no `detail` |
+| `ANSWER_SUBMITTED` | a participant's first answer to a question; `targetType` `PARTICIPANT_ANSWER`; `detail` carries `participantId`, `questionId`, `choice`, `confidenceLevel`, `awardedPoints` |
+| `ANSWER_CHANGED` | a participant changes an existing answer (idempotent resubmission of the same value is not logged); `detail` adds `previousChoice`, `previousConfidenceLevel`, `previousAwardedPoints` alongside the new values |
+| `CONFIDENCE_LEVEL_SELECTED` | a participant's first confidence-level selection for a question; `targetType` `PARTICIPANT_QUIZ_CONFIDENCE_SELECTION`; `detail` carries `participantId`, `questionId`, `confidenceLevel`, `eliminatedChoice` |
+| `CONFIDENCE_LEVEL_CHANGED` | a participant changes an existing confidence-level selection (idempotent resubmission is not logged); `detail` adds `previousConfidenceLevel` alongside the new value |
+| `QUIZ_STARTED` | `POST /api/operator/quiz/start` succeeds (`waiting` → `in_progress`); no `detail` |
+| `QUESTION_PUBLISHED` | a question first becomes visible to participants, from `start` or `publish`; `targetType` `QUESTION`; `detail` carries `position`, `isRelayQuestion` |
+| `LIVE_CORRECT_ANSWER_UPDATED` | the operator sets/changes the live correct answer on a relay question; `detail.correctAnswer` |
+| `ANSWER_WINDOW_CLOSE_REQUESTED` | the operator manually starts the answer-window close countdown; no `detail` |
+| `ANSWER_WINDOW_CLOSED` | the answer window actually closes (manual countdown elapsed or the time limit expired); `detail.reason` is `operator_requested` or `time_limit_expired`; recorded once at the single model-level choke point every polling path funnels through, so concurrent/repeated polling never double-logs it |
+| `ANSWER_REVEALED` | the operator reveals the correct answer; `detail.correctAnswer` (nullable) |
+| `QUIZ_FINISHED` | the operator finishes the quiz; `detail.finishedElapsedSeconds` (nullable) |
+| `OPERATOR_LOGIN_SUCCEEDED` | Google OAuth callback completes and an operator (manager-source) session is issued; applicant-source logins are not logged, mirroring `ADMIN_LOGIN_SUCCEEDED` |
+| `OPERATOR_LOGGED_OUT` | an operator explicitly logs out, mirroring `ADMIN_LOGGED_OUT` |
 
-Deliberately out of scope for phase 1 (candidates for a later contract, listed so C2 can leave room):
+Deliberately out of scope (candidates for a later contract):
 
 - `GET`-only reads (question list/detail, allowed-email list, access-request list). Logging every read would drown the trail; if read auditing is ever required, add a separate opt-in type (e.g. `AUDIT_LOG_VIEWED`) with its own retention discussion.
-- Other operator quiz lifecycle actions (`/api/operator/quiz/start`, `publish`, `close`, `reveal`, `finish`) and participant activity remain out of scope; the destructive reset is included because it writes a durable operator-attributed receipt.
+- High-frequency, low-significance participant signals: presence/heartbeat polling and emoji reactions (the latter already recorded in a separate, non-durable reaction event store).
 
 ## Backend storage notes
 
